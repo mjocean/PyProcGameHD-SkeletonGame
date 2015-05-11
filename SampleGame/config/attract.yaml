@@ -1,0 +1,29 @@
+Sequence:
+    - Combo:
+        Text:
+            - "MOcean"
+            - ""
+            - "Presents"
+        Font: large
+        lampshow: attract_show_1
+        duration: 2.0
+    - Animation:
+        Name: t800-war
+    - Combo:
+        Text:
+            - "Terminator"
+            - ""
+            - "2.0"
+        Font: large
+        Animation: chrome
+        FontStyle: blueish
+        lampshow: attract_show_2
+        duration: 2.0
+    - HighScores:
+        Font: large
+        Background: chrome
+        Order:
+            - player
+            - category
+            - score
+        duration: 1.0

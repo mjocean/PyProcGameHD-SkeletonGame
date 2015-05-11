@@ -1,0 +1,44 @@
+Machine (Standard):
+  'Balls Per Game':
+    options: [1,10]
+    increments: 1
+    default: 3
+  'Quick Bonus Mode':
+    options: [False,True]
+    default: True
+  'Attract Mode Sounds':
+    options: ['On','Off']
+    default: 'Off'
+  'Attract Mode Music':
+    options: ['On','Off']
+    default: 'Off'
+Machine (Coils):
+  'Auto Plunger':
+    options: [24,63]
+    increments: 1
+    default: 32
+Sound:
+  'Initial volume':
+    options: [1,2,3,4,5,6,7,8,9,10]
+    default: 5
+  'Music volume offset':
+    options: [-0.4,-0.3,-0.2,-0.1,0,0.1,0.2,0.3,0.4]
+    default: 0
+# Display:
+#   'x-offset':
+#     options: [-50,500]
+#     increments: 1
+#     default: 0
+#   'y-offset':
+#     options: [-50,500]
+#     increments: 1
+#     default: 0
+Gameplay (Feature):
+  'Skillshot Autoplunge Timer':
+    options: [0,30]
+    increments: 1
+    default: 15
+  'Ball Save Timer':
+    options: [0,20]
+    increments: 1
+    default: 10

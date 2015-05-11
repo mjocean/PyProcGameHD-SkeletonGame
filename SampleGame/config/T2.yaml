@@ -1,0 +1,392 @@
+# P-ROC Game Description file for T2
+PRGame:
+    machineType: wpc
+    numBalls: 3
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+PRBumpers:
+    - slingL
+    - slingR
+    - jetL
+    - jetR
+    - jetB
+PRSwitches:
+    # **** Format ****
+    # name:
+    #   number: <number>
+    #   type: <type>
+    #
+    #   <number> can be: SFx (Flipper switch, labeled Fx in WPC manual
+    #                    SDx (Dedicated switch, labeled SDx in WPC manual
+    #                    Sx  (Matrix switch, labeled x in WPC manual
+    #   <type> can be: 'NO' (normally open.  This is the default; so no need to use this)
+    #                  'NC' (normally closed.  Common for optos)
+    flipperLwR:
+        number: S11
+        ballsearch: stop # stop: this switch prevents the ballsearch timer from even starting
+    flipperLwL: 
+        number: S12
+        ballsearch: stop 
+    coinL:
+        number: SD1
+    coinR:
+        number: SD3
+    exit: 
+        number: SD5
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    startButton:
+        number: S13
+    tilt:
+        number: S14
+    trough1:
+        number: S15
+        ballsearch: reset # reset: this switch resets a ballsearch timer to occur X-seconds after this was seen
+    trough2:
+        number: S16
+        ballsearch: reset 
+    trough3:
+        number: S17
+        ballsearch: reset 
+    outhole:
+        number: S18
+        ballsearch: reset 
+    slamTilt:
+        number: S21
+    coinDoor:
+        number: S22
+    ticket:
+        number: S23
+    outlaneL:
+        number: S25
+        ballsearch: reset 
+    inlaneL:
+        number: S26
+        ballsearch: reset 
+    inlaneR:
+        number: S27        
+        ballsearch: reset 
+    outlaneR:
+        number: S28
+        ballsearch: reset 
+    gunLoaded: 
+        number: S31
+        ballsearch: stop 
+    gunMark:
+        number: S32
+        type: NC
+    gunHome:
+        number: S33
+    gripTrigger:
+        number: S34
+    standupMidL: 
+        number: S36
+        ballsearch: reset 
+    standupMidC: 
+        number: S37
+        ballsearch: reset 
+    standupMidR: 
+        number: S38
+        ballsearch: reset 
+    jetL:
+        number: S41
+        ballsearch: reset 
+    jetR:
+        number: S42
+        ballsearch: reset 
+    jetB:
+        number: S43
+        ballsearch: reset 
+    slingL:
+        number: S44
+        ballsearch: reset 
+    slingR:
+        number: S45
+        ballsearch: reset 
+    standupRightT: 
+        number: S46
+        ballsearch: reset 
+    standupRightM: 
+        number: S47
+        ballsearch: reset 
+    standupRightB: 
+        number: S48
+        ballsearch: reset 
+    lockLeft:
+        number: S51
+        ballsearch: stop
+    escapeL:
+        number: S53
+        ballsearch: reset 
+    escapeH:
+        number: S54
+        ballsearch: reset 
+    lockTop:
+        number: S55
+        ballsearch: stop
+    laneL:
+        number: S56
+        ballsearch: reset 
+    laneC:
+        number: S57
+        ballsearch: reset 
+    laneR:
+        number: S58
+        ballsearch: reset 
+    rampLeftEnter:
+        number: S61
+        ballsearch: reset 
+    rampLeftMade:
+        number: S62        
+        ballsearch: reset 
+    rampRightEnter:
+        number: S63
+        ballsearch: reset 
+    rampRightMade:
+        number: S64
+        ballsearch: reset 
+    chaseLoopLow:
+        number: S65
+        ballsearch: reset 
+    chaseLoopHigh:
+        number: S66
+        ballsearch: reset 
+    target1:
+        number: S71
+        ballsearch: reset 
+    target2:
+        number: S72
+        ballsearch: reset 
+    target3:
+        number: S73
+        ballsearch: reset 
+    target4:
+        number: S74
+        ballsearch: reset 
+    target5:
+        number: S75
+        ballsearch: reset 
+    ballPopper:
+        number: S76
+        ballsearch: stop 
+    dropTarget:
+        number: S77
+        ballsearch: reset 
+    shooter:
+        number: S78
+        ballsearch: stop, reset
+PRCoils:
+    flipperLwRMain: 
+        number: FLRM
+    flipperLwRHold: 
+        number: FLRH
+    flipperLwLMain: 
+        number: FLLM
+    flipperLwLHold: 
+        number: FLLH
+    flipperEnable:
+        number: G08
+    ballPopper:
+        number: C01
+    gunKicker:
+        number: C02
+    outhole:
+        number: C03
+        pulseTime: 30
+        ballsearch: True
+    trough:
+        number: C04
+        ballsearch: True
+    slingR:
+        number: C05
+    slingL:
+        number: C06
+    knocker:
+        number: C07
+    kickback:
+        number: C08
+        ballsearch: True
+    plunger:
+        number: C09
+    lockTop:
+        number: C10
+        ballsearch: True
+    gunMotor:
+        number: C11
+    knockDown:
+        number: C12
+        patterOnTime: 8
+        patterOffTime: 2
+    jetL:
+        number: C13
+    jetR:
+        number: C14
+    jetB:
+        number: C15
+    lockLeft:
+        number: C16
+        ballsearch: True
+    flasherShootAgain:
+        number: C17
+    flasherSlingR:
+        number: C18
+    flasherSlingL:
+        number: C19
+    flasherLockL:
+        number: C20
+    flasherGun:
+        number: C21
+    flasherRampR:
+        number: C22
+    flasherRampL:
+        number: C23
+    flasherBackglass:
+        number: C24
+    flasherTargets:
+        number: C25
+    flasherPopperL:
+        number: C26
+    flasherPopperR:
+        number: C27
+    dropTarget:
+        number: C28
+PRLamps:
+    mult2x:
+        number: L11
+    mult4x:
+        number: L12
+    holdBonus:
+        number: L13
+    mult6x:
+        number: L14
+    mult8x:
+        number: L15
+    shootAgain:
+        number: L16
+    mouth:
+        number: L17
+    kickback:
+        number: L21
+    special:
+        number: L22
+    inlaneL:
+        number: L23
+    inlaneR:
+        number: L24
+    database3:
+        number: L25
+    loadGun:
+        number: L26
+    extraBall:
+        number: L27
+    loadForJackpot:
+        number: L28
+    target1:
+        number: L31
+    target2:
+        number: L32
+    target3:
+        number: L33
+    target4:
+        number: L34
+    target5:
+        number: L35
+    standupMidL:
+        number: L36
+    standupMidC:
+        number: L37
+    standupMidR:
+        number: L38
+    lockTop:
+        number: L41
+    database2:
+        number: L42
+    million10:
+        number: L43
+    extraBall44:
+        number: L44
+    multiball:
+        number: L45
+    lightHurryUp:
+        number: L46
+    holdBonus47:
+        number: L47
+    securityPass:
+        number: L48
+    eyesLower:
+        number: L51
+    eyesUpper:
+        number: L52
+    fiveMil:
+        number: L53
+    threeMil:
+        number: L54
+    oneMil:
+        number: L55
+    sevenfiftyK:
+        number: L56
+    fivehunK:
+        number: L57
+    twofiftyK:
+        number: L58
+    cpuLitL:
+        number: L61
+    vaultKeyL:
+        number: L62
+    silentAlarmL:
+        number: L63
+    passcodeL:
+        number: L64
+    checkpointL:
+        number: L65
+    lockLeft:
+        number: L66
+    database1:
+        number: L67
+    rampL:
+        number: L68
+    cpuLitR:
+        number: L71
+    vaultKeyR:
+        number: L72
+    silentAlarmR:
+        number: L73
+    passcodeR:
+        number: L74
+    checkpointR:
+        number: L75
+    standupRightT:
+        number: L76
+    standupRightM:
+        number: L77
+    standupRightB:
+        number: L78
+    chaseValue:
+        number: L81
+    rampRight:
+        number: L82
+    hurryUp:
+        number: L83
+    startButton:
+        number: L84
+    dropTarget:
+        number: L85
+    laneL:
+        number: L86
+    laneC:
+        number: L87
+    laneR:
+        number: L88
+    topInsertGI:
+        number: G01
+    playfieldLeftGI:
+        number: G02
+    playfieldRightGI:
+        number: G03
+    bottomInsertGI:
+        number: G05
