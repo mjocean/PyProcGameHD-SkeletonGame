@@ -1,0 +1,414 @@
+# P-ROC Game Description file for Twilight Zone
+PRGame:
+    machineType: wpc
+    numBalls: 6
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+    - flipperUpR
+    - flipperUpL
+PRBumpers:
+    - slingL
+    - slingR
+PRSwitches:
+    flipperLwR:
+        number: SF2
+    flipperLwL:
+        number: SF4
+    flipperUpR:
+        number: SF6
+    flipperUpL:
+        number: SF8
+    exit: 
+        number: SD5
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    slingL:
+        number: S34
+    slingR: 
+        number: S35
+    inlaneR:
+        number: S11
+    outlaneR:
+        number: S12
+    startButton:
+        number: S13
+    tilt:
+        number: S14
+    troughR:
+        number: S15
+    troughC:
+        number: S16
+    troughL:
+        number: S17
+    Outhole:
+        number: S18
+    slamTilt:
+        number: S21
+    coinDoor:
+        number: S22
+    buyIn:
+        number: S23
+    alwaysClosed:
+        number: S24
+    troughFarL:
+        number: S25
+    troughProximity:
+        number: S26
+    shooterR:
+        number: S27
+    rocketKicker:
+        number: S28
+    popL:
+        number: S31
+    popR:
+        number: S32
+    popB:
+        number: S33
+    slingL:
+        number: S34
+    slingR:
+        number: S35
+    outlaneL:
+        number: S36
+    inlaneL1:
+        number: S37
+    inlaneL2:
+        number: S38
+    deadEnd:
+        number: S41
+    camera:
+        number: S42
+    playerPiano:
+        number: S43
+    miniPfEnter:
+        number: S44
+    miniPfLeft:
+        number: S45
+    miniPfRight:
+        number: S46
+    clockMillions:
+        number: S47
+    lowerLeft5Million:
+        number: S48
+    gumballPopperLane: 
+        number: S51
+    hitchhiker: 
+        number: S52
+    leftRampEnter:
+        number: S53
+    leftRamp:
+        number: S54
+    gumballGeneva:
+        number: S55
+    gumallExit:
+        number: S56
+    slotProximity:
+        number: S57
+    slotKickout:
+        number: S58
+    lowerSkill: 
+        number: S61
+    centerSkill: 
+        number: S62
+    upperSkill:
+        number: S63
+    upperRight5Million:
+        number: S64
+    powerPayoff:
+        number: S65
+    middleRight5Million1:
+        number: S66
+    middleRight5Million2:
+        number: S67
+    lowerRight5Million:
+        number: S68
+    s71:
+        number: S71
+    autoFireKicker:
+        number: S72
+    rightRamp:
+        number: S73
+    gumballPopper:
+        number: S74
+    miniPfTop:
+        number: S75
+    miniPfExit:
+        number: S76
+    middleLeft5Million:
+        number: S77
+    upperLeft5Million:
+        number: S78
+    lowerRightMagnet:
+        number: S81
+    s82:
+        number: S82
+    leftMagnet:
+        number: S83
+    centerLock:
+        number: S84
+    upperLock:
+        number: S85
+    s86:
+        number: S86
+    gumballEnter:
+        number: S87
+    lowerLock:
+        number: S88
+    clock15Minutes:
+        number: S91
+    clock0Minutes:
+        number: S92
+    clock45Minutes:
+        number: S93
+    clock30Minutes:
+        number: S94
+    clock1Hour:
+        number: S95
+    clock2Hour:
+        number: S96
+    clock3Hour:
+        number: S97
+    clock4Hour:
+        number: S98
+PRCoils:
+    flipperLwRMain: 
+        number: FLRM
+    flipperLwRHold: 
+        number: FLRH
+    flipperLwLMain: 
+        number: FLLM
+    flipperLwLHold: 
+        number: FLLH
+    flipperUpRMain: 
+        number: FURM
+    flipperUpRHold: 
+        number: FURH
+    flipperUpLMain: 
+        number: FULM
+    flipperUpLHold: 
+        number: FULH
+    slotKickout:
+        number: C01
+    rocketKicker: 
+        number: C02
+    autoFireKicker:
+        number: C03
+    gumballPopper: 
+        number: C04
+    rightRampDiverter:
+        number: C05
+    gumballDiverter:
+        number: C06
+    knocker:
+        number: C07
+    outhole: 
+        number: C08
+    ballRelease:
+        number: C09
+    slingR:
+        number: C10
+    slingL: 
+        number: C11
+    popB:
+        number: C12
+    popL: 
+        number: C13
+    popR:
+        number: C14
+    lockRelease:
+        number: C15
+    shooterDiverter:
+        number: C16
+    bumpers: 
+        number: C17
+    powerPayoff:
+        number: C18
+    miniPf: 
+        number: C19
+    upperLeftRamp:
+        number: C20
+    leftMagnet:
+        number: C21
+    unused:
+        number: C22
+    lowerRightMagnet: 
+        number: C23
+    gumballMotor:
+        number: C24
+    leftMiniMagnet: 
+        number: C25
+    rightMiniMagnet:
+        number: C26
+    leftRampDiverter:
+        number: C27
+    insideRamp:
+        number: C28
+    flasherUpperRightFlipper: 
+        number: C37
+    flasherGumballMachineHi:
+        number: C38
+    flasherGumballMachineMid:
+        number: C39
+    flasherGumballMachineLow:
+        number: C40
+    flasherUpperRightRamp: 
+        number: C41
+    flasherClockReverse:
+        number: C42
+    flasherClockForward: 
+        number: C43
+PRLamps:
+    cameraDoor:
+        number: L11
+    hitchhikerDoor:
+        number: L12
+    clockChaosDoor:
+        number: L13
+    superSkillDoor:
+        number: L14
+    fastLockDoor:
+        number: L15
+    liteGumballDoor:
+        number: L16
+    townSquareMadnessDoor:
+        number: L17
+    liteExtraBallDoor:
+        number: L18
+    doorPanelLock2:
+        number: L21
+    greedDoor:
+        number: L22
+    tenMillionDoor:
+        number: L23
+    battleThePowerDoor:
+        number: L24
+    theSpiralDoor:
+        number: L25
+    clockMillionDoor:
+        number: L26
+    superSlotDoor:
+        number: L27
+    doorPanelBall:
+        number: L28
+    leftExtraBall:
+        number: L31
+    doorPanelLock1:
+        number: L32
+    inlaneL1:
+        number: L33
+    doorHandle:
+        number: L34
+    inlaneL2:
+        number: L35
+    doorPanelGum:
+        number: L36
+    lowerLeft5Million:
+        number: L37
+    deadEnd:
+        number: L38
+    spiral2Million:
+        number: L41
+    spiralLeftBattlePower:
+        number: L42
+    spiral4Million:
+        number: L43
+    spiralRightBattlePower:
+        number: L44
+    spiral10Million:
+        number: L45
+    spiralExtraBall:
+        number: L46
+    shootAgain:
+        number: L47
+    inlaneR:
+        number: L48
+    leftRampBonusX:
+        number: L51
+    leftRampMultiball:
+        number: L52
+    leftRampSuperSkill:
+        number: L53
+    leftPowerball:
+        number: L54
+    Camera:
+        number: L55
+    rightRampThePower:
+        number: L56
+    lockExtraBall:
+        number: L57
+    lockArrow:
+        number: L58
+    popL:
+        number: L61
+    popB:
+        number: L62
+    popR:
+        number: L63
+    middleLeft5Million:
+        number: L64
+    upperLeft5Million:
+        number: L65
+    rightSpecial:
+        number: L66
+    rightPowerball:
+        number: L67
+    rightLaneSpiral:
+        number: L68
+    lowerRight5Million:
+        number: L71
+    middleRight5Million2:
+        number: L72
+    middleRight5Million1:
+        number: L73
+    powerPayoff:
+        number: L74
+    upperRight5Million:
+        number: L75
+    miniPf500000:
+        number: L76
+    miniPf1000000:
+        number: L77
+    miniPf750000:
+        number: L78
+    leftSpiral:
+        number: L81
+    clockMillions:
+        number: L82
+    pianoYellow:
+        number: L83
+    pianoRed:
+        number: L84
+    slotMachine:
+        number: L85
+    rightLaneGumball:
+        number: L86
+    buyIn:
+        number: L87
+    startButton:
+        number: L88
+    gi01:
+        number: G01
+    gi02:
+        number: G02
+    gi03:
+        number: G03
+    gi04:
+        number: G04
+    gi05:
+        number: G05
+
+PRBallSave:
+    pulseCoils: [slingL, slingR]
+    resetSwitches:
+        slingL: open
+        slingR: open
+    stopSwitches:
+        shooterR: closed
+        # don't ball search if a flipper button is pressed
+        flipperLwL: closed
+        flipperLwR: closed

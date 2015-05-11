@@ -1,0 +1,323 @@
+# P-ROC Game Description file for Creature from the Black Lagoon
+PRGame:
+    machineType: wpc
+    numBalls: 3
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+PRBumpers:
+    - slingL
+    - slingR
+    - leftJet
+    - rightJet
+    - bottomJet
+PRSwitches:
+    # **** Format ****
+    # name:
+    #   number: <number>
+    #   type: <type>
+    #
+    #   <number> can be: SFx (Flipper switch, labeled Fx in WPC manual
+    #                    SDx (Dedicated switch, labeled SDx in WPC manual
+    #                    Sx  (Matrix switch, labeled x in WPC manual
+    #   <type> can be: 'NO' (normally open.  This is the default; so no need to use this)
+    #                  'NC' (normally closed.  Common for optos)
+    flipperLwR:
+        number: SF2
+    flipperLwL: 
+        number: SF4
+    exit: 
+        number: SD5
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    startButton:
+        number: S13
+    tilt:
+        number: S14
+    topLeftRollover:
+        number: S15
+    leftSubway:
+        number: S16
+    centerSubway:
+        number: S17
+    centerShot:
+        number: S18
+    slamTilt:
+        number: S21
+    coinDoor:
+        number: S22
+    paidP:
+        number: S25
+    paidA:
+        number: S26
+    paidI:
+        number: S27
+    paidD:
+        number: S28
+    bottomJet:
+        number: S33
+    upperRightPopper:
+        number: S34
+        type: NO
+    rightRampEnter:
+        number: S35
+    leftRampEnter:
+        number: S36
+    lowerRightPopper:
+        number: S37
+        type: NO
+    rampUpDown:
+        number: S38
+    cola:
+        number: S41
+    hotDog:
+        number: S42
+    popcorn:
+        number: S43
+    iceCream:
+        number: S44
+    leftJet:
+        number: S45
+    rightJet:
+        number: S46
+    slingL:
+        number: S47
+    slingR:
+        number: S48
+    leftOutlane:
+        number: S51
+    leftInlane:
+        number: S52
+    startCombo:
+        number: S53
+    rightOutlane:
+        number: S54
+    outhole:
+        number: S55
+    rightTrough:
+        number: S56
+    centerTrough:
+        number: S57
+    leftTrough:
+        number: S58
+    rightRampExit:
+        number: S61
+    leftRampExit:
+        number: S62
+    centerLaneExit:
+        number: S63
+    upperRamp:
+        number: S64
+    bowl:
+        number: S65
+    shooter:
+        number: S66
+PRCoils:
+    flipperLwRMain: 
+        number: FLRM
+    flipperLwRHold: 
+        number: FLRH
+    flipperLwLMain: 
+        number: FLLM
+    flipperLwLHold: 
+        number: FLLH
+    upperRightPopper:
+        number: C01
+    leftSubwayEnterFlasher:
+        number: C02
+    lowerRightPopper:
+        number: C03
+    trough:
+        number: C04
+    slingR:
+        number: C05
+    slingL:
+        number: C06
+    knocker:
+        number: C07
+    bottomRightFlasher:
+        number: C08
+    backFlashers:
+        number: C09
+    bowlFlasher:
+        number: C10
+    creatureFlasher:
+        number: C11
+    outhole:
+        number: C12
+        pulseTime: 50
+    leftJet:
+        number: C13
+    rightJet:
+        number: C14
+    bottomJet:
+        number: C15
+    rightPopperFlasher:
+        number: C16
+    bottomLeftFlasher:
+        number: C17
+    rightRampFlasher:
+        number: C18
+    leftRampFlasher:
+        number: C19
+    sequentialGI1:
+        number: C20
+    hologramPushMotor:
+        number: C21
+    centerHoleFlasher:
+        number: C22
+    upDownRampUp:
+        number: C23
+    sequentialGI2:
+        number: C24
+    startMovieFlashers:
+        number: C25
+    upDownRampDown:
+        number: C26
+    creatureMotorMirror:
+        number: C27
+    hologramLamp:
+        number: C28
+PRLamps:
+    paidP:
+        number: L11
+    paidA:
+        number: L12
+    paidI:
+        number: L13
+    paidD:
+        number: L14
+    leftJet:
+        number: L15
+    rightJet:
+        number: L16
+    bottomJet:
+        number: L17
+    admitOne:
+        number: L18
+    kissK:
+        number: L21
+    kissI:
+        number: L22
+    kissS1:
+        number: L23
+    kissS2:
+        number: L24
+    million10:
+        number: L25
+    million20:
+        number: L26
+    million30:
+        number: L27
+    specials:
+        number: L28
+    startMegaMenu:
+        number: L31
+    playgroundAward:
+        number: L32
+    liteBigMillions:
+        number: L33
+    slide:
+        number: L34
+    rightSearch:
+        number: L35
+    rightVideo:
+        number: L36
+    rightStartMovie:
+        number: L37
+    megaMenu:
+        number: L38
+    lips:
+        number: L41
+    leftSearch:
+        number: L42
+    leftVideo:
+        number: L43
+    leftStartMovie:
+        number: L44
+    comboAward:
+        number: L45
+    parkingOK:
+        number: L46
+    moveYourCar:
+        number: L47
+    extraBall:
+        number: L48
+    snackBar:
+        number: L51
+    centerSearch:
+        number: L52
+    cola:
+        number: L53
+    hotDog:
+        number: L54
+    superJackpot:
+        number: L55
+    jackpot:
+        number: L56
+    rescue:
+        number: L57
+    multiballRestart:
+        number: L58
+    freePass:
+        number: L61
+    buildCombo:
+        number: L62
+    unlimitedMillions:
+        number: L63
+    creatureFeature:
+        number: L64
+    extraBallCountdown:
+        number: L65
+    bigMillions:
+        number: L66
+    movieMadness:
+        number: L67
+    snackAttack:
+        number: L68
+    c: # in backbox
+        number: L71
+    r:
+        number: L72
+    e:
+        number: L73
+    a:
+        number: L74
+    t:
+        number: L75
+    u:
+        number: L76
+    r:
+        number: L77
+    e:
+        number: L78
+    filmF:
+        number: L81
+    filmI:
+        number: L82
+    filmL:
+        number: L83
+    filmM:
+        number: L84
+    startCombo:
+        number: L85
+    popcorn:
+        number: L86
+    iceCream:
+        number: L87
+    startButton:
+        number: L88
+    sequentialGI1:
+        number: G01
+    insertPlayfieldMiddle:
+        number: G02
+    insertPlayfieldUpper:
+        number: G03
+    sequentialGI2:
+        number: G04
+    insertPlayfieldLower:
+        number: G05

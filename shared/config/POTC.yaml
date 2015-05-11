@@ -1,0 +1,367 @@
+# P-ROC Game Description file for Pirate of the Caribbean
+PRGame:
+    machineType: sternSAM
+    numBalls: 4
+    deadworld_mod_installed: False
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+PRBumpers:
+    - slingL
+    - slingR
+    - popL
+    - popR
+    - popB
+PRSwitches:
+    leftCoinSlot:
+        number: SD1
+    centerCoinSlot:
+        number: SD2
+    rightCoinSlot:
+        number: SD3
+    fourthCoinSlot:
+        number: SD4
+    fifthCoinSlot:
+        number: SD5
+    flipperLwL:
+        number: SD9
+    flipperLwR:
+        number: SD11
+    tilt: 
+        number: SD17
+    slamTilt: 
+        number: SD18
+    ticketNotch: 
+        number: SD19
+    exit: 
+        number: SD21
+    down: 
+        number: SD22
+    up: 
+        number: SD23
+    enter: 
+        number: SD24
+    leftLane:
+        number: S01
+    rightLane:
+        number: S02
+    hitChest:
+        number: S03
+    plunderExit:
+        number: S04
+    chestLock:
+        number: S06
+    leftOrbit:
+        number: S08
+    topCenterVUK:
+        number: S09
+    leftRampEnter:
+        number: S10
+    plunderEnter:
+        number: S11
+    leftTopLane:
+        number: S12
+    middleTopLane: 
+        number: S13
+    rightTopLane: 
+        number: S14
+    tournyStartButton:
+        number: S15
+    startButton:
+        number: S16
+    trough4:
+        number: S18
+    trough3:
+        number: S19
+    trough2:
+        number: S20
+    trough1:
+        number: S21
+    troughJam:
+        number: S22
+    shooterR:
+        number: S23
+    outlaneL:
+        number: S24
+    inlaneL:
+        number: S25
+    slingL: 
+        number: S26
+    slingR: 
+        number: S27
+    inlaneR:
+        number: S28
+    outlaneR:
+        number: S29
+    popL:
+        number: S30
+    popR:
+        number: S31
+    popB:
+        number: S32
+    bonusTreasureL:
+        number: S37
+    bonusTreasureR:
+        number: S39
+    plunder1:
+        number: S42
+    plunder2:
+        number: S43
+    plunder3:
+        number: S44
+    plunder4: 
+        number: S45
+    plunder5: 
+        number: S46
+    plunder6:
+        number: S47
+    pirate1:
+        number: S50
+    pirate2:
+        number: S51
+    pirate3:
+        number: S52
+    pirate4:
+        number: S53
+    pirate5:
+        number: S54
+    pirate6:
+        number: S55
+    popEject:
+        number: S56
+    jackScoopExit:
+        number: S57
+    orbitR: 
+        number: S58
+    skillHoleMade: 
+        number: S60
+    shipMade:
+        number: S61
+    shipFullySunk:
+        number: S62
+    shipHome:
+        number: S63
+PRCoils:
+    trough:
+        number: C01
+    shooterR:
+        number: C02
+    topCenterVUK:
+        number: C03
+    chestLid:
+        number: C04
+    raiseSails:
+        number: C05
+    plunderDiskMotor:
+        number: C06
+    popL:
+        number: C09
+    popR:
+        number: C10
+    popB:
+        number: C11
+    flipperLwLMain:
+        number: C15
+    flipperLwRMain:
+        number: C16
+    popEject:
+        number: C18
+    chestLock:
+        number: C19
+    flasherChest:
+        number: C20
+    shipMotor:
+        number: C21
+    flasherRearCenter: 
+        number: C22
+    plunderPin: 
+        number: C23
+    optionalCoil: 
+        number: C24
+    slingL: 
+        number: C25
+    slingR: 
+        number: C26
+    shipMotorRelay: 
+        number: C27
+    lowerSailsLatch: 
+        number: C28
+    shipPost:
+        number: C29
+    flasherBackRight: 
+        number: C30
+    flasherBackLeft: 
+        number: C31
+    flasherShip: 
+        number: C32
+PRLamps:
+    startButton:
+        number: L01
+    tournyStartButton:
+        number: L02
+    shootAgain:
+        number: L03
+    leftOutlane:
+        number: L04
+    leftInlane:
+        number: L05
+    rightInlane:
+        number: L06
+    rightOutlane:
+        number: L07
+    fourWinds:
+        number: L08
+    compassNorth:
+        number: L09
+    compassSwordFight:
+        number: L10
+    compassDavyJones:
+        number: L11
+    compassEast:
+        number: L12
+    compassHeartSJP:
+        number: L13
+    compassAllPirates:
+        number: L14
+    compassSouth:
+        number: L15 
+    compassPortRoyal:
+        number: L16
+    compassKraken:
+        number: L17
+    compassWest:
+        number: L18
+    compassJackTheMonkey:
+        number: L19
+    compassShipSunk:
+        number: L20
+    rightBonusTreasure:
+        number: L21
+    leftSideLaneArrow:
+        number: L22
+    shipJackpot:
+        number: L23
+    heartH :
+        number: L24
+    davyJones:
+        number: L25
+    timedBallLock:
+        number: L26
+    popBumpers:
+        number: L27
+    leftOrbitArrow:
+        number: L28
+    leftOrbitJackpot:
+        number: L29
+    rightOrbitJackpot:
+        number: L30
+    rightSpecial:
+        number: L31
+    heartE:
+        number: L32
+    backpanel1:
+        number: L33
+    backpanel2:
+        number: L34
+    backpanel3:
+        number: L35
+    backpanel4:
+        number: L36
+    backpanel5:
+        number: L37
+    backpanel6:
+        number: L38
+    backpanel7:
+        number: L39
+    heartA:
+        number: L40
+    Pirate6:
+        number: L41
+    leftSpecial:
+        number: L42
+    leftBonusTreasure:
+        number: L43
+    chestArrow:
+        number: L44
+    leftRampArrow:
+        number: L45
+    portRoyal:
+        number: L46
+    tortuga:
+        number: L47
+    heartR:
+        number: L48
+    Pirate1:
+        number: L49
+    Pirate2:
+        number: L50
+    Pirate3:
+        number: L51
+    Pirate4:
+        number: L52
+    Pirate5:
+        number: L53
+    heartMultiball:
+        number: L54
+    keyY:
+        number: L55
+    heartT:
+        number: L56
+    scoopArrow:
+        number: L57
+    jackJ:
+        number: L58
+    jackA:
+        number: L59
+    jackC:
+        number: L60
+    jackK:
+        number: L61
+    keyK:
+        number: L62
+    keyE:
+        number: L63
+    heart1:
+        number: L64
+    shipArrow:
+        number: L65
+    interceptor:
+        number: L66
+    dauntless:
+        number: L67
+    edinburghTrader:
+        number: L68
+    terpsichore:
+        number: L69
+    awardCompass:
+        number: L70
+    rightOrbitArrow:
+        number: L71
+    heart2:
+        number: L72
+    krakenMouth:
+        number: L73
+    centerArrow:
+        number: L74
+    centerJackpot:
+        number: L75
+    extraBall:
+        number: L76
+    liarsDice:
+        number: L77
+    leftTopLane:
+        number: L78
+    middleTopLane:
+        number: L79
+    rightTopLane:
+        number: L80
+
+PRBallSave:
+    pulseCoils: [shooterR]
+    resetSwitches:
+        shooterR: open
+    stopSwitches:
+        shooterR: closed
+        # don't ball search if a flipper button is pressed
+        flipperLwL: closed
+        flipperLwR: closed

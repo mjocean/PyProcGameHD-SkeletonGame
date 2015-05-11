@@ -1,0 +1,397 @@
+# P-ROC Game Description file for Bram Stoker's Dracula
+PRGame:
+    machineType: wpc
+    numBalls: 4
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+PRBumpers:
+    - slingL
+    - slingR
+    - jetL
+    - jetR
+    - jetB
+PRSwitches:
+    # **** Format ****
+    # name:
+    #   number: <number>
+    #   type: <type>
+    #
+    #   <number> can be: SFx (Flipper switch, labeled Fx in WPC manual
+    #                    SDx (Dedicated switch, labeled SDx in WPC manual
+    #                    Sx  (Matrix switch, labeled x in WPC manual
+    #   <type> can be: 'NO' (normally open.  This is the default; so no need to use this)
+    #                  'NC' (normally closed.  Common for optos)
+    flipperLwR:
+        number: SF2
+    flipperLwL: 
+        number: SF4
+    exit: 
+        number: SD5
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    unused11:
+        number: S11
+    unused12:
+        number: S12
+    startButton:
+        number: S13
+    tilt:
+        number: S14
+    leftDropTarget:
+        number: S15
+    leftDropScore:
+        number: S16
+    shooterR:
+        number: S17
+    unused18:
+        number: S18
+    slamTilt:
+        number: S21
+    coinDoor:
+        number: S22
+    ticketDispenser:
+        number: S23
+    alwaysClosed:
+        number: S24
+    topLaneLeft:
+        number: S25
+    topLaneMiddle:
+        number: S26
+    topLaneRight:
+        number: S27
+    rightRampScore:
+        number: S28
+    underShooterR:
+        number: S31
+    unused32:
+        number: S32
+    unused33:
+        number: S33
+    launchBall:
+        number: S34
+    leftOutlane:
+        number: S35
+    leftInlane:
+        number: S36
+    rightInlane:
+        number: S37
+    rightOutlane:
+        number: S38
+    trough1:
+        number: S41
+    trough2:
+        number: S42
+    trough3:
+        number: S43
+    trough4:
+        number: S44
+    s45:
+        number: S45
+    s46:
+        number: S46
+    s47:
+        number: S47
+    outhole:
+        number: S48
+    holeOpto: 
+        number: S51
+        type: 'NC'
+    magnetLeftPocket: 
+        number: S52
+        type: 'NC'
+    optoCastle1:
+        number: S53
+        type: 'NC'
+    optoCastle2:
+        number: S54
+        type: 'NC'
+    optoWireRampPopper:
+        number: S55
+        type: 'NC'
+    optoCryptPopper:
+        number: S56
+        type: 'NC'
+    optoCastle3:
+        number: S57
+        type: 'NC'
+    mysteryHole:
+        number: S58
+    jetL: 
+        number: S61
+    jetR: 
+        number: S62
+    jetB:
+        number: S63
+    slingL:
+        number: S64
+    slingR:
+        number: S65
+    leftBankTop:
+        number: S66
+    leftBankMiddle:
+        number: S67
+    leftBankBottom:
+        number: S68
+    castlePopper:
+        number: S71
+        type: 'NC'
+    coffinPopper:
+        number: S72
+        type: 'NC'
+    leftRampEntry:
+        number: S73
+        type: 'NC'
+    s74:
+        number: S74
+    s75:
+        number: S75
+    s76:
+        number: S76
+    rightRampUp:
+        number: S77
+    s78:
+        number: S78
+    magnetLeft:
+        number: S81
+    ballOnMagnet:
+        number: S82
+    magnetRight:
+        number: S83
+    leftRampScore:
+        number: S84
+    leftRampDiverted:
+        number: S85
+    middleBankLeft:
+        number: S86
+    middleBankMiddle:
+        number: S87
+    middleBankRight:
+        number: S88
+PRCoils:
+    flipperLwRMain: 
+        number: FLRM
+    flipperLwRHold: 
+        number: FLRH
+    flipperLwLMain: 
+        number: FLLM
+    flipperLwLHold: 
+        number: FLLH
+    shooterR:
+        number: C01
+    coffinPopper:
+        number: C02
+    castlePopper:
+        number: C03
+    rightRampDown:
+        number: C04
+    cryptPopper:
+        number: C05
+    wireRampBallPopper:
+        number: C06
+    knocker:
+        number: C07
+    shooterRampEntry:
+        number: C08
+    slingL:
+        number: C09
+    slingR:
+        number: C10
+    jetL:
+        number: C11
+    jetR:
+        number: C12
+    jetB: 
+        number: C13
+    rightRampUp: 
+        number: C14
+    outhole: 
+        number: C15
+    trough:
+        number: C16
+    flasherDracula:
+        number: C17
+    flasherStoker:
+        number: C18
+    flasherHouse:
+        number: C19
+    flasherMina:
+        number: C20
+    flasherHelsing:
+        number: C21
+    flasherLeftRamp:
+        number: C22
+    flasherRightRamp:
+        number: C23
+    flasherAsylum:
+        number: C24
+    leftDropTarget:
+        number: C25
+    flasherSpeakerPanel:
+        number: C26
+    magnet:
+        number: C27
+    magnetMotor:
+        number: C28
+PRLamps:
+    unused11:
+        number: L11
+    unused12:
+        number: L12
+    unused13:
+        number: L13
+    unused14:
+        number: L14
+    unused15:
+        number: L15
+    rightRampLock:
+        number: L16
+    draculaFace:
+        number: L17
+    rightRamp2Million:
+        number: L18
+    coffinLock1:
+        number: L21
+    coffinLock2:
+        number: L22
+    drAcula:
+        number: L23
+    rightRamp0p5Million:
+        number: L24
+    rightRamp1Million:
+        number: L25
+    rightRamp2p5Million:
+        number: L26
+    rightRampDouble:
+        number: L27
+    rightRamp1p5Million:
+        number: L28
+    Video:
+        number: L31
+    vIdeo:
+        number: L32
+    viDeo:
+        number: L33
+    vidEo:
+        number: L34
+    videO:
+        number: L35
+    dRacula:
+        number: L36
+    leftOutlane:
+        number: L37
+    leftInlane:
+        number: L38
+    rightInlane:
+        number: L41
+    rightOutlane:
+        number: L42
+    coffinMultiball:
+        number: L43
+    playfield2X:
+        number: L44
+    castleMultiball:
+        number: L45
+    playfield3X:
+        number: L46
+    mistMultiball:
+        number: L47
+    Dracula:
+        number: L48
+    coffinLamp1:
+        number: L51
+    coffinLamp2:
+        number: L52
+    magnet:
+        number: L53
+    shootAgain:
+        number: L54
+    loveNeverDies:
+        number: L55
+    coffinLamp3:
+        number: L56
+    leftRampLock:
+        number: L57
+    leftRampDiverter:
+        number: L58
+    leftSkill100K:
+        number: L61
+    middleSkill1M:
+        number: L62
+    rightSkill100K:
+        number: L63
+    topLaneLeft:
+        number: L64
+    topLaneMiddle:
+        number: L65
+    topLaneRight:
+        number: L66
+    dracUla:
+        number: L67
+    jetInsert:
+        number: L68
+    draCula:
+        number: L71
+    dracuLa:
+        number: L72
+    leftBankTop:
+        number: L73
+    leftBankMiddle:
+        number: L74
+    leftBankBottom:
+        number: L75
+    middleBankLeft:
+        number: L76
+    middleBankMiddle:
+        number: L77
+    middleBankRight:
+        number: L78
+    ratsMode:
+        number: L81
+    draculA:
+        number: L82
+    holeMystery:
+        number: L83
+    holeCarriage:
+        number: L84
+    holeExtraBall:
+        number: L85
+    holeJackpot:
+        number: L86
+    launchBall:
+        number: L87
+    startButton:
+        number: L88
+    gi01:
+        number: G01
+    gi02:
+        number: G02
+    gi03:
+        number: G03
+    gi04:
+        number: G04
+    gi05:
+        number: G05
+
+PRBallSave:
+    pulseCoils: [ shooterR, slingL, slingR]
+    resetSwitches:
+        leftOutlane: open
+        leftInlane: open
+        rightOutlane: open
+        rightInlane: open
+        shooterR: open
+        slingL: open
+        slingR: open
+        jetL: open
+        jetR: open
+        jetB: open
+    stopSwitches:
+        shooterR: closed
+        # don't ball search if a flipper button is pressed
+        flipperLwL: closed
+        flipperLwR: closed

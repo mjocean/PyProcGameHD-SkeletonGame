@@ -1,0 +1,372 @@
+# P-ROC Game Description file for Stern Lord of the Rings
+PRGame:
+    machineType: sternWhitestar
+    numBalls: 4
+PRFlippers:
+    - flipperLwR
+    - flipperLwL
+PRBumpers:
+    - slingL
+    - slingR
+    - popL
+    - popR
+    - popB
+PRSwitches:
+    flipperLwL:
+        number: SD1
+    flipperLwR:
+        number: SD3
+    down: 
+        number: SD6
+    up: 
+        number: SD7
+    enter: 
+        number: SD8
+    fourthCoinSlot:
+        number: S02
+    sixthCoinSlot:
+        number: S03
+    rightCoinSlot:
+        number: S04
+    centerCoinSlot:
+        number: S05
+    leftCoinSlot:
+        number: S06
+    fifthCoinSlot:
+        number: S07
+    leftVUK:
+        number: S09
+    standup:
+        number: S10
+    trough1:
+        number: S11
+    trough2:
+        number: S12
+    trough3:
+        number: S13
+    trough4: 
+        number: S14
+    troughStacking: 
+        number: S15
+    shooterR:
+        number: S16
+    swordLockHigh:
+        number: S17
+    swordLockMid:
+        number: S18
+    swordLockLow:
+        number: S19
+    rightOrbitLow:
+        number: S20
+    rightOrbitHigh:
+        number: S21
+    railRampExit:
+        number: S22
+    rightRampTarget:
+        number: S23
+    rightRampMade:
+        number: S24
+    rightRampEnter:
+        number: S25
+    balrogHit: 
+        number: S28
+    palantir: 
+        number: S29
+    rightVUK:
+        number: S30
+    balrogOpen:
+        number: S31
+    balrogClosed:
+        number: S32
+    miniPfUL:
+        number: S33
+    miniPfUR:
+        number: S34
+    miniPfLL:
+        number: S35
+    miniPfLR:
+        number: S36
+    leftOrbitLow:
+        number: S37
+    leftOrbitHi:
+        number: S38
+    leftRampEnter:
+        number: S39
+    leftRampMade: 
+        number: S40
+    topVUK: 
+        number: S41
+    innerLoop:
+        number: S42
+    leftTopLane:
+        number: S43
+    middleTopLane:
+        number: S44
+    rightTopLane:
+        number: S45
+    topSaucer:
+        number: S46
+    ringMade:
+        number: S47
+    backTrough:
+        number: S48
+    popL:
+        number: S49
+    popR:
+        number: S50
+    popB: 
+        number: S51
+    spinner: 
+        number: S52
+    spotRing:
+        number: S53
+    startButton:
+        number: S54
+    tournyStartButton:
+        number: S55
+    tilt:
+        number: S56
+    outlaneL: 
+        number: S57
+    inlaneL: 
+        number: S58
+    slingL:
+        number: S59
+    outlaneR:
+        number: S60
+    inlaneR:
+        number: S61
+    slingR:
+        number: S62
+PRCoils:
+    trough:
+        number: C01
+    shooterR:
+        number: C02
+    leftVUK:
+        number: C03
+    topVUK:
+        number: C04
+    rightVUK:
+        number: C05
+    ringMagnet:
+        number: C06
+    rightTower:
+        number: C07
+    loopDiverter:
+        number: C08
+    popL:
+        number: C09
+    popR:
+        number: C10
+    popB:
+        number: C11
+    orbitPin:
+        number: C13
+    flasherHelmsDeepR:
+        number: C14
+    flipperLwLMain:
+        number: C15
+    flipperLwRMain:
+        number: C16
+    slingL:
+        number: C17
+    slingR:
+        number: C18
+    topSaucer:
+        number: C19
+    balrogMotorRelay:
+        number: C20
+    swordLockRelease:
+        number: C21
+    balrogMotor: 
+        number: C22
+    flasherHelmsDeepL: 
+        number: C23
+    optionalCoil: 
+        number: C24
+    flasherPops: 
+        number: C25
+    flasherRing: 
+        number: C26
+    flasherBackpanel: 
+        number: C27
+    flasherRingWraith:
+        number: C29
+    flasherSword: 
+        number: C30
+    flasherDTR: 
+        number: C31
+    flasherBalrog: 
+        number: C32
+PRLamps:
+    keepK:
+        number: L01
+    keepE:
+        number: L02
+    keep2E:
+        number: L03
+    keepP:
+        number: L04
+    FOTR:
+        number: L05
+    TTT:
+        number: L06
+    ROTK:
+        number: L07
+    shootAgain:
+        number: L08
+    pippin:
+        number: L09
+    merry:
+        number: L10
+    sam:
+        number: L11
+    aragon:
+        number: L12
+    frodo:
+        number: L13
+    gandalf:
+        number: L14
+    legoles:
+        number: L15 
+    gimli:
+        number: L16
+    boromir:
+        number: L17
+    mystery:
+        number: L18
+    frodoArrow:
+        number: L19
+    DTR:
+        number: L20
+    modeStart:
+        number: L21
+    palantir:
+        number: L22
+    palantirGlobe:
+        number: L23
+    spotRing :
+        number: L24
+    pippinArrow:
+        number: L25
+    giftOfTheElves:
+        number: L26
+    lightExtraBall:
+        number: L27
+    ringMultiball:
+        number: L28
+    bigPoints:
+        number: L29
+    lightSpecial:
+        number: L30
+    superRingFrenzy:
+        number: L31
+    twoXScoring:
+        number: L32
+    legolesArrow:
+        number: L33
+    manRingRampL:
+        number: L34
+    dwarfRingRampL:
+        number: L35
+    elfRingRampL:
+        number: L36
+    gandolfArrow:
+        number: L37
+    manRingLoopC:
+        number: L38
+    dwarfRingLoopC:
+        number: L39
+    elfRingLoopC:
+        number: L40
+    gimliArrow:
+        number: L41
+    extraBall:
+        number: L42
+    gollumMultiball:
+        number: L43
+    special:
+        number: L44
+    merryArrow:
+        number: L45
+    manRingOrbitR:
+        number: L46
+    dwarfRingOrbitR:
+        number: L47
+    elfRingOrbitR:
+        number: L48
+    aragonArrow:
+        number: L49
+    manRingRampR:
+        number: L50
+    dwardRingRampR:
+        number: L51
+    elfRingRampR:
+        number: L52
+    lock:
+        number: L53
+    lanes:
+        number: L54
+    tower:
+        number: L55
+    flipper:
+        number: L56
+    orcO:
+        number: L57
+    orcR:
+        number: L58
+    orcC:
+        number: L59
+    miniPfUL:
+        number: L60
+    miniPfUR:
+        number: L61
+    miniPfLL:
+        number: L62
+    miniPfLR:
+        number: L63
+    shooterLane1:
+        number: L64
+    shooterLane2:
+        number: L65
+    shooterLane3:
+        number: L66
+    shooterLane4:
+        number: L67
+    shooterLane5:
+        number: L68
+    shooterLane6:
+        number: L69
+    shooterLane7:
+        number: L70
+    shooterLane8:
+        number: L71
+    shooterLane9:
+        number: L72
+    escapeTheRingwraiths:
+        number: L73
+    gandalfVSSaruman:
+        number: L74
+    wargAttack:
+        number: L75
+    warOfTheEnts:
+        number: L76
+    battleWithShelob:
+        number: L77
+    destoryTheWitchking:
+        number: L78
+    tournyStartButton:
+        number: L79
+    startButton:
+        number: L80
+
+PRBallSave:
+    pulseCoils: [shooterR]
+    resetSwitches:
+        shooterR: open
+    stopSwitches:
+        shooterR: closed
+        # don't ball search if a flipper button is pressed
+        flipperLwL: closed
+        flipperLwR: closed
