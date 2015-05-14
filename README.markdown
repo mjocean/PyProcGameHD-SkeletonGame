@@ -1,3 +1,7 @@
+The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or go to the thread on the PinballControllers forum, [here](http://www.pinballcontrollers.com/forum/index.php?topic=1500.0).  
+
+Thank you.  
+
 #  PyProcGame-HD + SkeletonGame
 ## Contents: ##
 
@@ -337,43 +341,7 @@ Event | when fired:
 
 ### steps to making your game: ###
 
-3.  I put the T2-SkelGame files at C:\P-ROC\pyprocgame-master\games\T2-SkelGame
-12.  I removed the dmd_fonts section from C:\P-ROC\pyprocgame-master\games\T2-SkelGame\config\asset_list.yaml
-13.  From config.yaml, I removed references to dropbox, sof (buffy), etc.
-
-Okay now time to make my pinbot game!
-
-1.  Copy T2-SkelGame folder in its entirety and rename.  I chose to rename Pinbot-SkelGame.
-2.  Copy and rename T2Game.py.  I chose PinbotGame.py.
-2A.  Search and Replace the class name T2Game with PinbotGame.
-2B.  Remove gunMode and LaneChangeMode (anything not used by Pinbot) from the "from my_modes import "
-2C.  Remove the instantiation of any modes previously removed (#self.gun_mode = gunMode(game=self), etc.)
-2D.  Change the trough count and osc closed switches if different from T2 (I have a 4 ball trough).
-2E.  Rename the switches and coils in doBallSearch() and reset() to fit your game.
-2F.  Change reference to config/T2.yaml to config/Pinbot.yaml.  One note, since I've already got a fully-working yaml file I get to skip the step of creating a new yaml file, which would take a while for somebody just starting out.
-
-4.  Now for modes.  To keep things clean I decided to delete gunMode.py and LaneChangeMode.py from the my_modes folder.  Also needed to delete these modes from my_modes/_init_.py
-5.  Speaking of modes, there are going to be quite a lot of references to switch, lamp, and coil names in the my_modes files.  I changed the references in attact, BaseGameMode, ExampleBlankMode, SkillshotMode to only reference similar switches, lamps, and coils that are actually present in my game.
-
-## Change Log ##
-Issues fixed/addressed:
-### 4/24/2015 ###
-
-1. Config/yaml parser fixed to be more resilient to missing/bad tags.
-2. ``enable_alphanumeric_flippers()`` checks for a PRCoil entry in machine yaml called ``flipperEnable``; does nothing but warn if none is present
-3. removed ``print()`` from ``msg_over()`` in ``dmdhelper.py``
-4. moved startButton/serviceButton monitoring to a new mode: ``switchmonitor``.py, so they wouldn't look as out of place in dmdhelper
-6. moved starting a game from attract mode out of attract mode.  Now switchmonitor does this.  Much cleaner in the code
-**still need to investigate/fix starting the game without a full trough
-7. added 'reset' functionality to ``score_display.py``, otherwise multiplayer style score display would still show after ending a multiplayer game and starting single player
-** still need to make multiplayer score display not ugly.
-8. *may* have fixed the lamps flashing after exiting attract mode.  More testing required.
-
-### 4/26/2015 ###
-1. Added a ballsearch mode that is modified from the stock ballsearch; notable changes include that there is no longer a separate section PRBallSearch required in the machine yaml.  Instead, tag the switches with ballsearch to indicate whether or not they are included in the ballsearch and tag coils as to whether or not they should be fired on search
-2. The game will attempt to locate balls (i.e., a full trough) prior to starting a game.
-3. ``.set_status`` is now intended for 'alert' style messages, it has a background box to indicate that it is an alert
-4. ``.set_status``, ``.genFrame`` and ``displayText`` all support a flashing argument, which indicates the number of frames to flash for (default is None, for non-flashing text).
+TODO: Write this...
 
 # Documentation
 
