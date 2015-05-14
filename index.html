@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="PyProcGameHD+SkeletonGame : The current HD VGA Fork of PyProcGame (w/ HW Accel) + SkeletonGame to accelerate new game development">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>PyProcGameHD+SkeletonGame</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame">View on GitHub</a>
+
+          <h1 id="project_title">PyProcGameHD+SkeletonGame</h1>
+          <h2 id="project_tagline">The current HD VGA Fork of PyProcGame (w/ HW Accel) + SkeletonGame to accelerate new game development</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or go to the thread on the PinballControllers forum, <a href="http://www.pinballcontrollers.com/forum/index.php?topic=1500.0">here</a>.  </p>
+
+<p>Thank you.  </p>
+
+<ul>
+<li>Michael</li>
+</ul>
+
+<h1>
+<a id="pyprocgame-hd--skeletongame" class="anchor" href="#pyprocgame-hd--skeletongame" aria-hidden="true"><span class="octicon octicon-link"></span></a>PyProcGame-HD + SkeletonGame</h1>
+
+<h2>
+<a id="contents" class="anchor" href="#contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contents:</h2>
+
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#skeletongame-big-picture">SkeletonGame</a></li>
+<li><a href="#game-event-flow">Event Flow, theory, etc.</a></li>
+<li><a href="#getting-started">Getting Started with SkeletonGame</a></li>
+<li><a href="#change-log">Change Log</a></li>
+</ul>
+
+<h1>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h1>
+
+<h2>
+<a id="pyprocgame-hd" class="anchor" href="#pyprocgame-hd" aria-hidden="true"><span class="octicon octicon-link"></span></a>PyProcGame-HD</h2>
+
+<p>This is a fork of PyProcGame, meant to replace PyProcGame for users who wish to create LCD-based PyProcGame games that are powered by a P-ROC.</p>
+
+<p>Traditional DMD support has been broken, in favor of supporting traditional PC display hardware (i.e., LCD display). Specifically this version enables full-color frames (with alpha and per-pixel alpha transparency) running resolutions far in excess of 128x32.  Hardware requirements moderate if hardware acceleration is available.</p>
+
+<p>This release replaces the previous HD VGA fork of PyProcGame and it's functionality is a superset of that version.  This release has been re-written (and aggressively optimized) to leverage SDL2+PySDL2 graphics hardware acceleration features.  Many things are now possible with nominal overhead, including 'dot-filter', alpha transparency, per-pixel alpha, just to name a few.  The prior PyGame-based version remains for those who might need it for some reason or another.</p>
+
+<p>Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use this version for some games and have it live side-by-side with traditional, DMD-based games.  The easiest is to just include the procgame folder as a subfolder of your game.</p>
+
+<h2>
+<a id="skeletongame" class="anchor" href="#skeletongame" aria-hidden="true"><span class="octicon octicon-link"></span></a>SkeletonGame</h2>
+
+<p>SkeletonGame is a collection of classes to speed up new game development, and is also included (and maintained) as part of this release.  If you are a new P-ROC developer, you should strongly consider using it.  If you have an existing codebase, you can migrate to this latest version of the HD Framework without using SkeletonGame, with minimal code changes.</p>
+
+<p>SkeletonGame is meant to be a proper third tier on top of BasicGame; think of it as the logical continuation of Starter.py --that is, if starter were a class that people were expected to subclass.  SkeletonGame is just a bunch of additions to pyprocgame (many of which lifted from the JD sample game). It leverages everything that those of use who use PyProcGame know and love, and only intends to streamline some things for new users. It should help you make games faster.  Think of it as sucking out the best parts of the Judge Dredd sample game, modifying it to be generic, adding stuff to make developing games easier, and having the whole thing running on the latest HD VGA fork of PyProcGame. </p>
+
+<p>If SkeletonGame works, it means you (as the programmer) should:</p>
+
+<ul>
+<li>have VERY few lines of code in your game class.</li>
+<li>spend most of your time coding the logic for <em>modes</em>.</li>
+<li>be able to leverage fairly standard modes that have been written before.</li>
+<li>use helpers to create DMD content (in code) much easier.</li>
+<li>get started quickly.</li>
+</ul>
+
+<h2>
+<a id="pyprocgame" class="anchor" href="#pyprocgame" aria-hidden="true"><span class="octicon octicon-link"></span></a>pyprocgame</h2>
+
+<p>This work is built on top of (and would be nothing without) pyprocgame, which is a high-level pinball development framework for use with P-ROC (Pinball Remote Operations Controller).  Pyprocgame was written by Adam Preble and Gerry Stellenberg.  More information about P-ROC is available at <a href="http://pinballcontrollers.com/">pinballcontrollers.com</a>.  See the <a href="http://pyprocgame.pindev.org/">pyprocgame site</a> for the full pyprocgame documentation.</p>
+
+<h1>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
+
+<h2>
+<a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
+
+<p>pyprocgame requires the following libraries.  Before installing any of these, follow the installation guide, below.</p>
+
+<ul>
+<li><a href="http://python.org/">Python 2.6</a></li>
+<li>
+<a href="http://github.com/preble/pypinproc">pypinproc</a> -- native Python extension enabling P-ROC hardware access and native DMD frame manipulation.</li>
+<li>
+<a href="http://pypi.python.org/pypi/setuptools">setuptools</a> -- required for procgame script installation.  Also adds easy_install, a helpful installer tool for popular Python modules.</li>
+<li>
+<a href="http://pyyaml.org/">pyyaml</a> -- YAML parsing.</li>
+<li>One of the Python graphics and sound modules:
+
+<ul>
+<li><a href="http://www.pygame.org/">pygame</a></li>
+</ul>
+</li>
+<li>
+<a href="http://www.pythonware.com/products/pil/">Python Imaging Library</a> (PIL)</li>
+</ul>
+
+<p>Additionally, this version requires:</p>
+
+<ul>
+<li>[SDL2 32bit (only use 64 if you are using the 64bit Python --you probably aren't).](<a href="https://www.libsdl.org/download-2.0.php">https://www.libsdl.org/download-2.0.php</a>
+</li>
+<li><a href="http://www.libsdl.org/projects/SDL_ttf/">SDL2 TTF (Font support, also 32bit)</a></li>
+<li><a href="http://pysdl2.readthedocs.org/en/latest/install.html">PySDL2 32-bit (x86)</a></li>
+<li><a href="https://pypi.python.org/pypi/pyOSC">PyOSC 0.3.5b-5294.zip</a></li>
+<li>
+<em>Optional:</em> For MP4 support install OpenCV and libffmpeg</li>
+</ul>
+
+<h2>
+<a id="installation-guide" class="anchor" href="#installation-guide" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation Guide</h2>
+
+<ol>
+<li> Run a <a href="http://proctools.catster.net/">"OneClickInstall"</a> from Jimmy (note, there is no one-click installer for OSX at this time)
+<em>test that it worked</em> --from a command-prompt run <code>python</code> and run the following instructions:<br>
+</li>
+</ol>
+
+<div class="highlight highlight-python"><pre><span class="pl-k">import</span> pinproc
+<span class="pl-k">import</span> procgame
+<span class="pl-k">import</span> pygame
+<span class="pl-k">print</span> pinproc.EventTypeBurstSwitchOpen</pre></div>
+
+<p>The first three lines should return the prompt with no feedback.  The last should print <code>6</code>.  This is how you know it worked.
+<em>TODO: post debugging instructions.</em></p>
+
+<ol>
+<li>
+<p>Install the SkeletonGame/HD VGA SDL2 dependencies.  </p>
+
+<ol>
+<li>Download and install <a href="http://pysdl2.readthedocs.org/en/latest/install.html">PySDL2 for your platform</a>
+</li>
+<li>Install the 32-bit (x86) versions of the SDL2 and the SDL2_TTF libraries -- 
+For windows, put them in a directory called <code>C:\Python26\DLLs\sdl2</code>.<br>
+</li>
+<li><a href="https://www.libsdl.org/download-2.0.php">sdl2</a></li>
+<li><a href="http://www.libsdl.org/projects/SDL_ttf/">sdl2_ttf</a></li>
+<li> Download and install <a href="https://pypi.python.org/pypi/pyOSC">pyOSC-0.3.5b-5294.zip</a>
+</li>
+<li> Either set the PYSDL2_DLL_PATH (as per the instructions, <a href="http://pysdl2.readthedocs.org/en/latest/integration.html">here</a> or add a <code>PYSDL2_DLL_PATH</code> in the game's <code>config.yaml</code>.</li>
+<li>
+<em>Optional:</em> For MP4 support install OpenCV and libffmpeg</li>
+</ol>
+</li>
+<li><p>Install the SkeletonGame version of PyProcGame along-side the One-Click installed pyprocgame.  Download the ZIP of the files here, and extract it to somewhere other than your existing pyprocgame-master folder (e.g., C:\P-ROC\pyprocgame-hd).  Within that directory, from the command line run:</p></li>
+</ol>
+
+<p><code>python setup.py develop</code></p>
+
+<p>This will install SkeletonGame in 'develop' mode, such that when you import pyprocgame from any python script, it will use this version, from the current location.</p>
+
+<pre><code>import procgame.game
+</code></pre>
+
+<p>It will also update the "procgame" command line tool into a system-dependent location.  The updated version works with the color file formats.  On Linux and Mac OS X systems this will probably be in your path such that you can type, from the command line:</p>
+
+<pre><code>procgame
+</code></pre>
+
+<p>and see a list of available commands.  If it is not in your path you can invoke it directly, or modify your PATH environment variable.  Note that on Windows the procgame script is typically located in C:\Python26\Scripts.</p>
+
+<h3>
+<a id="optional-the-graphical-switch-tester" class="anchor" href="#optional-the-graphical-switch-tester" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+<em>Optional:</em> the graphical switch tester:</h3>
+
+<ol>
+<li>Download/install wxPython (for windows, this is wxPython3.0-win32-3.0.2.0-py26.exe)
+<a href="http://www.wxpython.org/download.php">http://www.wxpython.org/download.php</a> </li>
+<li>Download the switchMatrixClient.py and put it in the main game folder.<br>
+<a href="https://github.com/mjocean/OscSwitchMatrixGUI">https://github.com/mjocean/OscSwitchMatrixGUI</a>
+</li>
+<li>Running the switch matrix client is as follows:</li>
+</ol>
+
+<pre><code>python switchMatrixClient.py -y config/t2.yaml -p 9000 -i t2_SM.jpg -l t2.layout
+</code></pre>
+
+<p>where:</p>
+
+<ul>
+<li>
+<code>config/t2.yaml</code> is the path to the machine configuration file</li>
+<li>
+<code>t2_SM.jpg</code> is a playfield image shrunk to fit the screen.</li>
+<li>
+<code>t2.layout</code> is a layout file saved from this tool (the first run will not include this <code>-l t2.layout</code> argument)</li>
+</ul>
+
+<h1>
+<a id="skeletongame-big-picture" class="anchor" href="#skeletongame-big-picture" aria-hidden="true"><span class="octicon octicon-link"></span></a>SkeletonGame: Big Picture</h1>
+
+<h2>
+<a id="overview-1" class="anchor" href="#overview-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Layer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SkeletonGame</td>
+<td>(L3)</td>
+</tr>
+<tr>
+<td>BasicGame</td>
+<td>(L2)</td>
+</tr>
+<tr>
+<td>libpinproc/pinproc</td>
+<td>(L1)</td>
+</tr>
+</tbody>
+</table>
+
+<p>Motivation: Most people who learn PyProcGame programming have done so by looking at existing open-source games and there are many good ones to learn from.  Unfortunately, the copy/paste/merge process is fairly error prone. I've done it a few times now and it gets dangerous with sequence dependant, asynchronous (i.e., event-driven) code that spans multiple files. Suppose 'project A' assumes that the attract mode will call <code>start_ball()</code>, but 'project B' assumes that <code>start_ball()</code> is called by the trough handler --depending on what you grab and from where, you may wind up with no balls in the trough or two balls.  Worse I've seen and encountered plenty of instances of the game appearing to be hung or crashing because some event doesn't occur due to functions being called in the wrong order as a result of copy/paste/merge-fail. Having worked on a few P-ROC projects now, I've tried to distill the common bits from each of those games so that I can avoid rewriting the same lines again and again.</p>
+
+<h2>
+<a id="skeletongame-includes" class="anchor" href="#skeletongame-includes" aria-hidden="true"><span class="octicon octicon-link"></span></a>SkeletonGame includes:</h2>
+
+<ul>
+<li>the class <code>SkeletonGame</code> (which is a subclass of <code>BasicGame</code>).  This class will serve as the new superclass for your game. This class includes the following (by default):
+
+<ul>
+<li>tracking ball counts, ball time, game counts, game time, loads/saves settings and data</li>
+<li>assetManager (all your images, sounds, music, fonts, lampshows are pre-loaded by defining a yaml file)</li>
+<li>a better <code>Player</code> class: supports player state tracking built in with appropriate methods for access. </li>
+<li>
+<code>soundController</code> mode auto created and loaded </li>
+<li>OSC mode auto loaded (though apparently based on an old version..oops)</li>
+<li>Built-in (already working) trough, ballsave, ballsearch, and tilt/slam tilt modes (all based on Gerry/Adam's versions)</li>
+<li> ... a VERY simple attract mode that's based on a simple, yet powerful yaml file/format</li>
+<li> ... service mode (basically Adam's) that senses dmd size</li>
+<li> ... high score entry (based on Adam's but in color) that senses dmd size</li>
+<li> ... high score frame generation for display in attract mode</li>
+<li> ... score display essentially based on Adam's but updated to use color fonts, background animations, etc. </li>
+<li> ... bonus helper (just like score: <code>bonus(tag, quantity)</code>) and a built-in bonus tally mode that kicks in at the end of the ball and shows any bonuses awarded to the player during their ball</li>
+</ul>
+</li>
+<li>
+<code>dmdHelper</code> "mode" that generates a message on screen shown over a single image/animation, or a stack of them. It makes using the DMD extremely painless.  It's usage is: <code>displayText(text, key)</code> 
+If key is a list, it builds a grouped layer for all the keys. If text is a list instead of single string, all the text is shown on the frame. A single line is centered vertically, two lines are shown at 1/3, and 2/3, three lines at 1/4,2/4, and 3/4... You get the idea. </li>
+<li>Automatic state progressions without having to code for it in your game.  No more calls to <code>start_ball()</code>, <code>end_ball()</code>, etc.<br>
+</li>
+<li>A new optional-Mode superclass called <code>AdvancedMode</code>;  AdvancedMode offers:
+
+<ul>
+<li>a "lifecycle type" (ball, game, system, or custom) --modes are auto added/removed based on that type. They only need to be created by importing them in the game code and creating them in init. Skeleton game adds/removed them as per their type </li>
+<li>a refined set of game progress events that get sent to AdvancedModes, in priority order, prior to the actual event occuring. Now modes themselves can respond directly to <code>evt_game_starting</code>, <code>evt_ball_starting</code>, <code>evt_ball_ending</code>, <code>evt_game_ending</code>, <code>evt_player_added</code>, <code>evt_tilt</code>, and <code>evt_tilt_ball_ending</code> events. Modes can also request to postpone the event propagation (i.e., the calling of the next event handler) by returning a number of seconds that the mode needs to 'finish up' (e.g., play a special animation or sound) or can delay and stop further propegation by returning a tuple of the delay in seconds and the second entry is <code>True</code>
+</li>
+</ul>
+</li>
+<li>A small and hopefully well commented example game based on T2.</li>
+</ul>
+
+<h3>
+<a id="coming-soon" class="anchor" href="#coming-soon" aria-hidden="true"><span class="octicon octicon-link"></span></a>Coming Soon:</h3>
+
+<ul>
+<li>automatic handling of AC Relay coils (from yaml markup, only)</li>
+<li>match mode</li>
+<li>more features to the bonus mode: using a yaml file to define about valid bonuses, score per award, Max numbers to allow of said award, etc. the tally is still in progress --this is not totally done.</li>
+</ul>
+
+<h2>
+<a id="game-event-flow" class="anchor" href="#game-event-flow" aria-hidden="true"><span class="octicon octicon-link"></span></a>Game event flow</h2>
+
+<p>(changes from PyProcGame, etc.)</p>
+
+<p>A game class that is subclassed from SkeletonGame should be very short.  The example provided is fewer than 60 lines if you exclude imports, comments and whitespace.  Most of your code should be present in your mode classes, instead.</p>
+
+<p>Your game class should not call game_start, ball_end, etc.  It should also not need to subclass these methods.  You can, of course, do so, but you should not HAVE to.  SkeletonGame (and its constiutent parts, including the attract and bonus modes) will handle the successive event progression.  In a typical game, this looks like:</p>
+
+<h3>
+<a id="your-game-class-iniializes-itself-in-main" class="anchor" href="#your-game-class-iniializes-itself-in-main" aria-hidden="true"><span class="octicon octicon-link"></span></a>Your game class iniializes itself in main()...</h3>
+
+<p>Behind the scenes, super(SkeletonGame,self).<strong>init</strong> does the following:</p>
+
+<ul>
+<li>initializes the sound controller</li>
+<li>finds the DMD settings from the config.yaml and sets up your display</li>
+<li>creates a lampshow controller</li>
+<li>loads all your assets from the asset_list.yaml file (shows the player a graphical loading bar)</li>
+<li>initializes and connects the ball_save and trough modes</li>
+<li>loads the OSC mode, bonus mode, score display </li>
+</ul>
+
+<p>Then, any AdvancedMode derived modes that you initialize are automatically added to skeletonGame's 'known modes' so it can add/remove them for you, based on their mode_type (game, ball, system, custom).  </p>
+
+<h3>
+<a id="when-you-call-reset" class="anchor" href="#when-you-call-reset" aria-hidden="true"><span class="octicon octicon-link"></span></a>When you call reset():</h3>
+
+<p>The SkeletonGame version of reset() protects the modes that need to be in the game.  The old reset method would remove ALL modes from the game, but reset() in skeletonGame's will re-add modes that should not be removed and protect certain modes (e.g., the OSC controller) from being removed at all.</p>
+
+<p>The last thing your reset() method should do is call: self.start_attract_mode()</p>
+
+<p>Then, SkeletonGame takes over again, initiating the attract mode from the yaml file.
+When the player presses the switch with the name 'startButton', SkeletonGame will automatically:</p>
+
+<ul>
+<li>find modes with method <em>evt_game_starting</em> and call them </li>
+<li>find modes with method <em>evt_player_added</em> and call them</li>
+<li>find modes with method <em>evt_ball_starting</em> and call them </li>
+<li>add a ball to the shooter lane.</li>
+</ul>
+
+<p>Your modes hopefully do something here :)</p>
+
+<p>When the ball drains and the trough is full, SkeletonGame will automatically:</p>
+
+<ul>
+<li>finds modes with method <em>evt_ball_ending</em> and calls them</li>
+<li>show the 'end of ball' and bonus sequence (if bonuses were awarded)</li>
+<li>if the balls number is <em>less than</em> the quantity specified in the machine yaml
+
+<ul>
+<li>find modes with method <em>evt_ball_starting</em> and call them (repeating the cycle)</li>
+</ul>
+</li>
+<li>if the ball number is <em>greater than</em> the quantity specified in the machine yaml
+
+<ul>
+<li>finds modes with method <em>evt_game_ending</em> and calls them</li>
+<li>checks the players score against the high scores.  If greater, the player may enter his/her scores</li>
+<li>attract mode is shown again</li>
+</ul>
+</li>
+</ul>
+
+<p>So, the available events are:</p>
+
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>when fired:</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>evt_player_added(player)</code></td>
+<td>fired when a player is added; may be player 1, 2</td>
+</tr>
+<tr>
+<td><code>evt_game_starting</code></td>
+<td>fired before the game starts.  This is your chance to do something prior to game start</td>
+</tr>
+<tr>
+<td><code>evt_ball_starting</code></td>
+<td>fired before the ball is kicked into the shooter lane</td>
+</tr>
+<tr>
+<td><code>evt_ball_ending(shoot_again, last_ball)</code></td>
+<td>fired as the ball is ending (i.e., the trough is full).  shoot_again will be true if the player has an extra ball lined up to follow this one; last_ball indicates that this is the last ball prior to this player's game ending</td>
+</tr>
+<tr>
+<td><code>evt_game_ending</code></td>
+<td>the player's game is about to end.</td>
+</tr>
+<tr>
+<td><code>evt_tilt</code></td>
+<td>the player has tilted the machine (exceeded all warnings on the plumb bob)</td>
+</tr>
+<tr>
+<td><code>evt_tilt_ball_ending</code></td>
+<td>all balls are accounted for following the player tilting the machine (exceeded all warnings on the plumb bob)</td>
+</tr>
+</tbody>
+</table>
+
+<h1>
+<a id="making-your-first-skeletongame-based-game" class="anchor" href="#making-your-first-skeletongame-based-game" aria-hidden="true"><span class="octicon octicon-link"></span></a>Making your first SkeletonGame-based game:</h1>
+
+<h2>
+<a id="getting-started" class="anchor" href="#getting-started" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting Started</h2>
+
+<ol>
+<li><p>Get everything installed and working as per the installation guide, above.</p></li>
+<li>
+<p>Create your project workspace (folder structure):</p>
+
+<p>Assuming I put my game in a folder called <code>MyGame</code> my directory structure should look like:</p>
+
+<pre><code>MyGame/
+|
++--config/      [this is where most yaml files live]
+|
++--assets/      [your asset_list.yaml is here as well as individual dmds, sounds, lampshows]
+|
++--my_modes/    [.py files for the modes that you add to your game]
+|
++--MyGame.py    [your game class]
+|
++--config.yaml  [these are the settings for your game: dmd size, resolution, etc.]
+</code></pre>
+
+<p>Before we can really begin, you need a <code>config.yaml</code> file and a machine yaml file.</p>
+</li>
+<li>
+<p><code>config.yaml</code></p>
+
+<p>Use the default provided.  TODO: Paste documetnation from pinballcontrollers forum</p>
+</li>
+<li>
+<p><code>machine.yaml</code></p>
+
+<p>This is the machine definition file.  It defines all the switches, lamps and coils in your machine.  Some samples are available.</p>
+
+<p>You <strong>must</strong> adhere to a few naming conventions:</p>
+
+<ul>
+<li>your trough switches should be named <code>trough1</code>, <code>trough2</code>, .. <code>troughN</code> where N==num trough switches.</li>
+<li>your start button should be called <code>startButton</code>
+</li>
+<li>your shooter lane switch should be called <code>shooter</code>
+</li>
+<li>your (bob) tilt switch should be called <code>tilt</code>
+</li>
+<li>your slam-tilt switch should be called <code>slamTilt</code> </li>
+<li>ball search is handled differently!  switches and coils should be tagged for ball search, as shown in the example.</li>
+</ul>
+</li>
+<li>
+<p>Build your <code>asset_list.yaml</code></p>
+
+<p>TODO: quite a lot to write about the format.  The example is probably good to reporoduce here.  </p>
+
+<p>You must be sure you define a few things:</p>
+
+<ul>
+<li>A Font or HDFont named: <code>tilt-font-big</code>, <code>tilt-font-small</code>, <code>settings-font-small</code>, <code>high_score_entry_inits</code>, <code>high_score_entry_msg</code> <code>high_score_entry_letters</code>
+</li>
+<li>blah blah</li>
+<li>something else that's vital...</li>
+</ul>
+</li>
+<li>
+<p>Other important yaml files:</p>
+
+<h3>
+<a id="score_displayyaml" class="anchor" href="#score_displayyaml" aria-hidden="true"><span class="octicon octicon-link"></span></a>score_display.yaml</h3>
+</li>
+</ol>
+
+<div class="highlight highlight-yaml"><pre>    <span class="pl-s"><span class="pl-ent">ScoreLayout:</span></span>
+      <span class="pl-s"><span class="pl-ent">Fonts:</span></span>
+            <span class="pl-s"><span class="pl-ent">bottom_info:</span>                  </span><span class="pl-c"># the bottom info Credits/Ball Num</span>
+                  <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_sub         </span></span><span class="pl-c"># value corresponds to a font key in asset_list.yaml</span>
+                  <span class="pl-s"><span class="pl-ent">FontStyle:</span> <span class="pl-s">blueish      </span></span><span class="pl-c"># FontStyles are also in asset_list and OPTIONAL</span>
+            <span class="pl-s"><span class="pl-ent">single_player:</span>                </span><span class="pl-c"># Fonts/Styles for single player play</span>
+                  <span class="pl-s"><span class="pl-ent">10_digits:</span></span>
+                        <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeL </span></span><span class="pl-c"># corresponds to keys in asset_list.yaml</span>
+                  <span class="pl-s"><span class="pl-ent">11_digits:</span></span>
+                        <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeM</span></span>
+                  <span class="pl-s"><span class="pl-ent">12plus:</span></span>
+                        <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeS</span></span>
+            <span class="pl-s"><span class="pl-ent">multiplayer:</span>                 </span><span class="pl-c"># Fonts/Styles for multiplayer play</span>
+                  <span class="pl-s"><span class="pl-ent">active:</span>                 </span><span class="pl-c"># style for the active player</span>
+                        <span class="pl-s"><span class="pl-ent">7_digits:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeL</span></span>
+                        <span class="pl-s"><span class="pl-ent">8_digits:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeM</span></span>
+                        <span class="pl-s"><span class="pl-ent">9plus:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_activeS</span></span>
+                  <span class="pl-s"><span class="pl-ent">inactive:</span>               </span><span class="pl-c"># style for the inactive player(s)</span>
+                        <span class="pl-s"><span class="pl-ent">7_digits:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_inactive</span></span>
+                        <span class="pl-s"><span class="pl-ent">8_digits:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_inactive</span></span>
+                        <span class="pl-s"><span class="pl-ent">9plus:</span> </span>
+                              <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">score_inactive</span></span>
+</pre></div>
+
+<h3>
+<a id="attractyaml" class="anchor" href="#attractyaml" aria-hidden="true"><span class="octicon octicon-link"></span></a>attract.yaml</h3>
+
+<div class="highlight highlight-yaml"><pre>        <span class="pl-s"><span class="pl-ent">Sequence:</span></span>
+        <span class="pl-s">- <span class="pl-ent">Combo:</span></span>
+            <span class="pl-s"><span class="pl-ent">Text:</span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span>MOcean<span class="pl-pds">"</span></span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span>Presents<span class="pl-pds">"</span></span></span>
+            <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">large</span></span>
+            <span class="pl-s"><span class="pl-ent">lampshow:</span> <span class="pl-s">attract_show_1</span></span>
+            <span class="pl-c1"><span class="pl-ent">duration:</span> 2.0</span>
+        <span class="pl-s">- <span class="pl-ent">Animation:</span></span>
+            <span class="pl-s"><span class="pl-ent">Name:</span> <span class="pl-s">t800-war</span></span>
+        <span class="pl-s">- <span class="pl-ent">Combo:</span></span>
+            <span class="pl-s"><span class="pl-ent">Text:</span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span>Terminator<span class="pl-pds">"</span></span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span></span>
+                <span class="pl-s">- <span class="pl-s"><span class="pl-pds">"</span>2.0<span class="pl-pds">"</span></span></span>
+            <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">large</span></span>
+            <span class="pl-s"><span class="pl-ent">Animation:</span> <span class="pl-s">chrome</span></span>
+            <span class="pl-s"><span class="pl-ent">FontStyle:</span> <span class="pl-s">blueish</span></span>
+            <span class="pl-s"><span class="pl-ent">lampshow:</span> <span class="pl-s">attract_show_2</span></span>
+            <span class="pl-c1"><span class="pl-ent">duration:</span> 2.0</span>
+        <span class="pl-s">- <span class="pl-ent">HighScores:</span></span>
+            <span class="pl-s"><span class="pl-ent">Font:</span> <span class="pl-s">large</span></span>
+            <span class="pl-s"><span class="pl-ent">Background:</span> <span class="pl-s">chrome</span></span>
+            <span class="pl-s"><span class="pl-ent">Order:</span></span>
+                <span class="pl-s">- <span class="pl-s">player</span></span>
+                <span class="pl-s">- <span class="pl-s">category</span></span>
+                <span class="pl-s">- <span class="pl-s">score</span></span>
+            <span class="pl-c1"><span class="pl-ent">duration:</span> 1.0</span></pre></div>
+
+<h3>
+<a id="steps-to-making-your-game" class="anchor" href="#steps-to-making-your-game" aria-hidden="true"><span class="octicon octicon-link"></span></a>steps to making your game:</h3>
+
+<p>TODO: This...</p>
+
+<h1>
+<a id="pyprocgame-documentation" class="anchor" href="#pyprocgame-documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>PyProcGame Documentation</h1>
+
+<p>Please see the <a href="http://pyprocgame.pindev.org/">pyprocgame Documentation</a> site for the pyprocgame Manual and detailed API documentation.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>New components are Copyright (c) 2014-2015 Michael Ocean and Josh Kugler
+Content unchanged from PyProcGame remain Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">PyProcGameHD+SkeletonGame maintained by <a href="https://github.com/mjocean">mjocean</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
