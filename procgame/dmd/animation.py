@@ -5,7 +5,7 @@ import sqlite3
 import bz2
 import StringIO
 import time
-import Image
+from PIL import Image # change req'd on Debian/RPi2
 import dmd 
 from dmd import Frame
 from sdl2_displaymanager import sdl2_DisplayManager
@@ -23,11 +23,6 @@ try:
     OpenCV_avail = True
 except ImportError:
     OpenCV_avail = False
-
-try:
-    import Image
-except ImportError:
-    Image = None
 
 # Global reference; use AnimationCacheManager.shared_manager() to create and reference.
 shared_cache_manager = None

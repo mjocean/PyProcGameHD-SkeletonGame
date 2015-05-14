@@ -6,6 +6,8 @@ try:
     import cv2.cv as cv
     OpenCV_avail = True
 except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     logging.error("OpenCV is not available on your system.  The MovieLayer (mp4) support is unavailable")
     OpenCV_avail = False
     

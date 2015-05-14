@@ -36,7 +36,7 @@ class AssetManager(object):
         return value_for_key(self.values,keypath, default)
 
     def loadConfig(self, curr_file_path, quick_load = False):
-        logger = logging.getLogger('game.assets')
+        self.logger = logging.getLogger('game.assets')
 
         if(quick_load):
             asset_config_path = curr_file_path + "/config/asset_list_quick.yaml"
@@ -45,7 +45,7 @@ class AssetManager(object):
 
         path = asset_config_path
         if not os.path.exists(asset_config_path): # try another location...
-            logger.warning('asset configuration file found at %s' % path)
+            self.logger.warning('asset configuration file found at %s' % path)
 
             if(quick_load):
                 asset_config_path = curr_file_path + "/asset_list_quick.yaml"
@@ -54,17 +54,17 @@ class AssetManager(object):
             path = asset_config_path
 
         if not os.path.exists(asset_config_path):
-            logger.warning('asset configuration file found at %s' % path)
+            self.logger.warning('asset configuration file found at %s' % path)
 
             raise ValueError, "No asset configuration file found at '" + path + "'" 
 
-        logger.info('asset configuration found at %s' % path)
+        self.logger.info('asset configuration found at %s' % path)
         try:
             self.values = yaml.load(open(path, 'r'))
         except yaml.scanner.ScannerError, e:
-            logger.error('Error loading asset config file from %s; your configuration file has a syntax error in it!\nDetails: %s', path, e)
+            self.logger.error('Error loading asset config file from %s; your configuration file has a syntax error in it!\nDetails: %s', path, e)
         except Exception, e:
-            logger.error('Error loading asset config file from %s: %s', path, e)
+            self.logger.error('Error loading asset config file from %s: %s', path, e)
 
 
     def __init__(self, game, quick_load = False):
@@ -230,11 +230,24 @@ class AssetManager(object):
                                         line_color=lc )
                 self.fontstyles[k] = font_style
 
-        except Exception, e:
-            logger.error("===ASSET MANAGER - ASSET FAILURE===")
-            logger.error(current)
-            logger.error("======")
-            raise e
+            for anim in anims:
+                k  = value_for_key(anim,'key')
+                ft = value_for_key(anim,'frame_time',2)
+                f  = value_for_key(anim,'file')
+                r  = value_for_key(anim,'repeatAnim',False)
+                h  = value_for_key(anim,'holdLastFrame',False)
+                o  = value_for_key(anim,'opaque',False)
+                c  = value_for_key(anim,'composite_op')
+                x  = value_for_key(anim, 'x_loc', 0)
+                y  = value_for_key(anim, 'y_loc', 0)
+                current = 'Animation: [%s]: %s' % (k, f)
+                self.loadIntoCache(k,ft,f,r,h,o,c,x,y)
+
+        except:
+            self.logger.error("===ASSET MANAGER - ASSET FAILURE===")
+            self.logger.error(current)
+            self.logger.error("======")
+            raise
 
         for s in music:
             k  = value_for_key(s,'key')
@@ -263,17 +276,6 @@ class AssetManager(object):
             self.numLoaded += 1
 
 
-        for anim in anims:
-            k  = value_for_key(anim,'key')
-            ft = value_for_key(anim,'frame_time',2)
-            f  = value_for_key(anim,'file')
-            r  = value_for_key(anim,'repeatAnim',False)
-            h  = value_for_key(anim,'holdLastFrame',False)
-            o  = value_for_key(anim,'opaque',False)
-            c  = value_for_key(anim,'composite_op')
-            x  = value_for_key(anim, 'x_loc', 0)
-            y  = value_for_key(anim, 'y_loc', 0)
-            self.loadIntoCache(k,ft,f,r,h,o,c,x,y)
 
         # self.clearScreen()    
 
