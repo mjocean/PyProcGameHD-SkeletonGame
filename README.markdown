@@ -20,7 +20,10 @@ Traditional DMD support has been broken, in favor of supporting traditional PC d
 
 This release replaces the previous HD VGA fork of PyProcGame and it's functionality is a superset of that version.  This release has been re-written (and aggressively optimized) to leverage SDL2+PySDL2 graphics hardware acceleration features.  Many things are now possible with nominal overhead, including 'dot-filter', alpha transparency, per-pixel alpha, just to name a few.  The prior PyGame-based version remains for those who might need it for some reason or another.
 
-Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use this version for some games and have it live side-by-side with traditional, DMD-based games.  The easiest is to just include the procgame folder as a subfolder of your game.
+Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use PyProcGameHD for some games and have it live side-by-side with other PyProcGame (traditional DMD)-based games.  The easiest is to just include PyProcGameHD's procgame folder as a subfolder named procgame in your game.
+
+A Display Architecture Tutorial for both PyProcGameHD specifics and PyProcGame, in general, is provided [here](http://mjocean.github.io/PyProcGameHD-SkeletonGame/DMD_Tutorial.html).
+
 
 ## SkeletonGame
 
@@ -35,6 +38,8 @@ If SkeletonGame works, it means you (as the programmer) should:
 - be able to leverage fairly standard modes that have been written before.
 - use helpers to create DMD content (in code) much easier.
 - get started quickly.
+
+A Sample game that has been provided, [here](https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame)
 
 ## pyprocgame
 
@@ -337,13 +342,15 @@ Event | when fired:
             duration: 1.0
 ```
 
+### Steps to making your game: ###
 
+## 1. Look at the Sample game that has been provided, [here](https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame)
 
-### steps to making your game: ###
+## 2. Look at the Display Architecture Tutorial, [here](http://mjocean.github.io/PyProcGameHD-SkeletonGame/DMD_Tutorial.html)
 
-TODO: Write this...
+TODO: This...
 
-# Documentation
+# PyProcGame Documentation
 
 Please see the [pyprocgame Documentation](http://pyprocgame.pindev.org/) site for the pyprocgame Manual and detailed API documentation.
 
