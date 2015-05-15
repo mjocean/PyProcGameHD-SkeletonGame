@@ -4,11 +4,11 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="Using the DMD in PyProcGame and PyProcGameHD">
+    <meta name="description" content="Understanding the DMD Architecture in PyProcGame and PyProcGameHD">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Using the DMD in PyProcGame and PyProcGameHD</title>
+    <title>Understanding Layers in PyProcGame and PyProcGameHD</title>
   </head>
 
   <body>
@@ -18,19 +18,14 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame">PyProcGameHD on GitHub</a>
 
-          <h1 id="project_title">Display Architecture Examples</h1>
-          <h2 id="project_tagline">Using Layers in PyProcGame and PyProcGameHD</h2>
+          <h1 id="project_title">Display Architecture Usage and Examples</h1>
+          <h2 id="project_tagline">for PyProcGame and PyProcGameHD</h2>
         </header>
     </div>
 
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-
-
-<h1>Using the DMD in PyProcGame (for traditional and PyProcGameHD)</h1>
-
-<hr>
 
 <p>The Mode architecture of PyProcGame allows every mode to provide a display 'Layer' to be shown on the DMD.  The Layer family of objects represent the various container classes for types of content to be displayed on the DMD, and the Layer should be thought of exactly as the Layer metaphor in Photoshop or other image editing software.  The ordering of the Layers is dictated by the priority of the Modes, with the highest priority mode (largest number) being the top-most layer and the lowest priority mode would be the bottom-most layer.</p>
 
@@ -56,6 +51,7 @@
 
 <p>The simplest of Layers (aside from 'Layer' itself) is the Frame layer.  This layer is used when you want a mode to show a single image on the dmd.  Assuming you already have the image in the correct .dmd format (which can be done using the procgame command-line tools to convert an image to a .dmd, or can be converted from other image formats at runtime).  You will need three lines:</p>
 
+<div class="highlight highlight-python">
 <pre><code>    # An example of loading a single frame from a DMD file      
 
     anim = dmd.Animation().load('filename.dmd')
@@ -71,11 +67,11 @@
     self.layer = frame_layer 
     #3. sets this mode's layer to be the newly created frame layer.
 </code></pre>
-
+</div>
 <p>Of course, you can consolidate into a single line, if you are so inclined:</p>
 
-<pre><code>    self.layer = dmd.FrameLayer(frame=animation.load('filename.dmd'))
-</code></pre>
+<div class="highlight highlight-python"><pre><code>    self.layer = dmd.FrameLayer(frame=animation.load('filename.dmd'))
+</code></pre></div>
 
 <h3>
 <a id="user-content-textlayer" class="anchor" href="#textlayer" aria-hidden="true"><span class="octicon octicon-link"></span></a>TextLayer</h3>
@@ -84,14 +80,14 @@
 
 <p>Typically you will create a textLayer</p>
 
-<pre><code>    # T: example of a text-layer
+<div class="highlight highlight-python"><pre><code>    # T: example of a text-layer
     txt_ayer = dmd.TextLayer(128/2, 14, self.game.fonts['Jazz18'], "center", opaque=False)
     # note the form of a textLayer call is x-location, y-location, font, justification, and then dictionary values
     #  .set_text(string) may be called on a textLayer to set the text; if this is called while the textLayer is 
     #   on screen, then the displayed text changes.
 
     txt_layer.set_text("Welcome")
-</code></pre>
+</code></pre></div>
 
 <p>Many layers support a 'fill_color' argument which specifies the background fill to be placed within the 
 larger layer that contains the desired content.   In the regular DMD framework those colors are 0..15, 
