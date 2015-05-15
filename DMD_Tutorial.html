@@ -27,9 +27,9 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
 
-<p>The Mode architecture of PyProcGame allows every mode to provide a display 'Layer' to be shown on the DMD.  The Layer family of objects represent the various container classes for types of content to be displayed on the DMD, and the Layer should be thought of exactly as the Layer metaphor in Photoshop or other image editing software.  The ordering of the Layers is dictated by the priority of the Modes, with the highest priority mode (largest number) being the top-most layer and the lowest priority mode would be the bottom-most layer.</p>
+<p>The Mode architecture of PyProcGame allows every `mode` to provide a display 'Layer' to be shown on the DMD.  The Layer family of objects represent the various container classes for types of content to be displayed on the DMD, and the Layer should be thought of exactly as the Layer metaphor in Photoshop or other image editing software.  The ordering of the Layers is dictated by the priority of the Modes, with the highest priority mode (largest number) being the top-most layer and the lowest priority mode would be the bottom-most layer (assuming all layers are `opaque`).</p>
 
-<p>Modes do not necessarily have to have a visible component, and simply would not have Layers set.  A mode that <em>does</em> have something to show would create a layer by assigning it's layer attribute (i.e., <code>self.layer</code>) to some specific instance of a Layer object.  The type of layer object you create depends on the type of data you want to place in the Layer.</p>
+<p>Modes do not necessarily have to have a visible component, and simply would not have its `layer` attribute set.  A mode that <em>does</em> have something to show would create a layer by assigning it's layer attribute (i.e., <code>self.layer</code>) to some specific instance of a Layer object.  The type of layer object you create depends on the type of data you want to place in the Layer.</p>
 
 <h2>
 <a id="user-content-whats-different-in-the-display-framework-between-pyprocgame-and-pyprogamehd-" class="anchor" href="#whats-different-in-the-display-framework-between-pyprocgame-and-pyprogamehd-" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's different in the display framework between PyProcGame and PyProGameHD ??</h2>
@@ -38,10 +38,11 @@
 
 <ol>
 <li><p>Alpha support: <code>composite_op='blacksrc'</code> is deprecated at <em>best</em>.  Instead, every new layer created (Grouped, Frame, etc) is filled with a transparent color --i.e., <code>(0,0,0,0)</code> of the form (R,G,B,Alpha) where Alpha ranges from 0 (invisible) to 255 (opaque).  Before, if you created a layer and did not indicate the blacksrc composite_op you would have expected it to be visibly opaque (though not the same as the flag <code>opaque=True</code> which carries a very different meaning for layers).  If you're wondering why you can now see through your GroupedLayer, that's why.  It also means you should probably set that GroupedLayer to have it's <code>.opaque</code> property set to <code>True</code> which will both stop the lower layers from being visible by preventing them from even being rendered (saving CPU cycles).</p></li>
-<li><p>Graphical (animations, frames, fonts) assets must be loaded <em>after</em> the display framework has been initialized.  What this means, is that any code that initializes a font at 'global scope' (i.e., outside a <code>class</code> body) will cause the code to "blow up" --instead, we provide an assetmanager class (defined in <code>assetmanager.py</code>) and all you have to do is provide a list of assets in the file <code>config/asset_list.yaml</code> and they will be loaded for you.</p></li>
+<li><p>Graphical (animations, frames, fonts) assets must be loaded <em>after</em> the display framework has been initialized.  What this means, is that any code that initializes a font at 'global scope' (i.e., outside a <code>class</code> body) will cause the code to "blow up" --instead, we provide an assetmanager class (defined in <code>assetmanager.py</code>) and all you have to do is provide a list of assets in the file <code>config/asset_list.yaml</code> and they will be pre-loaded for you when the game is loaded (a graphical progress bar is shown).</p></li>
+<li><p>Using the assetmanager means that you can refer to an animation (or single frame) by its key via game's `animation` dictionary.</p></li>
 </ol>
 
-<p>Look at the sample <code>asset_list.yaml</code> in the <code>SampleGame/config/</code> folder.  It Really should make things easier.</p>
+<p>Look at the sample <code>asset_list.yaml</code> in the <code>SampleGame/config/</code> folder.  The assetmanager should hopefully make things easier.</p>
 
 <h2>
 <a id="user-content-types-of-layers-and-examples-of-their-use" class="anchor" href="#types-of-layers-and-examples-of-their-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>Types of Layers and examples of their use:</h2>
@@ -72,6 +73,34 @@
 
 <div class="highlight highlight-python"><pre><code>    self.layer = dmd.FrameLayer(frame=animation.load('filename.dmd'))
 </code></pre></div>
+
+<p>In PyProcGameHD you would define the file in the asset_list.yaml and simply refer to the file's key.
+Also, in PyProcGameHD, there is no need to convert animations to DMD format.</p>
+
+<p>The asset_list.yaml might include a few entries.  In the following example, an chrome.png is a single image and could be used as the source frame in a frame layer:</p>
+<div class="highlight highlight-yaml"><pre><code>    
+Animations:
+- key: 'cows'
+  file: 'cows_shuffling.dmd'  
+- key: 'explosion'
+  file: 'explosion.gif'
+  frame_time : 4
+  composite_op: 'magentasrc'  
+- key: 'gameover'
+  file: 'thumbsup.gif'
+  frame_time : 2
+- key: 'chrome'
+  file: 'chrome.png'  
+</code></pre></div>  
+
+<p>The corresponding 'mode code' to use chrome as a Frame Layer is:</p>
+<div class="highlight highlight-python"><pre><code>    self.layer = dmd.FrameLayer(frame=self.game.animations['chrome'].frames[0]) # access the 1st frame of the animation with the key 'chrome' and use it as a frame.
+</code></pre></div>
+<p>This is far more complicated than just using the AnimatedLayer object that the assetmanager creates when it pre-loads the content. </p>
+
+<div class="highlight highlight-python"><pre><code>    self.layer = self.game.animations['chrome']
+</code></pre></div>
+
 
 <h3>
 <a id="user-content-textlayer" class="anchor" href="#textlayer" aria-hidden="true"><span class="octicon octicon-link"></span></a>TextLayer</h3>
@@ -120,6 +149,26 @@ created.  The following example uses width, height and fill_color</p>
     lyrFutureWar = self.game.animations['t800-war']
     lyrFutureWar.reset()
 </code></pre>
+
+<p>Again, PyProcGameHD and it's assetmanager should make life easier.  It will load the animated gifs indicated in the following examples as animations.</p>
+<div class="highlight highlight-yaml"><pre><code>    
+Animations:
+- key: 'cows'
+  file: 'cows_shuffling.dmd'  
+- key: 'explosion'
+  file: 'explosion.gif'
+  frame_time : 4
+  composite_op: 'magentasrc'  
+- key: 'gameover'
+  file: 'thumbsup.gif'
+  frame_time : 2
+- key: 'chrome'
+  file: 'chrome.png'  
+</code></pre></div>  
+
+<p>The corresponding 'mode code' to use a pre-loaded animation as such, is:</p>
+<div class="highlight highlight-python"><pre><code>    self.layer = self.game.animations['gameover']
+</code></pre></div>
 
 <h4>
 <a id="user-content-grouped-layers" class="anchor" href="#grouped-layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Grouped Layers</h4>
@@ -313,7 +362,7 @@ def one_less_second(self):
 </code></pre>
 </li>
 <li><p>Scriptless layer supports callbacks, too</p></li>
-<li><p>GroupedLayers support a fill_color so that if you want to explicitly black_fill (or something else) you can just specify it here.  You can also omit it for transparency (as we both agree is the correct behavior)</p></li>
+<li><p>GroupedLayers support a fill_color so that if you want to explicitly black_fill (or something else) you can just specify it here.  You can also omit it for the default which is a transparent fill.</p></li>
 <li><p>PanningLayer supports setting the 'frame' content to be any type of layer, so anything can be panned.  If you specify a regular frame, well, that still works too.  I also fixed some implementation bugs that I encountered with bounce.  A ton of testing went on there, so I'd be surprised if any part of that didn't work.</p></li>
 <li><p>RotationLayer: a cute toy.  Lets you rotate any type of layer.  It's cute.. not very useful but I thought, why not?</p></li>
 <li><p>I fixed some major placement bugs in AnimatedHDTextLayer that caused them to be positioned incorrectly.</p></li>
