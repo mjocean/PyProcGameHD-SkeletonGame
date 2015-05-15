@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Using the DMD in PyProcGame and PyProcGameHD">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Using the DMD in PyProcGame and PyProcGameHD</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame">View on GitHub</a>
+
+          <h1 id="project_title">PyProcGameHD+SkeletonGame</h1>
+          <h2 id="project_tagline">The current HD VGA Fork of PyProcGame (w/ HW Accel) + SkeletonGame to accelerate new game development</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+
+<h1>Using the DMD in PyProcGame (for traditional and PyProcGameHD)</h1>
+
+<hr>
+
+<p>The Mode architecture of PyProcGame allows every mode to provide a display 'Layer' to be shown on the DMD.  The Layer family of objects represent the various container classes for types of content to be displayed on the DMD, and the Layer should be thought of exactly as the Layer metaphor in Photoshop or other image editing software.  The ordering of the Layers is dictated by the priority of the Modes, with the highest priority mode (largest number) being the top-most layer and the lowest priority mode would be the bottom-most layer.</p>
+
+<p>Modes do not necessarily have to have a visible component, and simply would not have Layers set.  A mode that <em>does</em> have something to show would create a layer by assigning it's layer attribute (i.e., <code>self.layer</code>) to some specific instance of a Layer object.  The type of layer object you create depends on the type of data you want to place in the Layer.</p>
+
+<h2>
+<a id="user-content-whats-different-in-the-display-framework-between-pyprocgame-and-pyprogamehd-" class="anchor" href="#whats-different-in-the-display-framework-between-pyprocgame-and-pyprogamehd-" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's different in the display framework between PyProcGame and PyProGameHD ??</h2>
+
+<p>Quite a bit deep in the bowels, but from the end user's perspective, hopefully not much.  Many new layers were added and in this document PyProcGameHD "exclusive" layers are indicated where appropriate.  Similarly changes to the functionality of some layers was introduced and those are also indicated here.  The biggest changes (i.e., things that might cause existing code to not work or behave differently than expected under the new framework) are:</p>
+
+<ol>
+<li><p>Alpha support: <code>composite_op='blacksrc'</code> is deprecated at <em>best</em>.  Instead, every new layer created (Grouped, Frame, etc) is filled with a transparent color --i.e., <code>(0,0,0,0)</code> of the form (R,G,B,Alpha) where Alpha ranges from 0 (invisible) to 255 (opaque).  Before, if you created a layer and did not indicate the blacksrc composite_op you would have expected it to be visibly opaque (though not the same as the flag <code>opaque=True</code> which carries a very different meaning for layers).  If you're wondering why you can now see through your GroupedLayer, that's why.  It also means you should probably set that GroupedLayer to have it's <code>.opaque</code> property set to <code>True</code> which will both stop the lower layers from being visible by preventing them from even being rendered (saving CPU cycles).</p></li>
+<li><p>Graphical (animations, frames, fonts) assets must be loaded <em>after</em> the display framework has been initialized.  What this means, is that any code that initializes a font at 'global scope' (i.e., outside a <code>class</code> body) will cause the code to "blow up" --instead, we provide an assetmanager class (defined in <code>assetmanager.py</code>) and all you have to do is provide a list of assets in the file <code>config/asset_list.yaml</code> and they will be loaded for you.</p></li>
+</ol>
+
+<p>Look at the sample <code>asset_list.yaml</code> in the <code>SampleGame/config/</code> folder.  It Really should make things easier.</p>
+
+<h2>
+<a id="user-content-types-of-layers-and-examples-of-their-use" class="anchor" href="#types-of-layers-and-examples-of-their-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>Types of Layers and examples of their use:</h2>
+
+<h2>
+<a id="user-content-framelayer" class="anchor" href="#framelayer" aria-hidden="true"><span class="octicon octicon-link"></span></a>FrameLayer</h2>
+
+<p>The simplest of Layers (aside from 'Layer' itself) is the Frame layer.  This layer is used when you want a mode to show a single image on the dmd.  Assuming you already have the image in the correct .dmd format (which can be done using the procgame command-line tools to convert an image to a .dmd, or can be converted from other image formats at runtime).  You will need three lines:</p>
+
+<pre><code>    # An example of loading a single frame from a DMD file      
+
+    anim = dmd.Animation().load('filename.dmd')
+    # 1. the dmd.Animation() class contains the helper method 'load', 
+    #   which loads a DMD from a DMD file; the variable anim now holds that animation
+
+    frame_layer = dmd.FrameLayer(opaque=False, frame=anim.frames[0])
+    # 2. create a FrameLayer which contains a single frame, the first in the animation
+    #   dmd.FrameLayer needs at least the frame to display; anim.frames[0] 
+    #   is first frame (possibly the only frame) in that DMD file
+    #   setting Opaque=False means layers below this layer may be visible
+
+    self.layer = frame_layer 
+    #3. sets this mode's layer to be the newly created frame layer.
+</code></pre>
+
+<p>Of course, you can consolidate into a single line, if you are so inclined:</p>
+
+<pre><code>    self.layer = dmd.FrameLayer(frame=animation.load('filename.dmd'))
+</code></pre>
+
+<h3>
+<a id="user-content-textlayer" class="anchor" href="#textlayer" aria-hidden="true"><span class="octicon octicon-link"></span></a>TextLayer</h3>
+
+<p>The text layer will be used a lot in your games and is the same in any DMD based PyProcGame game.  The PyProcGameHD version adds HDTextLayer, and it isn't drastically different, so we will start with this one.</p>
+
+<p>Typically you will create a textLayer</p>
+
+<pre><code>    # T: example of a text-layer
+    txt_ayer = dmd.TextLayer(128/2, 14, self.game.fonts['Jazz18'], "center", opaque=False)
+    # note the form of a textLayer call is x-location, y-location, font, justification, and then dictionary values
+    #  .set_text(string) may be called on a textLayer to set the text; if this is called while the textLayer is 
+    #   on screen, then the displayed text changes.
+
+    txt_layer.set_text("Welcome")
+</code></pre>
+
+<p>Many layers support a 'fill_color' argument which specifies the background fill to be placed within the 
+larger layer that contains the desired content.   In the regular DMD framework those colors are 0..15, 
+in the PyProcGameHD framework they are (RED,GREEN,BLUE) tuples with values ranging from 0..255 for each RED,GREEN, and BLUE</p>
+
+<p>There is also a width and height argument that lets you specify the width and height of the layer to be
+created.  The following example uses width, height and fill_color</p>
+
+<pre><code>    lyrHdTextExample = dmd.TextLayer(self.game.dmd.width/2, self.game.dmd.height/2, game.fonts['Jazz18'], "center", opaque=True, width=self.game.dmd.width, height=self.game.dmd.height, fill_color=(64,32,0))
+    lyrHdTextExample.set_text("Hello, World!")
+</code></pre>
+
+<h4>
+<a id="user-content-panning-layer-hdvga-extensions" class="anchor" href="#panning-layer-hdvga-extensions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Panning Layer (HDVGA Extensions)</h4>
+
+<pre><code>    t = dmd.PanningLayer(224,112, r, (0,0), (2,0), bounce=True, numFramesDrawnBetweenMovementUpdate=1)
+</code></pre>
+
+<h4>
+<a id="user-content-animated-layers" class="anchor" href="#animated-layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Animated Layers</h4>
+
+<pre><code>    # A: Example of an animated layer; the DMD file referenced here 
+    anim = dmd.Animation().load(self.game.dmd_path + 'bikeacrosscity.dmd')
+    animLayer = dmd.AnimatedLayer(frames=anim.frames, frame_time=3) # frametime is the duration each frame is shown
+
+    self.layer = animLayer
+
+    # after the animation has played (e.g., if a mode has been re-started) it may be useful to
+    # reset the animation -- 
+    lyrFutureWar = self.game.animations['t800-war']
+    lyrFutureWar.reset()
+</code></pre>
+
+<h4>
+<a id="user-content-grouped-layers" class="anchor" href="#grouped-layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Grouped Layers</h4>
+
+<pre><code>    # G: example of Grouped Layers
+    # specifically of placing text on top of a DMD image (again, from file)
+    bgframe = dmd.FrameLayer(opaque=False, frame=dmd.Animation().load(self.game.dmd_path+'Splash.dmd').frames[0])
+
+    textex.composite_op = "blacksrc" # cause black pixels to be transparent in the text layer
+    # notice a single grouped layer is created, compositing the previous two layers
+    grplayerex = dmd.GroupedLayer(128, 32, [bgframe, textex])
+</code></pre>
+
+<h4>
+<a id="user-content-real-world-grouped-layer" class="anchor" href="#real-world-grouped-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Real-world grouped layer</h4>
+
+<pre><code>    # finally an example of a group layer to indicate multiple items to the player at once
+    # notice these are declared at the scope of the class (self.) so we can use them later...
+    self.info_layer_right = dmd.TextLayer(127, 1, self.game.fonts['Tiny7'], "right").set_text("B")
+    self.info_layer_left = dmd.TextLayer(1, 1, self.game.fonts['Tiny7'], "left").set_text("A")
+    self.info_layer_num = dmd.TextLayer(128/2, 10, self.game.fonts['Font_14x10'], "center").set_text("0")
+    self.info_layer_msg = dmd.TextLayer(128/2, 26, self.game.fonts['Tiny7'], "center").set_text("C")
+    self.composite_layer_example = dmd.GroupedLayer(128, 32, [self.info_layer_right, self.info_layer_left, self.info_layer_num, self.info_layer_msg])
+
+    self.info_layer_left.set_text("Hurry")
+    self.info_layer_msg.set_text("Hurry Up Mode!!")
+    self.layer = self.composite_layer_example
+
+    self.seconds_remaining = 30
+    self.update_and_delay()
+
+def update_and_delay(self):
+    self.info_layer_right.set_text("%d seconds" % (self.seconds_remaining))
+    self.delay(name='countdown', event_type=None, delay=1, handler=self.one_less_second)
+
+def one_less_second(self):
+    self.seconds_remaining -= 1
+    if self.seconds_remaining &gt;= 0:
+        self.update_and_delay()
+    else:
+        # do something when the timer has expired!
+        pass
+</code></pre>
+
+<h4>
+<a id="user-content-scripted-layer" class="anchor" href="#scripted-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Scripted Layer</h4>
+
+<pre><code>    # for frame in highscore.generate_highscore_frames(self.game.highscore_categories, self.game.dmd.width, self.game.dmd.height):
+    #     layer = dmd.FrameLayer(frame=frame)
+    #     script.append({'seconds':2.0, 'layer':layer})
+
+    ##self.layer = dmd.ScriptedLayer(224, 112, script)
+
+    # example of a scripted layer; plays a sequence of layers for the times specified
+    self.layer = dmd.ScriptedLayer(128, 32, [
+        {'seconds':1.0, 'layer':layerex}, 
+        {'seconds':1.0, 'layer':textex}, 
+        {'seconds':1.0, 'layer':grplayerex}, 
+        {'seconds':4.0, 'layer':animex}, 
+        {'seconds':1.0, 'layer':ptex}, 
+        {'seconds':2.0, 'layer':self.composite_layer_example}])
+</code></pre>
+
+<h4>
+<a id="user-content-layer-from-text" class="anchor" href="#layer-from-text" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layer from Text</h4>
+
+<p>Note: this is NOT supported in the PyProcGameHD Framework!!</p>
+
+<pre><code>    # Example creating a DMD image using plain-text characters
+    # this lets you describe a graphic using plain-text, either 
+    # in-place in your code or from an external file
+    # (if you deal with loading that file yourself)
+
+    ptframe = dmd.Frame.create_with_text(lines=[ \
+        '                               ', \
+        '            *****+*            ', \
+        '            *****+*            ', \
+        '    *****************++****    ', \
+        '    *****************++****    ', \
+        '    **                   **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **++++++++++  +  **    ', \
+        '    **  **+++++++++++++  **    ', \
+        '    **                   **    ', \
+        '    ***********************    '], \
+        palette={' ':0, '+':7, '*':15})
+
+    # Make a Layer to contain the newly created frame
+    ptex = dmd.FrameLayer(frame=ptframe)
+</code></pre>
+
+<h4>
+<a id="user-content-transitions" class="anchor" href="#transitions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Transitions</h4>
+
+<pre><code>    # transitions work on layer change, such that prior to showing whatever layer is next, this transition will occur.
+    layerex.transition = dmd.PushTransition(direction='east')
+</code></pre>
+
+<h2>
+<a id="user-content-advanced-layers-for-pyprocgamehd" class="anchor" href="#advanced-layers-for-pyprocgamehd" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advanced Layers for PyProcGameHD</h2>
+
+<p>The following are Layers that are only present in the PyProcGameHD Framework only:</p>
+
+<h4>
+<a id="user-content-particle-layer" class="anchor" href="#particle-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Particle Layer</h4>
+
+<pre><code>    from procgame.dmd.particle import ParticleLayer, ParticleEmitter, ParticleSystem, FireParticle, FireworkParticle
+
+    ps1 = ParticleEmitter(32, 64, max_life=24, max_particles=300, particles_per_update=20, total_creations=None, particle_class=FireParticle)
+    # ps2 = ParticleEmitter(64, 94, max_life=20, max_particles=300, particles_per_update=100, total_creations=300, particle_class=FireworkParticle, random_next=True)
+    # ps3 = ParticleEmitter(118, 96, max_life=20, max_particles=300, particles_per_update=100, total_creations=300, particle_class=FireworkParticle, random_next=True)
+
+    ps = ParticleLayer(64,96, emitters=[ps1]) #, ps2, ps3])
+</code></pre>
+
+<h4>
+<a id="user-content-rotation-layer" class="anchor" href="#rotation-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rotation Layer</h4>
+
+<pre><code>    r = dmd.RotationLayer(112,64, 2, ps)
+</code></pre>
+
+<h4>
+<a id="user-content-hd-text-layer" class="anchor" href="#hd-text-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>HD Text Layer</h4>
+
+<p>Adds borders and interior fill colors</p>
+
+<pre><code>    # self.game.fonts['ex_font'] = dmd.hdfont_named("Courier",24)
+    # lyrHdTextExample = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, game.fonts['ex_font'], "center", vert_justify="center", opaque=True, width=self.game.dmd.width, height=self.game.dmd.height,line_color=(255,128,0), line_width=1, interior_color=(192,96,0),fill_color=(64,32,0))
+    # lyrHdTextExample.set_text("Hello, World!")
+
+    # self.layer = lyrHdTextExample
+
+
+    - or - 
+    # lyrTxtPresents = dmd.HDTextLayer(224/2, 7, game.fonts['large'], "center", opaque=True, width=self.game.dmd.width, height=self.game.dmd.height,line_color=(132,32,132), line_width=1, interior_color=(155,155,255),fill_color=None).set_text("Presents")
+</code></pre>
+
+<h4>
+<a id="user-content-animated-hd-text-layer" class="anchor" href="#animated-hd-text-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Animated HD Text Layer</h4>
+
+<pre><code>    # layer = dmd.AnimatedHDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, 
+    #     self.font_for_score_single(score), "center", 
+    #     line_color=(132,132,132), line_width=1, fill_color=None,
+    #     line_anim=None, fill_anim=self.bgFire, width=self.game.dmd.width, height=self.game.dmd.height)
+</code></pre>
+
+<h4>
+<a id="user-content-transition-layer" class="anchor" href="#transition-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Transition Layer</h4>
+
+<pre><code>    # lyrTransEC_Presents = TransitionLayer(layerA=lyrTxtEndicott, layerB=lyrTxtPresents, transitionType=Transition.TYPE_CROSSFADE, transitionParameter=None)
+</code></pre>
+
+<h4>
+<a id="user-content-script-less-layer" class="anchor" href="#script-less-layer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Script-less Layer</h4>
+
+<pre><code>    sl = dmd.ScriptlessLayer(224,112)
+    # sl.append(lyrHdTextExample,4.0)
+    sl.append(t,6.0)
+    sl.append(lyrTxtEndicott,2.0)
+    sl.append(lyrFutureWar)
+    sl.append(lyrTxtTerminator,2.0)
+    sl.opaque=True
+    self.layer = sl
+</code></pre>
+
+<h2>
+<a id="user-content-assorted-changes-in-pyprocgamehd" class="anchor" href="#assorted-changes-in-pyprocgamehd" aria-hidden="true"><span class="octicon octicon-link"></span></a>Assorted Changes in PyProcGameHD</h2>
+
+<ol>
+<li><p>Added some fixes for when frame_sequences are used.  My frame_listeners were not firing when I used frame_sequences, so I added a fix for that.</p></li>
+<li><p>Added a helper called play_sequence that would play a specific frame_sequence and then revert back to the prior sequence when complete.  It makes it more like a traditional animation interface.  I also added the ability to send an arg to the listener because I needed that for resuming sequences</p></li>
+<li><p>Fixed the movie (mp4) layer to work with the new framework.  It does now; I've tested it.</p></li>
+<li>
+<p>Added a callback for scripted_layers, so a specified method will be called when that script section is encountered.  Example:</p>
+
+<pre><code>[{'seconds':3.0, 'layer':self.game_over_layer}, {'seconds':3.0, 'layer':None, 'callback':self.next_lampshow()}]
+</code></pre>
+</li>
+<li><p>Scriptless layer supports callbacks, too</p></li>
+<li><p>GroupedLayers support a fill_color so that if you want to explicitly black_fill (or something else) you can just specify it here.  You can also omit it for transparency (as we both agree is the correct behavior)</p></li>
+<li><p>PanningLayer supports setting the 'frame' content to be any type of layer, so anything can be panned.  If you specify a regular frame, well, that still works too.  I also fixed some implementation bugs that I encountered with bounce.  A ton of testing went on there, so I'd be surprised if any part of that didn't work.</p></li>
+<li><p>RotationLayer: a cute toy.  Lets you rotate any type of layer.  It's cute.. not very useful but I thought, why not?</p></li>
+<li><p>I fixed some major placement bugs in AnimatedHDTextLayer that caused them to be positioned incorrectly.</p></li>
+</ol>
+</article>
+
+<h2>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">PyProcGameHD+SkeletonGame maintained by <a href="https://github.com/mjocean">mjocean</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
