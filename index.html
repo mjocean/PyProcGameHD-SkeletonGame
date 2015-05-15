@@ -66,7 +66,9 @@
 
 <p>This release replaces the previous HD VGA fork of PyProcGame and it's functionality is a superset of that version.  This release has been re-written (and aggressively optimized) to leverage SDL2+PySDL2 graphics hardware acceleration features.  Many things are now possible with nominal overhead, including 'dot-filter', alpha transparency, per-pixel alpha, just to name a few.  The prior PyGame-based version remains for those who might need it for some reason or another.</p>
 
-<p>Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use this version for some games and have it live side-by-side with traditional, DMD-based games.  The easiest is to just include the procgame folder as a subfolder of your game.</p>
+<p>Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use PyProcGameHD for some games and have it live side-by-side with PyProcGame (traditional DMD) games.  The easiest way is to just include PyProcGameHD's procgame folder as a subfolder of your game.</p>
+
+<p>A Display Architecture Tutorial for both PyProcGameHD specifics and PyProcGame, in general, is provided <a href="http://mjocean.github.io/PyProcGameHD-SkeletonGame/DMD_Tutorial.html">here</a>.</p>
 
 <h2>
 <a id="skeletongame" class="anchor" href="#skeletongame" aria-hidden="true"><span class="octicon octicon-link"></span></a>SkeletonGame</h2>
@@ -84,6 +86,8 @@
 <li>use helpers to create DMD content (in code) much easier.</li>
 <li>get started quickly.</li>
 </ul>
+
+<p>A Sample game that has been provided, <a href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame">here</a></p>
 
 <h2>
 <a id="pyprocgame" class="anchor" href="#pyprocgame" aria-hidden="true"><span class="octicon octicon-link"></span></a>pyprocgame</h2>
@@ -529,7 +533,15 @@ When the player presses the switch with the name 'startButton', SkeletonGame wil
             <span class="pl-c1"><span class="pl-ent">duration:</span> 1.0</span></pre></div>
 
 <h3>
-<a id="steps-to-making-your-game" class="anchor" href="#steps-to-making-your-game" aria-hidden="true"><span class="octicon octicon-link"></span></a>steps to making your game:</h3>
+<a id="steps-to-making-your-game" class="anchor" href="#steps-to-making-your-game" aria-hidden="true"><span class="octicon octicon-link"></span></a>Steps to making your game:</h3>
+
+<h2>
+<a id="1-look-at-the-sample-game-that-has-been-provided-here" class="anchor" href="#1-look-at-the-sample-game-that-has-been-provided-here" aria-hidden="true"><span class="octicon octicon-link"></span></a>1. Look at the Sample game that has been provided, <a href="https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame">here</a>
+</h2>
+
+<h2>
+<a id="2-look-at-the-display-architecture-tutorial-here" class="anchor" href="#2-look-at-the-display-architecture-tutorial-here" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. Look at the Display Architecture Tutorial, <a href="http://mjocean.github.io/PyProcGameHD-SkeletonGame/DMD_Tutorial.html">here</a>
+</h2>
 
 <p>TODO: This...</p>
 
