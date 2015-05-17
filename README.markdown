@@ -1,6 +1,10 @@
+This codebase exists for folks looking to code their own rules for pinball machines powered by either the P-ROC or P3-ROC, available from [pinballcontrollers.com](http://pinballcontrollers.com).  This framework is a fork of [PyProcGame](http://www.github.com/preble/pyprocgame), a Python based pinball programming framework.  Rather than traditional DMD hardware, it supports traditional PC display hardware (i.e., LCD) for high-resolution, full-color display via SDL2/OpenGL based hardware acceleration (PyProcGameHD) and tries to reduce the amount of code you have to write to create a new game with 'typical components' (via SkeletonGame).
+
 The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or go to the thread on the PinballControllers forum, [here](http://www.pinballcontrollers.com/forum/index.php?topic=1500.0).  
 
 Thank you.  
+
+![screenshot](https://dl.dropboxusercontent.com/u/254844/pyprocgamehd.png =256x)
 
 #  PyProcGame-HD + SkeletonGame
 ## Contents: ##
@@ -14,22 +18,22 @@ Thank you.
 
 # Overview
 ## PyProcGame-HD
-This is a fork of PyProcGame, meant to replace PyProcGame for users who wish to create LCD-based PyProcGame games that are powered by a P-ROC.
+A fork of PyProcGame, meant to replace PyProcGame for users who wish to create LCD-based PyProcGame games that are powered by a P-ROC.
 
-Traditional DMD support has been broken, in favor of supporting traditional PC display hardware (i.e., LCD display). Specifically this version enables full-color frames (with alpha and per-pixel alpha transparency) running resolutions far in excess of 128x32.  Hardware requirements moderate if hardware acceleration is available.
+Traditional DMD support has been removed in favor of supporting LCD displays. This version enables full-color frames (with alpha and per-pixel alpha transparency) running resolutions far in excess of 128x32.  Hardware requirements are moderate if OpenGL hardware acceleration is available.
 
-This release replaces the previous HD VGA fork of PyProcGame and it's functionality is a superset of that version.  This release has been re-written (and aggressively optimized) to leverage SDL2+PySDL2 graphics hardware acceleration features.  Many things are now possible with nominal overhead, including 'dot-filter', alpha transparency, per-pixel alpha, just to name a few.  The prior PyGame-based version remains for those who might need it for some reason or another.
+This release replaces the previous HD VGA fork of PyProcGame and it's functionality is a superset of that version.  It has been re-written (and aggressively optimized) to leverage SDL2 (OpenGL) graphics hardware acceleration features.  Many things are now possible with nominal overhead, including 'dot-filter', alpha transparency, per-pixel alpha, just to name a few.  The prior PyGame-based version is available for those who might need it for some reason or another.
 
-Note: This version does not support the PyGame or Pyglet based desktop as the original PyProcGame does.  There are several ways to use PyProcGameHD for some games and have it live side-by-side with other PyProcGame (traditional DMD)-based games.  The easiest is to just include PyProcGameHD's procgame folder as a subfolder named procgame in your game.
+Note: If you wish to have projects running on different versions of PyProcGame, the easiest way is to just include the appropriate version of PyProcGame's procgame folder as a subfolder named procgame in your game folder.
 
 A Display Architecture Tutorial for both PyProcGameHD specifics and PyProcGame, in general, is provided [here](http://mjocean.github.io/PyProcGameHD-SkeletonGame/DMD_Tutorial.html).
 
 
 ## SkeletonGame
 
-SkeletonGame is a collection of classes to speed up new game development, and is also included (and maintained) as part of this release.  If you are a new P-ROC developer, you should strongly consider using it.  If you have an existing codebase, you can migrate to this latest version of the HD Framework without using SkeletonGame, with minimal code changes.
+SkeletonGame is a collection of classes to speed up new game development that is also included (and maintained) as part of this release.  If you are a new P-ROC developer, you should strongly consider using it.  
 
-SkeletonGame is meant to be a proper third tier on top of BasicGame; think of it as the logical continuation of Starter.py --that is, if starter were a class that people were expected to subclass.  SkeletonGame is just a bunch of additions to pyprocgame (many of which lifted from the JD sample game). It leverages everything that those of use who use PyProcGame know and love, and only intends to streamline some things for new users. It should help you make games faster.  Think of it as sucking out the best parts of the Judge Dredd sample game, modifying it to be generic, adding stuff to make developing games easier, and having the whole thing running on the latest HD VGA fork of PyProcGame. 
+SkeletonGame is a logical extension of the BasicGame class --it is a bunch of additions to pyprocgame (many of which lifted from the JD sample game).  The idea being that most games all have the same core functionality, and that you shouldn't need to code those things.
 
 If SkeletonGame works, it means you (as the programmer) should:
 
@@ -41,9 +45,11 @@ If SkeletonGame works, it means you (as the programmer) should:
 
 A Sample game that has been provided, [here](https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame)
 
+It leverages everything that those of use who use PyProcGame know and love, and only intends to streamline some things for new users. It should help you make games faster.  If you have an existing PyProcGame project, you may choose to forgo SkeletonGame in order to migrate to the HD Framework with very minimal code changes.
+
 ## pyprocgame
 
-This work is built on top of (and would be nothing without) pyprocgame, which is a high-level pinball development framework for use with P-ROC (Pinball Remote Operations Controller).  Pyprocgame was written by Adam Preble and Gerry Stellenberg.  More information about P-ROC is available at [pinballcontrollers.com](http://pinballcontrollers.com/).  See the [pyprocgame site](http://pyprocgame.pindev.org/) for the full pyprocgame documentation.
+Again, this work is built on top of (and would be nothing without) pyprocgame, which is a high-level pinball development framework for use with P-ROC (Pinball Remote Operations Controller).  Pyprocgame was written by Adam Preble and Gerry Stellenberg.  More information about P-ROC is available at [pinballcontrollers.com](http://pinballcontrollers.com/).  See the [pyprocgame site](http://pyprocgame.pindev.org/) for the full pyprocgame documentation.
 
 # Installation
 
@@ -81,7 +87,7 @@ print pinproc.EventTypeBurstSwitchOpen
 The first three lines should return the prompt with no feedback.  The last should print ``6``.  This is how you know it worked.
 *TODO: post debugging instructions.*
 
-2. Install the SkeletonGame/HD VGA SDL2 dependencies.  
+2. Install the PyProcGame*HD* SDL2 dependencies.  
 	2. Download and install [PySDL2 for your platform]
 	(http://pysdl2.readthedocs.org/en/latest/install.html)
 	1. Install the 32-bit (x86) versions of the SDL2 and the SDL2_TTF libraries -- 
@@ -92,7 +98,7 @@ The first three lines should return the prompt with no feedback.  The last shoul
 	1.  Either set the PYSDL2_DLL_PATH (as per the instructions, [here](http://pysdl2.readthedocs.org/en/latest/integration.html) or add a ``PYSDL2_DLL_PATH`` in the game's ``config.yaml``.
 	1. *Optional:* For MP4 support install OpenCV and libffmpeg
 
-3. Install the SkeletonGame version of PyProcGame along-side the One-Click installed pyprocgame.  Download the ZIP of the files here, and extract it to somewhere other than your existing pyprocgame-master folder (e.g., C:\P-ROC\pyprocgame-hd\).  Within that directory, from the command line run:
+3. Install the SkeletonGame version of PyProcGameHD along-side the One-Click installed pyprocgame.  Download the ZIP of the GitHub project here, and extract it to somewhere other than your existing pyprocgame-master folder (e.g., C:\P-ROC\pyprocgame-hd\).  From a command-prompt within that directory, from the command line run:
 
 ```python setup.py develop```
 
@@ -107,11 +113,14 @@ It will also update the "procgame" command line tool into a system-dependent loc
 and see a list of available commands.  If it is not in your path you can invoke it directly, or modify your PATH environment variable.  Note that on Windows the procgame script is typically located in C:\Python26\Scripts.
 
 ### *Optional:* the graphical switch tester: ###
-1. Download/install wxPython (for windows, this is wxPython3.0-win32-3.0.2.0-py26.exe)
-http://www.wxpython.org/download.php 
+The graphical switch tester allows you to use an image of your playfield, layout the buttons and lamps on that image, and then test your machine by interacting with a GUI on top of that image.  
+
 2. Download the switchMatrixClient.py and put it in the main game folder.  
-https://github.com/mjocean/OscSwitchMatrixGUI
-3. Running the switch matrix client is as follows:
+[https://github.com/mjocean/OscSwitchMatrixGUI](https://github.com/mjocean/OscSwitchMatrixGUI)
+
+1. Download/install (wxPython)[http://www.wxpython.org/download.php]  --for windows, this is wxPython3.0-win32-3.0.2.0-py26.exe
+
+3. Run the switch matrix client on the command line as as follows:
 
 ```
 python switchMatrixClient.py -y config/t2.yaml -p 9000 -i t2_SM.jpg -l t2.layout
@@ -126,14 +135,9 @@ where:
 # SkeletonGame: Big Picture
 ## Overview
 
-Module       | Layer
--------------------|----
-SkeletonGame       | (L3)
-BasicGame          | (L2)
-libpinproc/pinproc | (L1)
+Having worked on a few P-ROC projects now, I've tried to distill the common bits from each of those games so that I can avoid rewriting the same lines again and again.  It also tries to organize and automatically handle the flow of the larger 'game' events (game starting, ball starting, ball ending, etc.).
 
-
-Motivation: Most people who learn PyProcGame programming have done so by looking at existing open-source games and there are many good ones to learn from.  Unfortunately, the copy/paste/merge process is fairly error prone. I've done it a few times now and it gets dangerous with sequence dependant, asynchronous (i.e., event-driven) code that spans multiple files. Suppose 'project A' assumes that the attract mode will call `start_ball()`, but 'project B' assumes that `start_ball()` is called by the trough handler --depending on what you grab and from where, you may wind up with no balls in the trough or two balls.  Worse I've seen and encountered plenty of instances of the game appearing to be hung or crashing because some event doesn't occur due to functions being called in the wrong order as a result of copy/paste/merge-fail. Having worked on a few P-ROC projects now, I've tried to distill the common bits from each of those games so that I can avoid rewriting the same lines again and again.
+A game class that is subclassed from SkeletonGame should be very short.  The example provided is fewer than 60 lines if you exclude imports, comments and whitespace.  Most of your code should be present in your mode classes, instead.
 
 ## SkeletonGame includes: 
 
@@ -167,12 +171,12 @@ If key is a list, it builds a grouped layer for all the keys. If text is a list 
 ## Game event flow
 (changes from PyProcGame, etc.)
 
-A game class that is subclassed from SkeletonGame should be very short.  The example provided is fewer than 60 lines if you exclude imports, comments and whitespace.  Most of your code should be present in your mode classes, instead.
+Your game class should not call game_start, ball_end, etc.  It should also not need to override these methods.  If you feel you need to, you should contact me so I can change the framework.  As designed, SkeletonGame (and its constiutent parts, including the attract and bonus modes) will handle the successive event progression.  
 
-Your game class should not call game_start, ball_end, etc.  It should also not need to subclass these methods.  You can, of course, do so, but you should not HAVE to.  SkeletonGame (and its constiutent parts, including the attract and bonus modes) will handle the successive event progression.  In a typical game, this looks like:
+In a typical game, this looks like:
 
 ### Your game class iniializes itself in main()... ###
- Behind the scenes, super(SkeletonGame,self).__init__ does the following:
+Behind the scenes, ``super(SkeletonGame,self).__init__()`` does the following:
 
 - initializes the sound controller
 - finds the DMD settings from the config.yaml and sets up your display
@@ -187,19 +191,20 @@ Then, any AdvancedMode derived modes that you initialize are automatically added
 
 The SkeletonGame version of reset() protects the modes that need to be in the game.  The old reset method would remove ALL modes from the game, but reset() in skeletonGame's will re-add modes that should not be removed and protect certain modes (e.g., the OSC controller) from being removed at all.
 
-The last thing your reset() method should do is call: self.start_attract_mode()
+The last thing your reset() method should do is call: ``self.start_attract_mode()``
 
 Then, SkeletonGame takes over again, initiating the attract mode from the yaml file.
-When the player presses the switch with the name 'startButton', SkeletonGame will automatically:
+When the player presses the switch with the name ``startButton``, SkeletonGame will automatically:
 
-- find modes with method *evt_game_starting* and call them 
-- find modes with method *evt_player_added* and call them
-- find modes with method *evt_ball_starting* and call them 
-- add a ball to the shooter lane.
+- ensure that the correct number of balls are in the trough, if not, a message is displayed and a ball-search is initiated.  If the balls are present (or found later), it goes on to...
+- find modes with method *evt_game_starting* and call those methods in the order of their mode priority (a mode that needs more time can return a positive number to delay calling the next such method for that many seconds).  When completed, it goes on to... 
+- find modes with method *evt_player_added* and call them.  This allows modes to perform any player specific data storage at this time.  Then
+- find modes with method *evt_ball_starting* and call them as above.
+- finally, add a ball to the shooter lane; if the ball does not actually close the ``shooterlane`` switch, the logic will continue to try to re-feed the shooter lane.  The ball is not considered successfully launched or in-play until that switch has been closed.
 
 Your modes hopefully do something here :)
 
-When the ball drains and the trough is full, SkeletonGame will automatically:
+When a ball drains (i.e., the trough is full again), SkeletonGame will automatically:
 
 - finds modes with method *evt_ball_ending* and calls them
 - show the 'end of ball' and bonus sequence (if bonuses were awarded)
@@ -223,9 +228,10 @@ Event | when fired:
 ``evt_tilt_ball_ending`` | all balls are accounted for following the player tilting the machine (exceeded all warnings on the plumb bob)
 
 
-
 # Making your first SkeletonGame-based game:
 ## Getting Started 
+
+Note that a [sample 'empty' game](https://github.com/mjocean/PyProcGameHD-SkeletonGame/tree/master/SampleGame) is provided in the GitHub repository
 
 0. Get everything installed and working as per the installation guide, above.
 
@@ -249,11 +255,13 @@ Event | when fired:
 
 2. ``config.yaml``
 
-    Use the default provided.  TODO: Paste documetnation from pinballcontrollers forum
+  This file lives in the root of your game folder.  It is the only yaml file that isn't placed in the config folder.  It defines the paths to the asset files your game will need (images, lampshows, sounds), SkeletonGame specific settings (which modes to enable or disable), DMD specific settings (resolution, fps), window settings (border, scale, dot-effect), whether to connect to the real P-ROC hardware or not ('FakePinProc'), and finally a mapping of keyboard keys to switch numbers (for testing when the real P-ROC is not connected).
 
-3. ``machine.yaml``
+  The Sample Game's [config.yaml file](https://raw.githubusercontent.com/mjocean/PyProcGameHD-SkeletonGame/master/SampleGame/config.yaml) should help.  
 
-    This is the machine definition file.  It defines all the switches, lamps and coils in your machine.  Some samples are available.
+3. ``config/machine.yaml``
+
+    This is the machine definition file.  It maps all the switches, lamps and coils in your machine to easier to use logical names.  Some samples are available, including the [T2.yaml example in the Sample Game](https://raw.githubusercontent.com/mjocean/PyProcGameHD-SkeletonGame/master/SampleGame/config/T2.yaml)
 
     You **must** adhere to a few naming conventions:
         
@@ -264,19 +272,31 @@ Event | when fired:
       - your slam-tilt switch should be called ``slamTilt`` 
       - ball search is handled differently!  switches and coils should be tagged for ball search, as shown in the example.
 
-4. Build your ``asset_list.yaml``
+4. Build your ``config/asset_list.yaml``
 
-    TODO: quite a lot to write about the format.  The example is probably good to reporoduce here.  
+    The assetmanager class and the asset list yaml file is arguably one of the most powerful additions to SkeletonGame/PyProcGameHD over PyProcGame.
 
-    You must be sure you define a few things:
+    The asset_list.yaml file defines a number of things for your game:
+      1. Loader User Interface: The visual layout of the asset loading screen that will be shown while your assets are being pre-loaded (on game launch)
+      2. LampShows: a mapping of lamp show file names and logical names (i.e., keys) by which they will be defined.  Defining a lampshow in this file causes the lampshow to be parsed and validated during asset loading, so if there is in error in the lampshow you will find out immediately instead of when your code eventually goes to play the lampshow.
+      3. Animations: a list of images and animations to be used in your game; minimally their file names and their logical names (i.e., keys).  By including an entry the image or animation will be pre-loaded, ready for use in your game's mode code.  Supported formats include the 'dmd' format, many common single frame formats: jpg, gif, png (per pixel alpha supported), and some animation formats such as gif (for animated gifs) and single frame file sequences (e.g., a file range from my_image000.png through my_image029.png would be specified with the file name ``my_image0%3d.png`` and all 30 would be loaded as the frames of a single animation).
+      4. HDFonts: Native system fonts (TTF) and aliases for specific sizes of those fonts
+      5. Fonts: Bitmap fonts, based on the PyProcGame font format
+      6. Audio, Music, Voice: Audio files named via key (wav or ogg format).
+
+    [The sample file will hopefully help clear up a lot about this file and its format](https://raw.githubusercontent.com/mjocean/PyProcGameHD-SkeletonGame/master/SampleGame/config/asset_list.yaml).
+
+    SkeletonGame requires a few conventions in your asset_list, that allow you to tweak/customize certain properties.  You must be sure you define a few things:
 
       - A Font or HDFont named: `tilt-font-big`, `tilt-font-small`, `settings-font-small`, `high_score_entry_inits`, `high_score_entry_msg` `high_score_entry_letters`
-      - blah blah
+      - blah blah..?  TODO: Figure out hte complete list, for here!
       - something else that's vital...
 
 5. Other important yaml files:
 
-    ###score_display.yaml###
+    ###config/score_display.yaml###
+
+    If you wish to tweak the visual appearance of the score display in your game, you can do so by editing the score_display yaml file.  An example (the same included with the Sample Game) is included below:
 
 ```yaml
     ScoreLayout:
@@ -310,6 +330,9 @@ Event | when fired:
 ```
 
 ###attract.yaml###
+  
+  The attract.yaml file allows you to change the attract sequence contents with a great degree of flexibility without having to jump into the code.  Consider the following example:
+
 ```yaml
         Sequence:
         - Combo:
