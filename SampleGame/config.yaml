@@ -1,6 +1,6 @@
 font_path:
     - C:\P-ROC\shared\dmd\
-    - .\assets\dmd\
+    - ./assets/dmd/
 config_path:
     - C:\P-ROC\shared\config\
 dmd_path: ./assets/dmd/
@@ -19,7 +19,7 @@ pinproc_class: procgame.fakepinproc.FakePinPROC # comment out this line when usi
 
 # all of this is for the hdDMD
 use_virtual_dmd_only: True          # don't try to talk to the real DMD (seriously, don't)
-dmd_grid_path: .\assets\dmd\        # where to find the dmdgrid32x32.png file
+dmd_grid_path: ./assets/dmd/        # where to find the dmdgrid32x32.png file
 dmd_dots_w: 224                     # the display width in virtual dots
 dmd_dots_h: 112                     # the display height in virtual donts
 dmd_dot_filter: True                # enable to virtual dot effect; false disables dot separation
