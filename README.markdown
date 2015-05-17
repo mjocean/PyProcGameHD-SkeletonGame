@@ -4,7 +4,7 @@ The code, documentation, and this page itself are a work in progress.  Please be
 
 Thank you.  
 
-![screenshot](https://dl.dropboxusercontent.com/u/254844/pyprocgamehd.png =256x)
+![screenshot](https://dl.dropboxusercontent.com/u/254844/pyprocgamehd.png)
 
 #  PyProcGame-HD + SkeletonGame
 ## Contents: ##
