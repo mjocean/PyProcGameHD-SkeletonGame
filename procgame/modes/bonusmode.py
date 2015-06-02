@@ -66,14 +66,15 @@ class BonusMode(AdvancedMode):
     return gl
 
   def next_bonus_display(self):
+    self.cancel_delayed(name='next_bonus_display')
     if(len(self.bonus_list)>0):
       this_bonus = self.bonus_list.pop()
       self.layer = self.getBonusFrame(this_bonus['name'], this_bonus['count'])
-      self.delay(delay=2, handler=self.next_bonus_display)
+      self.delay(name='next_bonus_display', delay=2, handler=self.next_bonus_display)
     else:
       self.layer = None
-      # don't do this!!
-      # self.game.end_ball()
+      self.force_event_next()
+
 
   def evt_ball_ending(self, (shoot_again, last_ball)):
     self.game.log("Bonus Mode awakened!!")

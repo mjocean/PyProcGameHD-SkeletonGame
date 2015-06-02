@@ -2,7 +2,8 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 from ..game import Mode
-from procgame.game import SwitchStop
+from procgame.game import SwitchStop, SwitchContinue
+from .. import highscore
 
 
 class SwitchMonitor(Mode):
@@ -20,6 +21,10 @@ class SwitchMonitor(Mode):
         return SwitchStop
 
     def sw_startButton_active(self, sw):
+        for m in self.game.modes:
+            if isinstance(m, highscore.HD_EntrySequenceManager):
+                return SwitchContinue
+
         if(self.game.attract_mode in self.game.modes):
             self.game.modes.remove(self.game.attract_mode)
             # Initialize game   

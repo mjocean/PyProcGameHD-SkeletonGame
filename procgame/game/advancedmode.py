@@ -18,3 +18,5 @@ class AdvancedMode(Mode):
 
         game.notifyOfNewMode(self)
 
+    def force_event_next(self):
+        self.game.notifyNextModeNow(self)

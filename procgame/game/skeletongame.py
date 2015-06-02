@@ -49,7 +49,8 @@ import os
 import logging
 import locale
 import random
-
+import re
+import weakref
 
 # set up a few more things before we get started 
 # the logger's configuration and format
@@ -85,6 +86,17 @@ def run_proc_game(game_class):
         if(exc_info is not None):
             raise exc_info[0], exc_info[1], exc_info[2]
             print "---------"
+
+
+class GameEventHandler(object):
+    def __init__(self, name, mode, handler, param=None):
+        self.name = name
+        self.handler = handler
+        self.param = param
+        self.mode = weakref.ref(mode) # use a weak reference
+
+    def __str__(self):
+        return '<name=%s handler=%s mode=%s>' % (self.name, self.handler, self.mode())
 
 
 class SkeletonGame(BasicGame):
@@ -124,6 +136,11 @@ class SkeletonGame(BasicGame):
             self.known_modes[AdvancedMode.Ball] = []
             self.known_modes[AdvancedMode.Game] = []
             self.known_modes[AdvancedMode.Manual] = []
+            
+            self.event_handlers = dict()
+            # the evt_ methods:
+            for e in ['tilt', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']:
+                self.event_handlers[e] = list()
             
             # create a sound controller (self.game.sound from within modes)
             self.sound = sound.SoundController(self)
@@ -232,6 +249,9 @@ class SkeletonGame(BasicGame):
 
             self.genLayerFromYAML = self.dmdHelper.genLayerFromYAML
 
+            self.notify_list = None
+            self.curr_delayed_by_mode = None
+
         except Exception, e:
             if(hasattr(self,'osc') and self.osc is not None):
                 self.osc.OSC_shutdown()
@@ -309,9 +329,24 @@ class SkeletonGame(BasicGame):
         self.known_modes[new_mode.mode_type].append(new_mode)
         self.log("Skel: Known advanced modes added '%s'" % new_mode)
 
+        # Format: evt_name(self):
+        handler_func_re = re.compile('evt_(?P<name>[a-zA-Z0-9_]+)?')
+        for item in dir(new_mode):
+            m = handler_func_re.match(item)
+            if m == None:
+                continue
+            handlerfn = getattr(new_mode, item)
+            evt_name = m.group('name')
+            
+            if(evt_name not in self.event_handlers):
+                raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (new_mode, item)
+            ge = GameEventHandler(evt_name, new_mode, handlerfn)
+            self.event_handlers[evt_name].append(ge)
+
 
     def notifyNextMode(self):
         if(len(self.notify_list)==0):
+            self.curr_delayed_by_mode = None
             if(self.event_complete_fn is not None):
                 self.log("Skel: completing event '%s' by calling '%s'" % (self.event, self.event_complete_fn))
                 self.event_complete_fn()
@@ -320,16 +355,17 @@ class SkeletonGame(BasicGame):
             return
 
         # otherwise there are more modes awaiting notification
-        next_mode = self.notify_list.pop()
+        next_handler = self.notify_list.pop()
 
-        fn = getattr(next_mode, self.event)
-        self.log("Skel: calling mode '%s' event handler for event '%s'" % (next_mode, self.event))
+        self.log("Skel: calling mode '%s' event handler for event '%s'" % (next_handler.mode(), self.event))
+
         if(self.args is None):
-            d = fn()
+            d = next_handler.handler()
         else:
-            d = fn(self.args)
+            d = next_handler.handler(self.args)
 
         if(d is not None and type(d) is int and d > 0):
+            self.curr_delayed_by_mode = next_mode
             self.switchmonitor.delay(name='notifyNextMode',
                event_type=None, 
                delay=d, 
@@ -337,8 +373,9 @@ class SkeletonGame(BasicGame):
         elif(type(d) is tuple):
             if(d[1] == True): # flag to stop event propegation and jump to the event 
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
-                self.log("Skel: Mode '%s' indivates event '%s' is now complete.  Blocking further propegation" % (next_mode, self.event))
+                self.log("Skel: Mode '%s' indivates event '%s' is now complete.  Blocking further propegation" % (next_handler.mode(), self.event))
             if(d[0] > 0):
+                self.curr_delayed_by_mode = next_handler.mode()
                 self.switchmonitor.delay(name='notifyNextMode',
                    event_type=None, 
                    delay=d[0], 
@@ -347,29 +384,35 @@ class SkeletonGame(BasicGame):
                 self.notifyNextMode() # note: next call will either fire event or notify next mode accordingly
         else:
             self.notifyNextMode()
-        
+      
+    def notifyNextModeNow(self, caller_mode):
+        if(caller_mode == self.curr_delayed_by_mode):
+            # okay to notify next
+            self.log("Skel: notifyNextModeNow called by %s..." % (caller_mode))
+            self.switchmonitor.cancel_delayed(name='notifyNextMode')
+            self.notifyNextMode()
+        else:
+            # not okay, wrong caller!!
+            self.log("Skel: notifyNextModeNow called by %s, but currently blocked by %s!?" % (caller_mode, self.curr_delayed_by_mode))
 
     def notifyModes(self, event, args=None, event_complete_fn=None):
         delay = 0
         self.notify_list = list()
         self.event_complete_fn = event_complete_fn
         self.args = args
-        self.event = event
+        if(event.startswith('evt_')):
+            self.event = event[4:]
 
         self.log("Skel: preparing to notify modes of event %s." % event)
-        for m in self.modes:
-            self.log("Skel: checking mode [%s]" % m)
 
-            if (hasattr(m, event)):
-                self.log("Skel: FOUND named element [%s] in mode [%s]" % (event,m))
-                fn = getattr(m, event)
-                if(callable(fn)):
-                    self.log("Skel: FOUND event subscriber in mode [%s]" % m)
-                self.notify_list.append(m)
+        only_active_handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None and h.mode() in self.modes]
+        for h in only_active_handlers:
+            self.log("Skel: event handler queuing handler in mode [%s]" % (h.mode()))
+            self.notify_list.append(h)
 
         # note this sort is in reverse priority order because we pop 
         # off the back!
-        self.notify_list.sort(lambda x, y: x.priority - y.priority)
+        self.notify_list.sort(lambda x, y: x.mode().priority - y.mode().priority)
 
         self.notifyNextMode()
 
@@ -571,7 +614,7 @@ class SkeletonGame(BasicGame):
     def tilted_ball_end(self):
         """ called by the 'Tilted' mode to indicate the machine has been 
             tilted and all balls are back in the trough -- in essence, this 
-            signals a evt_ball_tilted, which is a variant of evt_ball_ending;
+            signals a evt_tilt_ball_ending, which is a variant of evt_ball_ending;
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
         if(not self.b_slam_tilted):
@@ -649,7 +692,7 @@ class SkeletonGame(BasicGame):
         self.log("Skel: 'players score %s" % self.last_score)
 
         self.game_data['Audits']['Avg Ball Time'] = self.calc_time_average_string(self.game_data['Audits']['Balls Played'], self.game_data['Audits']['Avg Ball Time'], self.ball_time)
-        self.game_data['Audits']['Balls Played'] += 1
+        
         # Also handle game stats.
         for i in range(0,len(self.players)):
             game_time = self.get_game_time(i)
