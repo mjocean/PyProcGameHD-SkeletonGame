@@ -365,7 +365,7 @@ class SkeletonGame(BasicGame):
             d = next_handler.handler(self.args)
 
         if(d is not None and type(d) is int and d > 0):
-            self.curr_delayed_by_mode = next_mode
+            self.curr_delayed_by_mode = next_handler.mode()
             self.switchmonitor.delay(name='notifyNextMode',
                event_type=None, 
                delay=d, 
