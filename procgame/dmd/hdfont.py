@@ -53,7 +53,9 @@ class HDFont(object):
 
         # pygame.font.init()
         # p = pygame.font.match_font(fontname,bold)
-        font_path = font_file_path or match_font(fontname) 
+        font_path = font_file_path
+        if(font_path is None):
+            font_path = match_font(fontname)
         p = sdl2_DisplayManager.inst().font_add(font_path=font_path, font_alias=fontname, size=None, color=None, bgcolor=None)
 
         if(p==None):
@@ -242,14 +244,14 @@ init_hdfont_path()
 
 
 __hdfont_cache = {}
-def hdfont_named(name, size, bold=False):
+def hdfont_named(name, size, bold=False, font_file_path=None):
     """Searches the :attr:`font_path` for a font file of the given name and returns an instance of :class:`Font` if it exists."""
     cname = name + str(size)
     if cname in __hdfont_cache:
         return __hdfont_cache[cname]
 
     import dmd # have to do this to get dmd.Font to work below... odd.
-    font = HDFont(name,size, bold)
+    font = HDFont(name,size, bold, font_file_path=font_file_path)
     __hdfont_cache[cname] = font
     return font
 

@@ -206,10 +206,11 @@ class AssetManager(object):
                 k  = value_for_key(f,'key')
                 sname = value_for_key(f,'systemName',k)
                 size  = value_for_key(f,'size')
+                file_path = value_for_key(f, 'file', None)
                 self.updateProgressBar("HD Fonts", sname)
                 current = 'HD font: [%s]: %s, %d ' % (k, sname, size)
                 
-                self.fonts[k] = dmd.hdfont_named(sname,size)
+                self.fonts[k] = dmd.hdfont_named(sname,size, font_file_path=file_path)
                 self.numLoaded += 1
 
             for f in rfonts:
