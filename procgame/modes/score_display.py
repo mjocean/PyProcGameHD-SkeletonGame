@@ -74,7 +74,7 @@ class ScoreDisplay(Mode):
             raise
         except Exception, e:
             self.game.log('score_display: Error loading yaml file from %s: %s' % (yaml_file, e))
-            raise
+            values = dict()
 
         self.layer = ScoreLayer(self.game.dmd.width, self.game.dmd.height, self)
 
@@ -109,6 +109,15 @@ class ScoreDisplay(Mode):
 
             key_bottom_info = 'score_sub'
 
+        bg = value_for_key(values, "Background.key")
+        if(bg is None):
+            if("score_background" in self.game.animations):
+                self.bgFrame = self.game.animations["score_background"]         
+            else:
+                self.bgFrame = dmd.SolidLayer(self.game.dmd.width, self.game.dmd.height, (0,0,0))
+        else:
+            self.bgFrame = self.game.animations[bg]
+
         self.font_single_player_10_digits = self.game.fonts[key_single_player_10_digits]
         self.font_single_player_11_digits = self.game.fonts[key_single_player_11_digits]
         self.font_single_player_12plus = self.game.fonts[key_single_player_12plus]
@@ -123,10 +132,8 @@ class ScoreDisplay(Mode):
         self.font_inactive_player_8_digits = self.game.fonts[key_inactive_8_digits]
         self.font_inactive_player_7_digits = self.game.fonts[key_inactive_9plus]
 
-
         self.set_left_players_justify(left_players_justify)
 
-        self.bgFrame = dmd.SolidLayer(self.game.dmd.width, self.game.dmd.height, (0,0,0))
         # self.bgFire = self.game.animations['flames']
         # self.bgFire.opaque=False
         self.bgFrame.opaque = True
@@ -136,7 +143,7 @@ class ScoreDisplay(Mode):
         self.score_layer = dmd.AnimatedHDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, 
                     self.font_for_score_single(0), "center", vert_justify="center",
                     line_color=(132,132,132), line_width=1, 
-                    fill_color=None, fill_anim=self.game.animations['flames'], 
+                    fill_color=None, fill_anim=self.bgFrame, 
                     width=self.game.dmd.width, height=self.game.dmd.height)
 
         self.layer.layers += [self.score_layer]
