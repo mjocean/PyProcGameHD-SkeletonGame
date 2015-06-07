@@ -42,11 +42,11 @@ class SwitchMonitor(Mode):
         return SwitchStop
 
 
-    def sw_coinDoor_active_for_1s(self,sw):
-        # disable coils
-        pass
+    # def sw_coinDoor_active_for_1s(self,sw):
+    #     # disable coils
+    #     pass
 
-    def sw_coinDoor_inactive_for_1s(self,sw):
-        # enable coils
-        pass
+    # def sw_coinDoor_inactive_for_1s(self,sw):
+    #     # enable coils
+    #     pass
 
