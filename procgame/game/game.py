@@ -72,7 +72,6 @@ class GameController(object):
 	""":class:`Logger` object instance; instantiated in :meth:`__init__` with the logger name "game"."""
 
 	# MJO: Virtual DMD w/o h/w DMD
-	use_virtual_dmd_only = False
 	frames_per_second = 30
 	
 	"""Setting this to true in the config.yaml enables a virtual DMD without physical DMD events going to the PROC"""
@@ -100,7 +99,6 @@ class GameController(object):
 		
 		If that key path does not exist then this method returns an instance of :class:`pinproc.PinPROC`.
 		"""
-		self.use_virtual_dmd_only = config.value_for_key_path('use_virtual_dmd_only', False)
 		self.frames_per_second = config.value_for_key_path('dmd_framerate', 30)
 		klass_name = config.value_for_key_path('pinproc_class', 'pinproc.PinPROC')
 		klass = util.get_class(klass_name)
@@ -590,8 +588,7 @@ class GameController(object):
 		"""
 		events = []
 		events.extend(self.proc.get_events())
-		if(self.use_virtual_dmd_only is True):		# MJO: changed to support fake DMD w/o h/w DMD
-			events.extend(self.get_virtualDMDevents())
+		events.extend(self.get_virtualDMDevents()) # MJO: changed to support fake DMD w/o h/w DMD
 		return events
 
 	def tick_virtual_drivers(self):

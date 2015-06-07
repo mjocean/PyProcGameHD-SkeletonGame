@@ -40,11 +40,11 @@ class DisplayController(object):
         # Do two updates to get the pump primed:
         for x in range(2):
             self.update()
-        if(game.use_virtual_dmd_only is False):     # MJO: added to stop DMD events when no physical DMD is present 
-            print("using physical DMD, b/c use_virtual_dmd_only is " + str(game.use_virtual_dmd_only))
-            print("change via config.yaml --> use_virtual_dmd_only: True")
-            self.frame_handlers.append(self.game.proc.dmd_draw)
-        else:
+        # if(game.use_virtual_dmd_only is False):     # MJO: added to stop DMD events when no physical DMD is present 
+        #     print("using physical DMD, b/c use_virtual_dmd_only is " + str(game.use_virtual_dmd_only))
+        #     print("change via config.yaml --> use_virtual_dmd_only: True")
+        #     self.frame_handlers.append(self.game.proc.dmd_draw)
+        # else:
             print("Using a virtual DMD ONLY - no physical DMD output will be sent")
             
     def set_message(self, message, seconds):
