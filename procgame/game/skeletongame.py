@@ -196,7 +196,18 @@ class SkeletonGame(BasicGame):
             # be the switch of the next ball to be ejected.  Some games
             # number the trough switches in the opposite order; so trough1
             # might be the proper switchname to user here.
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1],'trough', [], 'shooter', self.__ball_drained_callback)
+            trough_coil_name = None
+            if('trough' in self.coils):
+                trough_coil_name = 'trough'
+            else:
+                for c in self.coils:
+                    print c.name
+                    if(c.name.startswith("trough")):
+                        trough_coil_name = c.name
+                        break
+                if(trough_coil_name is None):
+                    raise ValueError, "machine YAML must define a coil named 'Trough' or that starts with"
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, [], 'shooter', self.__ball_drained_callback)
         
             # Link ball_save to trough
             self.trough.ball_save_callback = self.ball_save.launch_callback
