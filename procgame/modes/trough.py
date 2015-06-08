@@ -176,6 +176,9 @@ class Trough(Mode):
                         self.num_balls_in_play -= 1
                     if self.drain_callback:
                         self.drain_callback()
+        else:
+            if(self.is_full() and self.game.game_start_pending):
+                self.game.your_search_is_over()
 
     # Count the number of balls in the trough by counting active trough switches.
     def num_balls(self):

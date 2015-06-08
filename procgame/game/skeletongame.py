@@ -168,6 +168,7 @@ class SkeletonGame(BasicGame):
             self.use_osc_input = config.value_for_key_path('default_modes.osc_input', True)
             self.use_stock_servicemode = config.value_for_key_path('default_modes.service_mode', True)
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
+            self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
 
 
             if(self.use_stock_scoredisplay):
@@ -201,7 +202,6 @@ class SkeletonGame(BasicGame):
                 trough_coil_name = 'trough'
             else:
                 for c in self.coils:
-                    print c.name
                     if(c.name.startswith("trough")):
                         trough_coil_name = c.name
                         break
@@ -214,30 +214,40 @@ class SkeletonGame(BasicGame):
             self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
             self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
 
-            # add ball search options as per config.yaml
-            bs_stopSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'stop' or 'stop' in sw.ballsearch))]
-            bs_resetSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'reset' or 'reset' in sw.ballsearch))]
-            
-            self.ballsearch_resetSwitches = dict()
-            for sw in bs_resetSwitches:
-                v = 'closed' if sw.type == 'NC' or sw.type == 'nc' else 'open'
-                self.ballsearch_resetSwitches[sw.name]=v
-
-            self.ballsearch_stopSwitches = dict()
-            for sw in bs_stopSwitches:
-                v = 'active' if sw.type == 'NC' or sw.type == 'nc' else 'closed'
-                self.ballsearch_stopSwitches[sw.name]=v
-
-            self.ballsearch_coils = [dr.name for dr in self.coils if (hasattr(dr,'ballsearch') and dr.ballsearch == True)]
-
 
             self.game_start_pending = False
-            self.ball_search = BallSearch(self, priority=100, \
-                                     countdown_time=10, coils=self.ballsearch_coils, \
-                                     reset_switches=self.ballsearch_resetSwitches, \
-                                     stop_switches=self.ballsearch_stopSwitches, \
-                                     special_handler_modes=[])
+            bs_stopSwitches = list()
+            bs_resetSwitches = list()
+            self.ball_search_tries = 0
 
+            if(self.use_ballsearch_mode):
+                # add ball search options as per config.yaml
+                bs_stopSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'stop' or 'stop' in sw.ballsearch))]
+                bs_resetSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'reset' or 'reset' in sw.ballsearch))]
+                
+                self.ballsearch_resetSwitches = dict()
+                for sw in bs_resetSwitches:
+                    v = 'closed' if sw.type == 'NC' or sw.type == 'nc' else 'open'
+                    self.ballsearch_resetSwitches[sw.name]=v
+
+                self.ballsearch_stopSwitches = dict()
+                for sw in bs_stopSwitches:
+                    v = 'active' if sw.type == 'NC' or sw.type == 'nc' else 'closed'
+                    self.ballsearch_stopSwitches[sw.name]=v
+
+                self.ballsearch_coils = [dr.name for dr in self.coils if (hasattr(dr,'ballsearch') and dr.ballsearch == True)]
+
+                if(len(bs_stopSwitches) == 0 and len(bs_resetSwitches) == 0):
+                    self.log("Could not use Ball search mode as there were no ballsearch tags (reset/stop) on any game switches in the yaml. ")
+                    self.log(" -- will default to using your games: do_ball_search() method...")
+                    self.use_ballsearch_mode = False
+
+            # create it anyway; if the switches are empty it will nerf itself.                
+            self.ball_search = BallSearch(self, priority=100, \
+                                 countdown_time=10, coils=self.ballsearch_coils, \
+                                 reset_switches=self.ballsearch_resetSwitches, \
+                                 stop_switches=self.ballsearch_stopSwitches, \
+                                 special_handler_modes=[])
 
             if(self.use_osc_input):
                 try:
@@ -272,6 +282,9 @@ class SkeletonGame(BasicGame):
         cleanup()
         super(SkeletonGame,self).end_run_loop()        
 
+
+    def clear_status(self):
+        self.dmdHelper.layer = None
 
     def set_status(self, msg, duration=2.0):
         """ a helper used to display a message on the DMD --low-tech version of displayText """
@@ -432,12 +445,17 @@ class SkeletonGame(BasicGame):
         self.log("Skel: RESET()")
 
         super(SkeletonGame,self).reset()
+        self.ball_search_tries = 0
+
         self.game_start_pending = False
 
         # try to set the game up to be in a clean state from the outset:
         if(self.trough.num_balls() < self.num_balls_total):
             self.log("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
-            self.ball_search.perform_search(5, silent=True)
+            if(self.use_ballsearch_mode):
+                self.ball_search.perform_search(5, silent=True)
+            else:
+                self.do_ball_search(silent=True)
 
         # handle modes that need to be alerted of the game reset!
         for m in self.known_modes[AdvancedMode.System]:
@@ -450,7 +468,8 @@ class SkeletonGame(BasicGame):
             self.modes.add(self.score_display)
 
         self.modes.add(self.ball_search)
-        self.ball_search.disable()
+        if(self.use_ballsearch_mode):
+            self.ball_search.disable()
 
         # initialize the mode variables; the general form is:
         # self.varName = fileName.classModeName(game=self)
@@ -574,7 +593,8 @@ class SkeletonGame(BasicGame):
         self.enable_flippers(True)
         self.enable_alphanumeric_flippers(True)
 
-        self.ball_search.enable()
+        if(self.use_ballsearch_mode):
+            self.ball_search.enable()
 
     def __ball_drained_callback(self):
         if self.trough.num_balls_in_play == 0:
@@ -597,8 +617,18 @@ class SkeletonGame(BasicGame):
             # can't save here as file might still be open on game end...
             # self.save_game_data('game_user_data.yaml')
 
-            self.ball_search.disable()
+            if(self.use_ballsearch_mode):
+                self.ball_search.disable()
             self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
+
+    def your_search_is_over(self):
+        """ all balls have been accounted for --if you were blocking a game start, stop that. """
+        if(self.game_start_pending):
+            if(self.use_ballsearch_mode):
+                self.ball_search.full_stop()
+            self.game_start_pending = False
+            self.clear_status()
+            self.game_started()
 
     def add_player(self):
         player = super(SkeletonGame, self).add_player()
@@ -641,48 +671,65 @@ class SkeletonGame(BasicGame):
         # turn off the flippers
         self.enable_flippers(False)
         self.enable_alphanumeric_flippers(False)
-        self.ball_search.disable() # possibly redundant if ball ends normally, but not redundant when slam tilted
+        if(self.use_ballsearch_mode):
+            self.ball_search.disable() # possibly redundant if ball ends normally, but not redundant when slam tilted
 
         super(SkeletonGame, self).ball_ended()
         for m in self.known_modes[AdvancedMode.Ball]:
             self.modes.remove(m)
 
     def reset_search(self):
-        self.game_start_pending = False
-        if(self.trough.num_balls() >= self.num_balls_total):
-            self.game_started()        
-        else: # insufficient balls to start
-            # wait 3s before trying again
-            self.ball_search.delay(name='ballsearch_start_delay',
-               event_type=None, 
-               delay=3, 
-               handler=self.game_started)            
+        print("SKEL:Reset search")
+        if(self.game_start_pending):
+            if(self.trough.num_balls() >= self.num_balls_total):
+                self.game_start_pending = False
+                self.game_started()        
+            else: # insufficient balls to start
+                # wait 3s before trying again
+                if(self.use_ballsearch_mode):
+                    self.ball_search.perform_search(3,  completion_handler=self.reset_search)
+                    # self.ball_search.delay(name='ballsearch_start_delay',
+                    #    event_type=None, 
+                    #    delay=3, 
+                    #    handler=self.game_started)            
+                else:
+                    self.do_ball_search(silent=False)
+                    self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
+        else:
+            # game started on it's own.  Continue living
+            pass
 
     def game_started(self):
         """ this happens after start_game but before start_ball/ball_starting"""
         self.log("Skel:GAME STARTED")
 
         # check trough and potentially do a ball search first
-        if(self.trough.num_balls() < self.num_balls_total):
-            if(self.game_start_pending):
-                self.log("Skel: game_started: PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
-                self.set_status("Balls Missing: PLEASE WAIT!!", 3.0)
-                return
+        if(self.game_start_pending):
+            self.log("Skel: game_started: PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
+            self.set_status("Balls STILL Missing: PLEASE WAIT!!", 3.0)
+            return
 
+        if(self.trough.num_balls() < self.num_balls_total):
             self.game_start_pending=True
             self.log("Skel: game_started: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
-            self.ball_search.perform_search(5,  completion_handler=self.reset_search)
-            self.log("Skel: game_started: TROUGH STATE BLOCKING GAME START!  Will AUTOMATICALLY RETry again in 5s")
+            if(self.use_ballsearch_mode):
+                self.ball_search.perform_search(3,  completion_handler=self.reset_search)
+                self.log("Skel: game_started: TROUGH STATE BLOCKING GAME START!  Will AUTOMATICALLY Retry again in 5s if not resolved")
+            else:
+                self.do_ball_search(silent=False)
+                self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
             return
-        else:
+        else: # we have the right number of balls
             self.game_start_pending=False
-            self.ball_search.cancel_delayed(name='ballsearch_start_delay')
+            if(self.use_ballsearch_mode):
+                self.ball_search.cancel_delayed(name='ballsearch_start_delay')
 
         super(SkeletonGame, self).game_started()
 
         for m in self.known_modes[AdvancedMode.Game]:
             self.modes.add(m)
 
+        self.ball_search_tries = 0
         self.game_data['Audits']['Games Started'] += 1
         self.save_game_data('game_user_data.yaml')
 
@@ -803,6 +850,11 @@ class SkeletonGame(BasicGame):
     def run_loop(self, min_seconds_per_cycle=None):
         #sdl2_DisplayManager.inst().show_window(True)
         super(SkeletonGame, self).run_loop(min_seconds_per_cycle)
+
+    def do_ball_search(self, silent=False):
+        self.ball_search_tries += 1
+        if(not silent):
+            self.set_status("Balls Missing: PLEASE WAIT!!", 3.0)
 
 class AdvPlayer(Player):
     """Represents a player in the game.

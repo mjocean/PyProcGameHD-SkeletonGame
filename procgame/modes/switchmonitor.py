@@ -33,12 +33,17 @@ class SwitchMonitor(Mode):
         else:
             # not in attract mode; tell SkelGame to add another player
             if self.game.ball == 1:
-                p = self.game.add_player()
-                self.game.set_status(p.name + " added!")
+                if len(self.game.players) < self.game.max_players:
+                    p = self.game.add_player()
+                    self.game.set_status(p.name + " added!")
+                else:
+                    self.game.set_status("Cannot add more than %d players." % self.game.max_players)
+            elif self.game.ball > 1:
+                self.game.logger.info("switchmonitor: Start pressed after ball 1")
             else:
-                # probably in ball search mode...
+                # either in ball search mode or ball 2 maybe?  Either way ignore!
                 self.game.logger.info("switchmonitor: Start pressed, no players, no attract??  Ball search??")
-                self.game.start_game()
+                #self.game.start_game()
         return SwitchStop
 
 

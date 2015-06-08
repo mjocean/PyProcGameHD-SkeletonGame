@@ -60,9 +60,6 @@ class T2Game(SkeletonGame):
     def reset(self):
         # EVERY SkeletonGame game should start its reset() with a call to super()
         super(T2Game,self).reset()
-
-        # No need for this -- skel game now handles ball search
-        # self.doBallSearch()
         
         # initialize the mode variables; the general form is:
         # self.varName = fileName.classModeName(game=self)
@@ -97,6 +94,37 @@ class T2Game(SkeletonGame):
 
     # def game_ended(self):
     #     super(T2Game, self).game_ended()
+
+    def do_ball_search(self, silent=False):
+        """ If you don't want to use the full ball search mode
+             --e.g., you can't figure out how to tag your yaml when you port 
+                this to your own game, 
+            you can use this much simpler ball_search implementation.
+        SkeletonGame will default to calling this method if the other ball_search 
+        is disabled in your config.yaml or if your machine yaml doesn't provide 
+        enough info for ballsearch to work. """
+
+        super(T2Game, self).do_ball_search(silent) # always start by calling this
+        # this increases self.ball_search_tries; which you may want to check to
+        # escalate the 'level' of your search.
+
+        # this might be crazy, but who cares...
+        # this strategy is fire any coil that has the same name as a switch
+        # that's active right now.
+        for(sw in self.switches):
+            if(sw.name in self.coils and (not sw.name.startswith('trough'))):
+                if(sw.is_active):
+                    self.coils[sw.name].pulse()
+                    
+        # if(self.switches.outhole.is_active()):
+        #     self.coils.outhole.pulse()
+        # if(self.switches.lockTop.is_active()):
+        #     self.coils.lockTop.pulse()
+        # if(self.switches.lockLeft.is_active()):
+        #     self.coils.lockLeft.pulse()
+        # if(self.switches.ballPopper.is_active()):
+        #     self.coils.ballPopper.pulse()
+
 
 ## the following just set things up such that you can run Python ExampleGame.py
 # and it will create an instance of the correct game objct and start running it!

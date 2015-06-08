@@ -28,3 +28,5 @@ ScoreLayout:
                               Font: score_inactive
                         9plus: 
                               Font: score_inactive
+      # Background: flames
+      ScoreInterior: flames

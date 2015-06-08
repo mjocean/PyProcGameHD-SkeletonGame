@@ -10,7 +10,9 @@ class BallSearch(Mode):
 		self.special_handler_modes = special_handler_modes
 		self.enabled = 0;
 		self.completion_handler = None
-		Mode.__init__(self, game, 8)
+		self.stop_switch_check_functions = list()
+		super(BallSearch, self).__init__(game, 8)
+
 		for switch in reset_switches:
 			self.add_switch_handler(name=str(switch), event_type=str(reset_switches[switch]), delay=None, handler=self.reset)
 		# The disable_switch_names identify the switches that, when closed, 
@@ -19,11 +21,26 @@ class BallSearch(Mode):
 		for switch in stop_switches:
 			self.add_switch_handler(name=str(switch), event_type=str(stop_switches[switch]), delay=None, handler=self.stop)
 
+			stop_sw = self.game.switches[str(switch)]
+			state_str = str(self.stop_switches[switch])
+			sw_state_fn = getattr(stop_sw, 'is_%s' % (state_str))
+			self.stop_switch_check_functions.append(sw_state_fn)
+
+		if(len(reset_switches) == 0 and len(stop_switches)==0):
+			self.game.log("BallSearch: Initialized without any stop/reset switches.  Removing functionality")
+			self.perform_search = self.__perform_search
+			self.reset = self.__reset
+
 	#def sw_trough1_open_for_200ms(self, sw):
 	#	if self.game.is_trough_full():
 	#		for special_handler_mode in self.special_handler_modes:
 	#			special_handler_mode.mode_stopped()
 	#		self.stop(0)
+	def  __perform_search(self, completion_wait_time, completion_handler = None, silent=False):
+		pass
+
+	def __reset(self, sw):
+		pass
 
 	def enable(self):
 		self.game.log("BallSearch: Enabled (waiting)")
@@ -44,16 +61,13 @@ class BallSearch(Mode):
 			self.cancel_delayed('start_special_handler_modes')
 			self.cancel_delayed
 			schedule_search = 1
-			for switch in self.stop_switches:
+			for sw_state_fn in self.stop_switch_check_functions:
 
 				# Don't restart the search countdown if a ball
 				# is resting on a stop_switch.  First,
 				# build the appropriate function call into
 				# the switch, and then call it using getattr()
-				stop_sw = self.game.switches[str(switch)]
-				state_str = str(self.stop_switches[switch])
-				m = getattr(stop_sw, 'is_%s' % (state_str))
-				if m():
+				if sw_state_fn():
 					schedule_search = 0
 
 			if schedule_search:
@@ -61,11 +75,16 @@ class BallSearch(Mode):
 				self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 				self.game.logger.info("BallSearch: RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
 			else:
-				self.game.logger.info("BallSearch: RESET via '%s'; next search is unscheduled due to stopswitch %s." % (sw.name, stop_sw.name))
+				self.game.logger.info("BallSearch: RESET via '%s'; next search is not scheduled.")
 
 	def stop(self,sw):
 		self.game.logger.info("BallSearch: countdown STOPPED via '%s'" % ("" if sw is None else sw.name))
 		self.cancel_delayed(name='ball_search_countdown');
+
+	def full_stop(self):
+		self.stop('None')
+		for coil in self.coils:
+			self.cancel_delayed('ball_search_coil1')
 
 	def perform_search(self, completion_wait_time, completion_handler = None, silent=False):
 		self.game.log("BallSearch: perform_search(completion_wait_time=%d)" % completion_wait_time)

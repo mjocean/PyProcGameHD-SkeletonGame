@@ -109,7 +109,7 @@ class ScoreDisplay(Mode):
 
             key_bottom_info = 'score_sub'
 
-        bg = value_for_key(values, "Background.key")
+        bg = value_for_key(values, "ScoreLayout.Background")
         if(bg is None):
             if("score_background" in self.game.animations):
                 self.bgFrame = self.game.animations["score_background"]         
@@ -117,6 +117,15 @@ class ScoreDisplay(Mode):
                 self.bgFrame = dmd.SolidLayer(self.game.dmd.width, self.game.dmd.height, (0,0,0))
         else:
             self.bgFrame = self.game.animations[bg]
+
+        bg = value_for_key(values, "ScoreLayout.ScoreInterior")
+        if(bg is None):
+            if("score_interior" in self.game.animations):
+                self.interior = self.game.animations["score_interior"]         
+            else:
+                self.interior = None
+        else:
+            self.interior = self.game.animations[bg]
 
         self.font_single_player_10_digits = self.game.fonts[key_single_player_10_digits]
         self.font_single_player_11_digits = self.game.fonts[key_single_player_11_digits]
@@ -140,11 +149,18 @@ class ScoreDisplay(Mode):
 
         self.layer.layers = [self.bgFrame]
 
-        self.score_layer = dmd.AnimatedHDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, 
-                    self.font_for_score_single(0), "center", vert_justify="center",
-                    line_color=(132,132,132), line_width=1, 
-                    fill_color=None, fill_anim=self.bgFrame, 
-                    width=self.game.dmd.width, height=self.game.dmd.height)
+        if(self.interior is None):
+            self.score_layer = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, 
+                        self.font_for_score_single(0), "center", vert_justify="center",
+                        line_color=(132,132,132), line_width=1, 
+                        fill_color=None, 
+                        width=self.game.dmd.width, height=self.game.dmd.height)
+        else:
+            self.score_layer = dmd.AnimatedHDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, 
+                        self.font_for_score_single(0), "center", vert_justify="center",
+                        line_color=(132,132,132), line_width=1, 
+                        fill_color=None, fill_anim=self.interior, 
+                        width=self.game.dmd.width, height=self.game.dmd.height)
 
         self.layer.layers += [self.score_layer]
 
