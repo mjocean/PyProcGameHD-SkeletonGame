@@ -14,7 +14,7 @@ import re
 import colorsys
 import pygame
 import zipfile
-from pygame import movie
+
 try:
     import cv2
     import cv2.cv as cv
@@ -43,8 +43,6 @@ class Movie(object):
     def __del__(self):
         if self.vc != None:
             self.vc.release()
-        
-        
 
     def load(self, filename):
         """This is really jsut setting up the access to the file
@@ -61,23 +59,3 @@ class Movie(object):
 
         return self
 
-
-
-    def populate_from_mp4_file(self,file):
-        vc = cv2.VideoCapture(file)
-        self.width = int(vc.get(cv.CV_CAP_PROP_FRAME_WIDTH))
-        self.height = int(vc.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
-        frame_count  = int(vc.get(cv.CV_CAP_PROP_FRAME_COUNT))
-        #vc.set(cv.CV_CAP_PROP_CONVERT_RGB, True)
-        
-        #print "width:" + str(self.width) + "   Height: " + str(self.height) + "frame count: " + str(frame_count)
-
-        for i in range(frame_count):
-            rval, video_frame = vc.read()
-            the_frame = cv.fromarray(video_frame)
-            surface = pygame.image.frombuffer(the_frame.tostring(), (self.width, self.height), 'RGB')
-            new_frame = Frame(self.width, self.height)
-            new_frame.set_surface(surface)
-            self.frames.append(new_frame)
-
-        vc.release()

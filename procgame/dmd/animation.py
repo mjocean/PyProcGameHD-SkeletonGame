@@ -409,7 +409,7 @@ class Animation(object):
                 if(frame_index==1):
                     new_frame.font_dots = str_frame[0:97]                
             self.frames.append(new_frame)
-        
+
     def save_to_old_dmd_file(self, f):
         header = struct.pack("IIII", 0x00646D64, len(self.frames), self.width, self.height)
         if len(header) != 16:
@@ -436,16 +436,19 @@ class Animation(object):
         self.width = int(vc.get(cv.CV_CAP_PROP_FRAME_WIDTH))
         self.height = int(vc.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
         frame_count  = int(vc.get(cv.CV_CAP_PROP_FRAME_COUNT))
+        #vc.set(cv.CV_CAP_PROP_CONVERT_RGB, True)
         
         #print "width:" + str(self.width) + "   Height: " + str(self.height) + "frame count: " + str(frame_count)
 
         for i in range(frame_count):
             rval, video_frame = vc.read()
-            video_frame = cv2.cvtColor(video_frame,cv2.cv.CV_BGR2RGB)
-            the_frame = cv.fromarray(video_frame)
-            surface = pygame.image.frombuffer(the_frame.tostring(), (self.width, self.height), 'RGB')
-            new_frame = Frame(self.width, self.height)
-            new_frame.set_surface(surface)
-            self.frames.append(new_frame)
+
+            if rval is not None:
+                video_frame = cv2.cvtColor(video_frame,cv2.cv.CV_BGR2RGB)
+                the_frame = cv.fromarray(video_frame)
+                # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
+                surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.width, height=self.height, mode='RGB', composite_op = None)
+                new_frame = Frame(self.width, self.height, from_surface=surf)
+                self.frames.append(new_frame)
 
         vc.release()
