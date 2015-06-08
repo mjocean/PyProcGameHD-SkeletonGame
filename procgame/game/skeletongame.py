@@ -118,6 +118,7 @@ class SkeletonGame(BasicGame):
 
             # load the machine config yaml
             self.load_config(machineYamlFile)
+            self.max_players = 4
 
             # used to hold the 'fonts' dictionary
             fonts = {}
@@ -139,7 +140,8 @@ class SkeletonGame(BasicGame):
             
             self.event_handlers = dict()
             # the evt_ methods:
-            for e in ['tilt', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']:
+            self.known_events = ['tilt', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
+            for e in self.known_events:
                 self.event_handlers[e] = list()
             
             # create a sound controller (self.game.sound from within modes)
@@ -361,12 +363,7 @@ class SkeletonGame(BasicGame):
                 continue
             handlerfn = getattr(new_mode, item)
             evt_name = m.group('name')
-            
-            if(evt_name not in self.event_handlers):
-                raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (new_mode, item)
-            ge = GameEventHandler(evt_name, new_mode, handlerfn)
-            self.event_handlers[evt_name].append(ge)
-
+            self.add_evt_handler(new_mode, evt_name, handler=handlerfn)
 
     def notifyNextMode(self):
         if(len(self.notify_list)==0):
@@ -408,7 +405,14 @@ class SkeletonGame(BasicGame):
                 self.notifyNextMode() # note: next call will either fire event or notify next mode accordingly
         else:
             self.notifyNextMode()
-      
+
+
+    def add_evt_handler(self, mode, evt_name, handler):
+        if(evt_name not in self.event_handlers):
+            raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (mode, evt_name)
+        ge = GameEventHandler(evt_name, mode, handler)
+        self.event_handlers[evt_name].append(ge)
+        
     def notifyNextModeNow(self, caller_mode):
         if(caller_mode == self.curr_delayed_by_mode):
             # okay to notify next
@@ -679,7 +683,6 @@ class SkeletonGame(BasicGame):
             self.modes.remove(m)
 
     def reset_search(self):
-        print("SKEL:Reset search")
         if(self.game_start_pending):
             if(self.trough.num_balls() >= self.num_balls_total):
                 self.game_start_pending = False
@@ -941,8 +944,6 @@ class BonusRecord(object):
     def parse_from_file(self):
         # read a yaml fie and load all the bonuses
         pass
-
-
 
 
 def find_in_list(name, list):

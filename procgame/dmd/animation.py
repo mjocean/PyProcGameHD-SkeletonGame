@@ -442,7 +442,6 @@ class Animation(object):
 
         for i in range(frame_count):
             rval, video_frame = vc.read()
-
             if rval is not None:
                 video_frame = cv2.cvtColor(video_frame,cv2.cv.CV_BGR2RGB)
                 the_frame = cv.fromarray(video_frame)
