@@ -168,16 +168,16 @@ class AssetManager(object):
         self.numLoaded += 1
 
     def load(self):
-        anims = self.value_for_key_path(keypath='Animations', default={})
-        fonts = self.value_for_key_path(keypath='Fonts', default={})
-        hfonts = value_for_key(fonts,'HDFonts',{})
-        rfonts = value_for_key(fonts,'DMDFonts',{})
-        fontstyles = value_for_key(fonts,'FontStyles',{})
-        lamps = self.value_for_key_path(keypath='LampShows', default={})
-        sounds = self.value_for_key_path(keypath='Audio', default={})
-        music = value_for_key(sounds,'Music',{})
-        effects = value_for_key(sounds,'Effects',{})
-        voice = value_for_key(sounds,'Voice',{})
+        anims = self.value_for_key_path(keypath='Animations', default={}) or list()
+        fonts = self.value_for_key_path(keypath='Fonts', default={}) or list()
+        hfonts = value_for_key(fonts,'HDFonts',{}) or list()
+        rfonts = value_for_key(fonts,'DMDFonts',{}) or list()
+        fontstyles = value_for_key(fonts,'FontStyles',{}) or list()
+        lamps = self.value_for_key_path(keypath='LampShows', default={}) or list() 
+        sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
+        music = value_for_key(sounds,'Music',{}) or list()
+        effects = value_for_key(sounds,'Effects',{}) or list() 
+        voice = value_for_key(sounds,'Voice',{}) or list()
         
         # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
         self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))

@@ -106,7 +106,7 @@ class BallSearch(Mode):
 			self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 	
 	def pop_coil(self,coil):
-		self.game.log("BallSearch: FIRING '%s'" % coil)
+		#self.game.log("BallSearch: FIRING '%s'" % coil)
 		self.game.coils[coil].pulse()
 
 	def start_special_handler_modes(self):
