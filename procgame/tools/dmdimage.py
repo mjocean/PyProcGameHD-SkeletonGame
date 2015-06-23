@@ -82,15 +82,15 @@ def dmd_to_image(src_filename, dst_filename, dots_w=128, dots_h=32):
 
     # print("file has resolution (%d x %d)" % (anim.width, anim.height))
     
-    if(len(images)>1):
-		dst_basename = os.path.splitext(dst_filename)[0]
+    if(len(images)>1):        
+        dst_basename = os.path.splitext(dst_filename)[0]
         dst_ext = os.path.splitext(dst_filename)[-1]
         for index,frame in enumerate(images):
             dst_file = dst_basename + "_" + str("%03d" % index) + dst_ext
-			print("writing %s" % dst_file)
+            print("writing %s" % dst_file)
             frame.save(dst_file)
-            #pygame.image.save(frame.pySurface,dst_file)
-	else:
+            #pygame.image.save(frame.pySurface,dst_file)    
+    else:
         images[0].save(dst_filename)
         #pygame.image.save(frame.pySurface,dst_filename)
 
