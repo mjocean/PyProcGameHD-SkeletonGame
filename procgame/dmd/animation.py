@@ -161,6 +161,8 @@ class Animation(object):
         paths = map(os.path.abspath, paths)
         
         # The path that is used as the key in the database
+        if(len(paths)==0):
+            raise ValueError, "Load FAILED: could not locate a file matching [%s]" % filename
         key_path = paths[0]
         
         self.frames = []
