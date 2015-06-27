@@ -78,7 +78,7 @@ class BallSearch(Mode):
 				self.game.logger.info("BallSearch: RESET via '%s'; next search is not scheduled.")
 
 	def stop(self,sw):
-		self.game.logger.info("BallSearch: countdown STOPPED via '%s'" % ("" if sw is None else sw.name))
+		self.game.logger.info("BallSearch: countdown STOPPED via '%s'" % ("" if sw is None else sw))
 		self.cancel_delayed(name='ball_search_countdown');
 
 	def full_stop(self):
