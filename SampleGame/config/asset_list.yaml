@@ -31,16 +31,15 @@ Animations:
   x_loc: 120 # move the object 100 dots (not pixels!) in
   y_loc: 30 # 20 dot offest from the top
   # composite_op: 'magentasrc'  
-# - key: 'gameover'
-#   file: 'thumbsup.gif'
-#   frame_time : 2
-# - key : 'title'
-# - key : 'fire'
-# - key : 'pretty'
-- key : 'flames'
+- key: 'gameover'
   file: 'fireloop1_64x64/50 frames/fire1_ %02d.png'
   frame_time : 2
   repeatAnim : True
+- key : 'flames'
+  file: 'flames/flame_%03d.png'
+  frame_time : 3
+  repeatAnim : True
+  composite_op: 'blacksrc' # make the black in the image transparent  
 #   # y_loc: -30
 - key: 'chrome'
   file: 'light_texture.png'  
