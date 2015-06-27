@@ -311,7 +311,7 @@ class SettingsEditor(ServiceModeList):
 		self.name = name
 		self.items = []
 		self.value_layer = TextLayer(self.game.dmd.width/2, 19, font, "center")
-		self.layer = GroupedLayer(self.game.dmd.width, self.game.dmd.height, [self.title_layer, self.item_layer, self.value_layer, self.instruction_layer])
+		self.layer = GroupedLayer(self.game.dmd.width, self.game.dmd.height, [self.title_layer, self.item_layer, self.value_layer, self.instruction_layer], fill_color=(0,0,0,255))
 		for item in sorted(itemlist.iterkeys()):
 			#self.items.append( EditItem(str(item), itemlist[item]['options'], itemlist[item]['value'] ) )
 			if 'increments' in itemlist[item]:
