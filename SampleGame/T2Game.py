@@ -111,7 +111,7 @@ class T2Game(SkeletonGame):
         # this might be crazy, but who cares...
         # this strategy is fire any coil that has the same name as a switch
         # that's active right now.
-        for(sw in self.switches):
+        for sw in self.switches:
             if(sw.name in self.coils and (not sw.name.startswith('trough'))):
                 if(sw.is_active):
                     self.coils[sw.name].pulse()

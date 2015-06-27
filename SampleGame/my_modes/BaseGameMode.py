@@ -62,7 +62,8 @@ class BaseGameMode(procgame.game.AdvancedMode):
         # defined below
         self.game.ball_saver_enable(num_balls_to_save=1, time=5, now=True, 
             allow_multiple_saves=False, callback=self.ballsaved)
-
+        self.game.sound.fadeout_music()
+        self.game.sound.play_music('base-music-bgm')
 
     def ballsaved(self):
         """ this is the method that we told the ball-saver to call if
@@ -162,9 +163,9 @@ class BaseGameMode(procgame.game.AdvancedMode):
         self.game.log("base game mode trough changed notification ('ball_ending - again=%s, last=%s')" % (shoot_again,last_ball))
 
         # stop any music as appropriate
-        self.game.sound.fadeout_music()
-
+        # self.game.sound.fadeout_music()
         self.game.sound.play('ball_drain')
+        self.game.sound.play_music('sonic')
         self.game.displayText('BGM Ball Ended!')
         return 2.0
 
@@ -277,17 +278,19 @@ class BaseGameMode(procgame.game.AdvancedMode):
         """ called by each of the standupMid? handlers to 
             determine if the bank has been completed """
         if((self.game.getPlayerState('standupSwitchL') == True) and
-                (self.game.getPlayerState('standupSwitchC') == True) and
-                (self.game.getPlayerState('standupSwitchR') == True)): # all three are True
+            (self.game.getPlayerState('standupSwitchC') == True) and
+            (self.game.getPlayerState('standupSwitchR') == True)): # all three are True
                 self.game.displayText("All Targets Hit")
                 self.game.score(1000)
+                self.game.sound.play('target_bank')
                 self.game.lamps.standupMidL.disable()
                 self.game.lamps.standupMidC.disable()
                 self.game.lamps.standupMidR.disable()
                 self.game.setPlayerState('standupSwitchL', False)
                 self.game.setPlayerState('standupSwitchC', False)
                 self.game.setPlayerState('standupSwitchR', False)
-
+        else:
+                self.game.sound.play('target')
 
     """ An alternate way of handling a bank of related switches
         using lists (for switch states and lamps) we can have
@@ -301,9 +304,18 @@ class BaseGameMode(procgame.game.AdvancedMode):
         """
         vals = self.game.getPlayerState('leftTargets')
         vals[targetNum] = True
-        self.game.setPlayerState('leftTargets',vals)
-        self.game.score(5000000000)
-        self.game.leftTargetLamps[targetNum].enable()
+        if(False in vals):
+            self.game.setPlayerState('leftTargets',vals)
+            self.game.score(5000)
+            self.game.leftTargetLamps[targetNum].enable()
+            self.game.sound.play('target')
+        else:
+            self.game.setPlayerState('leftTargets',vals)            
+            self.game.score(50000)
+            self.game.sound.play('target_bank')
+            self.game.displayText("LEFT TARGETS COMPLETE!", 'explosion')
+            self.game.setPlayerState('leftTargets',[False]*5)
+
         return procgame.game.SwitchContinue    
 
     def sw_target1_active(self, sw):

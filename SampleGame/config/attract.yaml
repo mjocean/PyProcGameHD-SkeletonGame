@@ -5,10 +5,11 @@ Sequence:
             - ""
             - "Presents"
         Font: large
+        Animation: dark_chrome
         lampshow: attract_show_1
         duration: 2.0
     - Animation:
-        Name: t800-war
+        Name: explosion
     - Combo:
         Text:
             - "Terminator"

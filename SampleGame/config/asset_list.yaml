@@ -1,5 +1,5 @@
 UserInterface:
-  splash_screen: 'loading.jpg'
+  splash_screen: 'loading.png'
   progress_bar:
       x_center: 0.5
       y_center: 0.25
@@ -14,6 +14,7 @@ UserInterface:
         - 255
         - 0
   text:
+    color: [0,0,128] # no 0/255 Red, 0/255 Green, 128/255 Blue
     y_center: 0.3
 LampShows:
 - key: 'attract_show_1'
@@ -21,34 +22,30 @@ LampShows:
 - key: 'attract_show_2'
   file: 'attract_show_2.lampshow'  
 Animations:
-- key: 'cows'
-  file: 'cows_shuffling.dmd'  
-- key: 'firework'
-  file: 'firework.dmd'  
-  composite_op: 'greensrc'
-  x_loc: 100
-  y_loc: 0
 - key: 't800-war'
-  file: 't800-war_one.gif'
+  file: 'explosion1_64x48/explosion1_%04d.png'
   frame_time : 2
 - key: 'explosion'
-  file: 'explosion.gif'
-  frame_time : 4
-  composite_op: 'magentasrc'  
-- key: 'gameover'
-  file: 'thumbsup.gif'
-  frame_time : 2
-- key: 'chrome'
-  file: 'chrome.png'  
-- key: 'dark_chrome'
-  file: 'dark_chrome.png'  
-- key : 'title'
-- key : 'fire'
-- key : 'pretty'
+  file: 'explosion-%02d.png' # this naming convention will load a sequence explosion-00.png through explosion-99.png
+  frame_time : 4 # # of frames to show before next frame (@30fps)
+  x_loc: 120 # move the object 100 dots (not pixels!) in
+  y_loc: 30 # 20 dot offest from the top
+  # composite_op: 'magentasrc'  
+# - key: 'gameover'
+#   file: 'thumbsup.gif'
+#   frame_time : 2
+# - key : 'title'
+# - key : 'fire'
+# - key : 'pretty'
 - key : 'flames'
-  frame_time : 3
+  file: 'fireloop1_64x64/50 frames/fire1_ %02d.png'
+  frame_time : 2
   repeatAnim : True
-  # y_loc: -30
+#   # y_loc: -30
+- key: 'chrome'
+  file: 'light_texture.png'  
+- key: 'dark_chrome'
+  file: 'texture.png'  
 Fonts:
   FontStyles:
   - key: weird
@@ -74,129 +71,123 @@ Fonts:
       - 128
   HDFonts:
   - key: 'Tiny7'
-    systemName: "Arial"
+    file: 'Oswald-Heavy.ttf'
     size: 14
+    # NOTE: if you want to use a system font, instead of file use the following tag srtle
+    # systemName: "consolas"
   - key: 'Font_7x5'
-    systemName: "Times"
+    file: 'Oswald-Heavy.ttf'
     size: 14
   - key: 'Font_14x10'
-    systemName: "Consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 20
   - key: 'SM20aa'
-    systemName: "Consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 20
   - key: 'mono-tiny'
-    systemName: "Consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 18
   - key: 'mono-micro'
-    systemName: "Consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 12
-  - key: 'Arrows'
-    systemName: "Roadgeek 2005 Arrows 1"
-    size: 24
   - key: 'settings-font'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 16
   - key: 'settings-font-small'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 15
   - key: 'tiny'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 8
   - key: 'small'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 12
   - key: 'med'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 15
   - key: 'large'
-    systemName: "Terminator Two"
+    file: 'Oswald-Heavy.ttf'
     size: 20
   - key: 'score_1p'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 48
   - key: 'score_activeL'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 48
   - key: 'score_activeM'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Medium.ttf'
     size: 40
   - key: 'score_activeS'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Light.ttf'
     size: 32
   - key: 'score_inactive'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Light.ttf'
     size: 32
   - key: 'score_sub'
-    systemName: "Terminator Two"
+    file: 'Oswald-Heavy.ttf'
     size: 14
   - key: 'default_msg'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 15
   - key: 'tilt-font-small'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 15
   - key: 'tilt-font-big'
-    systemName: "H.H. Samuel"
+    file: 'Oswald-Heavy.ttf'
     size: 18
   - key: 'high_score_entry_inits'
-    systemName: "consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 12
   - key: 'high_score_entry_msg'
-    systemName: "consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 12
   - key: 'high_score_entry_letters'
-    systemName: "consolas"
+    file: 'Oswald-Heavy.ttf'
     size: 12
   DMDFonts:
-  - key: 'CC_9px'
-    file: "Font_CC_9px_az.dmd"
-  - key: 'font_matrix'
-    file: "switch_matrix_font.dmd"
+  # Example follows; I don't actually use any, but this is how you would.
+  # - key: 'CC_9px'
+  #   file: "Font_CC_9px_az.dmd"
 Audio:
   Music:
     - key: 'base-music-bgm'
-      file: 'BufThmS3.wav'
-      volume: 0.1
-    - key: 'canon'
-      file: 'Cannon.ogg'         
+      file: 'mitch murder - terminator theme.ogg'
+      volume: 0.5
+    - key: 'sonic'
+      file: 'mitch murder - green hill zone theme.ogg'         
   Effects:
-    - key: 'ball_serve'
-      file: 'BallServe.ogg'
-    - key: 'ball_launch'
-      file: 'ballServed.ogg'
+    # - key: 'ball_serve'
+    #   file: 'BallServe.ogg'
+    # - key: 'ball_launch'
+    #   file: 'ballServed.ogg'
+    # - key: 'ball_saved'
+    #   file: 'AutoFire.ogg'
     - key: 'ball_saved'
       file: 'AutoFire.ogg'
-    - key: 'ball_saved'
-      file: 'AutoFire.ogg'
-    - key: 'ss_tick'
-      file: 'skill_shot_target_move.ogg'
-    - key: 'ss_hit'
-      file: 'TargetHit.ogg'
-    - key: 'ss_miss'
-      file: 'ss_miss.ogg'
+    # - key: 'ss_tick'
+    #   file: 'skill_shot_target_move.ogg'
+    # - key: 'ss_hit'
+    #   file: 'TargetHit.ogg'
+    # - key: 'ss_miss'
+    #   file: 'ss_miss.ogg'
     - key: 'service_save'
-      file: 'save.wav'
+      file: 'accomplish_tune.wav'
     - key: 'service_previous'
-      file: 'previous_item.wav'
-    - key: 'service_enter'
-      file: 'menu_in.wav'
-    - key: 'service_exit'
-      file: 'menu_out.wav'
+      file: 'click.wav'
     - key: 'service_next'
-      file: 'next_item.wav'
+      file: 'click.wav'
+    - key: 'service_enter'
+      file: 'MENU A_Select.wav'
+    - key: 'service_exit'
+      file: 'MENU A_Back.wav'
     - key: 'service_cancel'
-      file: 'menu_out.wav'
+      file: 'MESSAGE-B_Decline.wav'
     - key: 'sling'
-      file: 'sling1.ogg'
-    - key: 'sling'
-      file: 'sling2.ogg'   
+      file: 'MENU B_Select.ogg'   
     - key: 'target'
-      file: 'randomTarget1.ogg'   
-    - key: 'target'
-      file: 'randomTarget2.ogg'   
-    - key: 'target'
-      file: 'randomTarget3.ogg'   
+      file: 'MENU B_Back.wav'   
+    - key: 'target_bank'
+      file: 'ALERT_Appear.wav'   
   Voice:
     - key: 'ss_successV'
       file: 'DirectHit1.ogg'
