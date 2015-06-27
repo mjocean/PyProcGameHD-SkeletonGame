@@ -62,6 +62,7 @@ class Attract(Mode):
         self.layer = sl
 
     def reset(self):
+        self.game.sound.fadeout_music()
         self.show = 0
         if(self.layer is not None):
             self.layer.reset()
