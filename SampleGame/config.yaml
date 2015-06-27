@@ -4,10 +4,12 @@ font_path:
 config_path:
     - C:\P-ROC\shared\config\
 dmd_path: ./assets/dmd/
-sounds_path: ./assets/sound/
+sound_path: ./assets/sound/
 voice_dir: voice/ # i.e., this is assets/sound/voice/
 sfx_dir: sfx/
-music_dir: music
+music_dir: music/
+hdfont_path: ./assets/fonts/
+
 
 default_modes:  # these are the default provided modes by SkeletonGame; turn them off here.
     score_display: True
