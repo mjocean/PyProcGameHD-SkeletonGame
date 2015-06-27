@@ -1180,8 +1180,12 @@ class AnimatedHDTextLayer(Layer):
             # print("blink frames: %d" % self.blink_frames_counter)
 
         if(self.fill_anim is not None):
-            fill = self.fill_anim.next_frame().pySurface
-            interior = sdl2_DisplayManager.inst().mask(self.texTextInterior, fill)
+            nf = self.fill_anim.next_frame()
+            if(nf is None):
+                interior = self.texTextInterior
+            else:
+                fill = nf.pySurface
+                interior = sdl2_DisplayManager.inst().mask(self.texTextInterior, fill)
         else:
             interior = self.texTextInterior
 
@@ -1189,8 +1193,12 @@ class AnimatedHDTextLayer(Layer):
 
         if(self.line_width > 0):
             if(self.line_anim is not None):
-                line = self.line_anim.next_frame().pySurface
-                edge = sdl2_DisplayManager.inst().mask(self.texTextBorder, line)
+                nf = self.line_anim.next_frame()
+                if(nf is None):
+                    edge = self.texTextBorder
+                else:
+                    line = nf.pySurface
+                    edge = sdl2_DisplayManager.inst().mask(self.texTextBorder, line)
             else:
                 edge = self.texTextBorder
 
