@@ -131,6 +131,8 @@ class SkeletonGame(BasicGame):
             self.voice_path = self.sound_path + config.value_for_key_path('voice_dir', "voice/")
             self.sfx_path = self.sound_path + config.value_for_key_path('sfx_dir', "sfx/")
             self.music_path = self.sound_path + config.value_for_key_path('music_dir', "music/")
+            
+            self.hdfont_path = config.value_for_key_path('hdfont_dir', curr_file_path + "/assets/fonts/")
 
             self.known_modes = {}
             self.known_modes[AdvancedMode.System] = []

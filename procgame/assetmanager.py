@@ -93,6 +93,9 @@ class AssetManager(object):
         bar_h = self.value_for_key_path('UserInterface.progress_bar.height', 0.15)
 
         text_y = self.value_for_key_path('UserInterface.text.y_center', 0.15)
+        # self.text_font = self.value_for_key_path('UserInterface.text.font', 0.15)
+        # self.text_size = self.value_for_key_path('UserInterface.text.size', 0.15)
+        self.text_color = self.value_for_key_path('UserInterface.text.color', (255,255,0,255))
 
         self.prog_bar_width = int(bar_w * self.screen_width)
         self.prog_bar_height = int(bar_h * self.screen_height)
@@ -124,10 +127,10 @@ class AssetManager(object):
         sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True) 
 
         s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
-        tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=None, bg_color=None)
+        tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
         sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
 
-        tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=None, bg_color=None)
+        tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
         sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
 
 
@@ -161,6 +164,10 @@ class AssetManager(object):
             self.loaded_map[file] = key
 
         self.lengths[key] = tmp.frames[-1]
+        if(len(tmp.frames)==1):
+            holdLastFrame = True
+            self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+
         self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame) 
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
@@ -209,7 +216,13 @@ class AssetManager(object):
                 file_path = value_for_key(f, 'file', None)
                 self.updateProgressBar("HD Fonts", sname)
                 current = 'HD font: [%s]: %s, %d ' % (k, sname, size)
-                
+
+                if(file_path is not None):
+                    file_path = self.game.hdfont_path + file_path
+                    if(not os.path.isfile(file_path)):
+                        raise ValueError, "Could not load font as specified in yaml\n %s\n File [%s] does not exist." % (current, file_path)
+
+
                 self.fonts[k] = dmd.hdfont_named(sname,size, font_file_path=file_path)
                 self.numLoaded += 1
 
