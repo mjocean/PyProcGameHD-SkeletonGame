@@ -57,10 +57,11 @@ class DMDHelper(Mode):
                 for each_anim in lAnimations:
                     each_anim.reset()
                 lAnimations.append(t)
-                lAnimations[0].opaque=True
+                # lAnimations[0].opaque=True
                 gl = dmd.GroupedLayer(self.game.dmd.width, self.game.dmd.height, lAnimations)
             else:
-                self.game.animations[background_layer].opaque=True
+                # self.game.animations[background_layer].opaque=True
+                self.game.animations[background_layer].reset()
                 gl = dmd.GroupedLayer(self.game.dmd.width, self.game.dmd.height, [self.game.animations[background_layer],t])
             gl.opaque = opaque
             return gl
