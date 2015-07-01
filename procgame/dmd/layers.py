@@ -36,8 +36,8 @@ class FrameLayer(Layer):
 
 
 class SolidLayer(Layer):
-    def __init__(self, width, height, color):
-        super(SolidLayer, self).__init__(opaque=True)
+    def __init__(self, width, height, color, opaque=True):
+        super(SolidLayer, self).__init__(opaque)
         self.frame = Frame(width,height)
         self.frame.fill_rect(0,0,width,height,color)#.append(255))
     def next_frame(self):
@@ -540,8 +540,8 @@ class ScriptedLayer(Layer):
       [{'seconds':3.0, 'layer':self.game_over_layer}, {'seconds':3.0, 'layer':None}]
     
     """
-    def __init__(self, width, height, script, hold=False):
-        super(ScriptedLayer, self).__init__()
+    def __init__(self, width, height, script, hold=False, opaque=False):
+        super(ScriptedLayer, self).__init__(opaque)
         self.buffer = Frame(width, height)
         self.script = script
         self.hold = hold
@@ -676,9 +676,9 @@ class ScriptlessLayer(ScriptedLayer):
                     sl.append(third_layer, 2.0)
     """
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, opaque=False):
         script = list()
-        super(ScriptlessLayer, self).__init__(width, height, script)
+        super(ScriptlessLayer, self).__init__(width, height, script, opaque)
 
     def append(self, layer, seconds = None, callback = None):
         """ adds the given layer to the current script, to be displayed for seconds 
@@ -702,8 +702,8 @@ class GroupedLayer(Layer):
     :meth:`~procgame.dmd.Layer.composite_next` method.  Compositing is ended after a layer that returns
     non-``None`` from :meth:`~Layer.composite_next` is :attr:`~Layer.opaque`."""
     
-    def __init__(self, width, height, layers=None, fill_color=None):
-        super(GroupedLayer, self).__init__()
+    def __init__(self, width, height, layers=None, fill_color=None, opaque=False):
+        super(GroupedLayer, self).__init__(opaque)
         self.buffer = Frame(width, height)
         self.fill_color = fill_color
         if layers == None:
