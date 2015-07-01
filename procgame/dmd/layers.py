@@ -957,6 +957,9 @@ class HDTextLayer(TextLayer):
             interior_color = self.interior_color 
             line_width = self.line_width 
 
+        if(fill_color is None):
+            fill_color = self.fill_color
+
         if(fill_color == (0,0,0) and self.composite_op == 'blacksrc'):
             fill_color = None
 
@@ -1010,7 +1013,7 @@ class HDTextLayer(TextLayer):
 
                 (x, y) = ((wOfText-self.width)*x_offset, (hOfText-self.height)*y_offset)
                 
-                self.font.drawHD(self.frame, text, x, y, line_color, line_width, interior_color, fill_color)
+                self.font.drawHD(self.frame, text, x, y, line_color, line_width, interior_color, None)
                 # self.font.draw(self.frame, text, x, y, interior_color)
 
                 (self.target_x_offset, self.target_y_offset) = (self.x,self.y)
@@ -1087,6 +1090,9 @@ class HDTextLayer(TextLayer):
         x_txt_off, y_txt_off = 0, 0
         (w_txt, h_txt) = self.font.size(text)
         (w_txt , h_txt) = (w_txt+(2*line_width), h_txt+(2*line_width))
+
+        self.text_width = w_txt
+        self.text_height = h_txt
 
         if self.justify == 'right':
             x_txt_off = self.width - w_txt
