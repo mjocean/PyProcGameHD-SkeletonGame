@@ -36,8 +36,8 @@ class FrameLayer(Layer):
 
 
 class SolidLayer(Layer):
-    def __init__(self, width, height, color):
-        super(SolidLayer, self).__init__(opaque=True)
+    def __init__(self, width, height, color, opaque=True):
+        super(SolidLayer, self).__init__(opaque)
         self.frame = Frame(width,height)
         self.frame.fill_rect(0,0,width,height,color)#.append(255))
     def next_frame(self):
@@ -333,7 +333,7 @@ class TextLayer(Layer):
     text = None
     """Dot value to fill the frame with.  Requres that ``width`` and ``height`` be set.  If ``None`` only the font characters will be drawn."""
     
-    def __init__(self, x, y, font, justify="left", opaque=False, width=192, height=96, fill_color=None):
+    def __init__(self, x, y, font, justify="left", opaque=False, width=None, height=None, fill_color=None):
         super(TextLayer, self).__init__(opaque)
         self.x = x
         self.y = y
@@ -371,11 +371,20 @@ class TextLayer(Layer):
             elif self.justify == 'center':
                 (x, y) = (-w/2,0)
 
-            if self.fill_color != None:
-                self.set_target_position(0, 0)
-                self.frame = Frame(width=self.width, height=self.height)
-                self.frame.fill_rect(0, 0, self.width, self.height, self.fill_color)
-                self.font.draw(self.frame, text, self.x + x, self.y + y)
+
+            if self.fill_color != None and self.width != None and self.height != None:
+                #width and height must not be none
+                #self.set_target_position(0, 0)
+                #self.frame = Frame(width=self.width, height=self.height)
+                #self.frame.fill_rect(0, 0, self.width, self.height, self.fill_color)
+                #self.font.draw(self.frame, text, self.x + x, self.y + y)
+                #
+                self.set_target_position(self.x, self.y)
+                self.frame = Frame(self.width, self.height)
+                self.frame.fill_rect(0, 0, self.width, self.height, self.fill_color) # but taking this away shouldn't break it should it??
+                self.font.draw(self.frame, text, 0, 0)
+                (self.target_x_offset, self.target_y_offset) = (x,y)
+                
             else:
                 self.set_target_position(self.x, self.y)
                 (w, h) = self.font.size(text)
