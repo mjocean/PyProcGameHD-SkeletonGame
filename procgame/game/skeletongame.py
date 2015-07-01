@@ -55,7 +55,7 @@ import weakref
 # set up a few more things before we get started 
 # the logger's configuration and format
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-locale.setlocale(locale.LC_ALL, "") # This is used to put commas in the score
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8") # This is used to put commas in the score
 
 def cleanup():
     import sdl2.ext
