@@ -141,6 +141,7 @@ class AssetManager(object):
             #print("Key: %s" % event.key.keysym.sym)
             if event.type == sdl2.SDL_KEYDOWN:
                 if event.key.keysym.sym == sdl2.SDLK_ESCAPE:
+                    self.game.end_run_loop()
                     sys.exit()
    
         # pygame.display.flip()

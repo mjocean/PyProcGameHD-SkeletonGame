@@ -118,6 +118,11 @@ class SkeletonGame(BasicGame):
 
             super(SkeletonGame, self).__init__(machineType)
 
+            self.use_alphadisplays = config.value_for_key_path('auxport_alphanumeric_displays', False)
+
+            if self.use_alphadisplays:
+                self.alpha_display = alphanumeric.AlphanumericDisplay(self.aux_port)
+
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
             self.dmd_height = config.value_for_key_path('dmd_dots_h', 240) 
             self.dmd_fps = config.value_for_key_path('dmd_framerate', 30) 

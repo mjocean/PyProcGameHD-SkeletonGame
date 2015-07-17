@@ -349,3 +349,8 @@ class BaseGameMode(procgame.game.AdvancedMode):
         self.game.lamps.dropTarget.pulse(20)
         return procgame.game.SwitchStop  
 
+    def sw_gripTrigger_active(self, sw):
+        if self.game.switches.shooter.is_active():
+            self.game.coils.plunger.pulse()
+            self.game.sound.play('sling')
+        return procgame.game.SwitchStop
