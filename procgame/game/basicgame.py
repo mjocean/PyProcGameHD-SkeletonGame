@@ -45,13 +45,11 @@ class BasicGame(GameController):
 		self.aux_port = auxport.AuxPort(self)
 		if self.machine_type == pinproc.MachineTypeWPCAlphanumeric:
 			self.alpha_display = alphanumeric.AlphanumericDisplay(self.aux_port)
-		else:
-			dots_w = config.value_for_key_path(keypath='dmd_dots_w', default=128)
-			dots_h = config.value_for_key_path(keypath='dmd_dots_h', default=32)
-			self.dmd = DisplayController(self, width=dots_w, height=dots_h) #, message_font=hdfont_named('Font07x5.dmd'))
-		# self.score_display = ScoreDisplay(self, 0)
 
-		
+		dots_w = config.value_for_key_path(keypath='dmd_dots_w', default=128)
+		dots_h = config.value_for_key_path(keypath='dmd_dots_h', default=32)
+		self.dmd = DisplayController(self, width=dots_w, height=dots_h) #, message_font=hdfont_named('Font07x5.dmd'))
+		# self.score_display = ScoreDisplay(self, 0)
 
 		if self.dmd: self.dmd.frame_handlers.append(self.set_last_frame)
 

@@ -52,6 +52,8 @@ import random
 import re
 import weakref
 
+from game import config_named
+
 # set up a few more things before we get started 
 # the logger's configuration and format
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -109,19 +111,25 @@ class SkeletonGame(BasicGame):
     """ SkeletonGame is intended to be the new super-class for your game class.  It provides
         more of the functionality that one expects to be in a 'generic' 'modern' pinball machine
     """
-    def __init__(self, machineYamlFile, curr_file_path, machineType=pinproc.MachineTypeWPC):
+    def __init__(self, machineYamlFile, curr_file_path, machineType=None):
         try:
             random.seed()
             pygame.mixer.pre_init(44100,-16,2,512)
 
             self.curr_file_path = curr_file_path
 
-            super(SkeletonGame, self).__init__(machineType)
+            if(machineType is None):
+                self.config = config_named(machineYamlFile)
+                if not self.config:
+                    raise ValueError, 'machineType not set in SkeletonGame() init.' % (filename)
 
-            self.use_alphadisplays = config.value_for_key_path('auxport_alphanumeric_displays', False)
+                machineType = self.config['PRGame']['machineType']
+            
+            machine_type = pinproc.normalize_machine_type(machineType)
+            if not machine_type:
+                raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (filename)
 
-            if self.use_alphadisplays:
-                self.alpha_display = alphanumeric.AlphanumericDisplay(self.aux_port)
+            super(SkeletonGame, self).__init__(machine_type)
 
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
             self.dmd_height = config.value_for_key_path('dmd_dots_h', 240) 
@@ -608,7 +616,7 @@ class SkeletonGame(BasicGame):
         self.trough.launch_balls(1)
 
         self.enable_flippers(True)
-        self.enable_alphanumeric_flippers(True)
+        # self.enable_alphanumeric_flippers(True)
 
         if(self.use_ballsearch_mode):
             self.ball_search.enable()
@@ -687,7 +695,7 @@ class SkeletonGame(BasicGame):
 
         # turn off the flippers
         self.enable_flippers(False)
-        self.enable_alphanumeric_flippers(False)
+        # self.enable_alphanumeric_flippers(False)
         if(self.use_ballsearch_mode):
             self.ball_search.disable() # possibly redundant if ball ends normally, but not redundant when slam tilted
 
