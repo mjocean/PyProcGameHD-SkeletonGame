@@ -203,6 +203,8 @@ class MovieLayer(Layer):
     """ this is the video controller that is handling the interface to the video
     it handles the next frame stuff"""
     
+    duration = None
+
     def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None):
         if(cv2 is None):
             raise ValueError, "MP4 is unavailable as OpenCV is not installed"
@@ -231,8 +233,15 @@ class MovieLayer(Layer):
         self.frame_pointer = 0
         
         self.frame = Frame(self.movie.width, self.movie.height)
+        self.fps = config.value_for_key_path('dmd_framerate', None) 
         self.reset()
     
+    def duration(self):
+        """Returns the duration of the animation, as played once through."""
+        if(self.movie.vc is not None):
+            return (self.movie.frame_count * self.frame_time) / self.fps
+        return 0
+
     def reset(self):
         """Resets the animation back to the first frame."""
         self.frame_pointer = 0
