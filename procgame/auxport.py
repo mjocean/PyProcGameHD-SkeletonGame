@@ -45,7 +45,7 @@ class AuxPort(object):
 		commands += [pinproc.aux_command_jump(1)]
 		self.game.proc.aux_send_commands(0,commands)
 
-		if True: self.print_commands(commands)
+		# if True: self.print_commands(commands)
 
 	def print_commands(self, commands):
 		ctr = 0

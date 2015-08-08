@@ -20,7 +20,6 @@ class DMDHelper(Mode):
 
     def msg_over(self):
         self.layer = None
-        #print("Timer removed a message : " + self.message)
     
     def genMsgFrame(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False, flashing=False):
         if(font_style is None):
@@ -69,8 +68,7 @@ class DMDHelper(Mode):
     def showMessage(self, msg, background_layer=None, font_style=None, opaque=False, duration=2.0, font_key=None, flashing=False):
         self.layer = self.genMsgFrame(msg, background_layer=background_layer, font_style=font_style, opaque=opaque, font_key=font_key, flashing=flashing)
         self.message = msg
-        # print("Added a message : ",  msg)
-        
+                
         #cancel any old outstanding timers 
         self.cancel_delayed(name=self.timer_name)
 
@@ -84,6 +82,7 @@ class DMDHelper(Mode):
     def genLayerFromYAML(self, yamlStruct):
         duration = None
         lampshow = None
+        sound = None
         lyrTmp = None
 
         if('Combo' in yamlStruct):
@@ -104,7 +103,8 @@ class DMDHelper(Mode):
 
         if(v is not None):
             lampshow = value_for_key(v, 'lampshow')
+            sound = value_for_key(v, 'sound')
 
-        return (lyrTmp, duration, lampshow)
+        return (lyrTmp, duration, lampshow, sound)
 
 

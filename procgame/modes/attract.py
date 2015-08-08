@@ -14,6 +14,8 @@ class Attract(Mode):
 
         self.shows = []
         self.show = 0
+        self.sounds = []
+        self.sound = 0
 
         sl = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
 
@@ -35,6 +37,7 @@ class Attract(Mode):
                     fields = value_for_key(v,'Order')
                     duration =  value_for_key(v,'duration', 2.0)
                     lampshow = value_for_key(v, 'lampshow')
+                    sound = value_for_key(v, 'sound')
                     for rec in self.game.get_highscore_data():
                         if fields is not None:
                             records = [rec[f] for f in fields]
@@ -50,13 +53,21 @@ class Attract(Mode):
                             sl.append(lyrTmp, duration)
 
                 else:
-                    (lyrTmp,duration, lampshow) = self.game.genLayerFromYAML(l)
+                    (lyrTmp, duration, lampshow, sound) = self.game.genLayerFromYAML(l)
 
-                    if(lampshow is not None):
+                    cb = None
+                    if(lampshow is not None and sound is not None):
                         self.shows.append(lampshow)
-                        sl.append(lyrTmp, duration, callback=self.next_show)
-                    else:
-                        sl.append(lyrTmp, duration)
+                        self.sounds.append(sound)
+                        cb = self.next_both
+                    elif(lampshow is not None):
+                        self.shows.append(lampshow)
+                        cb = self.next_show
+                    elif(sound is not None):
+                        self.sounds.append(sound)
+                        cb = self.next_sound
+
+                    sl.append(lyrTmp, duration, callback=cb)
 
         sl.opaque=True
         self.layer = sl
@@ -68,11 +79,21 @@ class Attract(Mode):
             self.layer.reset()
         pass
 
+    def next_both(self):
+        self.next_show()
+        self.next_sound()
+
     def next_show(self):
-        self.game.log("Attract: Playing NEXT show: %s" % self.shows[self.show])
+        self.game.log("Attract: Playing next lampshow: %s" % self.shows[self.show])
         self.game.lampctrl.play_show(self.shows[self.show],  repeat=True)
         self.show += 1 
         self.show = self.show % len(self.shows)
+
+    def next_sound(self):
+        self.game.log("Attract: Playing next sound: %s" % self.sounds[self.sound])
+        self.game.sound.play(self.sounds[self.sound])
+        self.sound += 1 
+        self.sound = self.sound % len(self.sounds)
         
     def mode_started(self):
         # self.game.sound.play_music('main_theme')

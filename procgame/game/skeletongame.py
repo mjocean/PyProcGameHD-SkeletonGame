@@ -164,6 +164,8 @@ class SkeletonGame(BasicGame):
             self.known_events = ['tilt', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
             for e in self.known_events:
                 self.event_handlers[e] = list()
+
+            self.game_tilted = False # indicates if any kind of tilt has occured; tilt, slam_tilt
             
             # create a sound controller (self.game.sound from within modes)
             self.sound = sound.SoundController(self)
@@ -662,10 +664,12 @@ class SkeletonGame(BasicGame):
 
     def slam_tilted(self):
         self.b_slam_tilted = True
+        self.game_tilted = True
         self.tilted()
 
     def slam_tilt_complete(self):
         self.b_slam_tilted = False
+        self.game_tilted = False
         self.end_ball()
         self.end_game()
         self.reset()
@@ -675,6 +679,7 @@ class SkeletonGame(BasicGame):
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
         self.b_slam_tilted = False
+        self.game_tilted = True
         self.notifyModes('evt_tilt', args=None, event_complete_fn=None)
 
     def tilted_ball_end(self):
@@ -683,6 +688,7 @@ class SkeletonGame(BasicGame):
             signals a evt_tilt_ball_ending, which is a variant of evt_ball_ending;
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
+        self.game_tilted = False
         if(not self.b_slam_tilted):
             self.notifyModes('evt_tilt_ball_ending', args=None, event_complete_fn=self.end_ball)
         else:

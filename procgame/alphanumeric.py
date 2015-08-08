@@ -158,5 +158,5 @@ class AlphanumericDisplay(object):
 		# Send the new list of commands to the Aux port controller.
 		self.aux_controller.update(self.aux_index, commands)
 
-		for command in commands:
-			print "Aux Command: %s" % command
+		# for command in commands:
+		# 	print "Aux Command: %s" % command

@@ -182,7 +182,7 @@ Audio:
     - key: 'service_cancel'
       file: 'MESSAGE-B_Decline.wav'
     - key: 'sling'
-      file: 'MENU B_Select.ogg'   
+      file: 'MENU B_Select.wav'   
     - key: 'target'
       file: 'MENU B_Back.wav'   
     - key: 'target_bank'

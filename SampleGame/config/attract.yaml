@@ -7,9 +7,11 @@ Sequence:
         Font: large
         Animation: dark_chrome
         lampshow: attract_show_1
+        sound: sling
         duration: 2.0
     - Animation:
         Name: explosion
+        sound: target_bank
     - Combo:
         Text:
             - "Terminator"
