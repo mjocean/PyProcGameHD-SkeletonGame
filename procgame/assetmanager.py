@@ -151,25 +151,32 @@ class AssetManager(object):
         pygame.display.flip()
 
 
-    def loadIntoCache(self,key,frametime=2,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0):
+    def loadIntoCache(self,key,frametime=2,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
         if(file==None):
             file=key + '.vga.dmd.zip'
         
         self.updateProgressBar("Animations", file)
 
-        if(self.loaded_map.has_key(file)):
+        tmp = None
+        if(self.loaded_map.has_key(file) and not streaming_load):
             tmp = self.animations[self.loaded_map[file]]
             #print("quick loaded '%s'" % key)
         else:
-            tmp = dmd.Animation().load(self.dmd_path + file , composite_op=composite_op)
+            if(not streaming_load):
+                tmp = dmd.Animation().load(self.dmd_path + file , composite_op=composite_op)
             self.loaded_map[file] = key
 
-        self.lengths[key] = tmp.frames[-1]
-        if(len(tmp.frames)==1):
-            holdLastFrame = True
-            self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+        if(tmp is not None):
+            self.lengths[key] = tmp.frames[-1]
+            if(len(tmp.frames)==1):
+                holdLastFrame = True
+                self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
-        self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame) 
+        if(streaming_load):
+            self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
+        else:
+            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame) 
+
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
         #   self.animations[key].composite_op = composite_op
@@ -255,8 +262,9 @@ class AssetManager(object):
                 c  = value_for_key(anim,'composite_op')
                 x  = value_for_key(anim, 'x_loc', 0)
                 y  = value_for_key(anim, 'y_loc', 0)
+                streaming_load  = value_for_key(anim, 'streamingMovie', False)
                 current = 'Animation: [%s]: %s' % (k, f)
-                self.loadIntoCache(k,ft,f,r,h,o,c,x,y)
+                self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load)
 
         except:
             self.logger.error("===ASSET MANAGER - ASSET FAILURE===")

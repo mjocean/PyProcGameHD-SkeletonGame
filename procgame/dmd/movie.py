@@ -52,6 +52,8 @@ class Movie(object):
         self.width = int(self.vc.get(cv.CV_CAP_PROP_FRAME_WIDTH))
         self.height = int(self.vc.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
         self.frame_count  = int(self.vc.get(cv.CV_CAP_PROP_FRAME_COUNT))
+        if self.width==0 or self.height==0:
+            raise ValueError, "Movie failed to load filename: '%s'" % filename
         #print 'ARE WE SET TO RGB?'
         #print self.vc.get(cv.CV_CAP_PROP_CONVERT_RGB)
         #self.vc.set(cv.CV_CAP_PROP_CONVERT_RGB, True)

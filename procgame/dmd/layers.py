@@ -5,6 +5,7 @@ try:
     import cv2
     import cv2.cv as cv
     OpenCV_avail = True
+    from movie import Movie
 except ImportError:
     import logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -202,17 +203,25 @@ class MovieLayer(Layer):
     """ this is the video controller that is handling the interface to the video
     it handles the next frame stuff"""
     
-    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None):
+    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None):
         if(cv2 is None):
             raise ValueError, "MP4 is unavailable as OpenCV is not installed"
 
         super(MovieLayer, self).__init__(opaque)
         self.hold = hold
         self.repeat = repeat
+        
+        if(movie is None and movie_file_path is None):
+            raise ValueError, "MovieLayer requires either a movie_file_path argument -or- an instantiated movie object"
+        elif(movie_file_path is not None):
+            movie = Movie().load(movie_file_path)
+
         self.movie = movie
+
         if self.movie.vc == None:
             raise ValueError, "OpenCV failed to handle this movie"
             pass  #something bad has happened, need to decide how to handle
+
         # print("movie loaded: frame count = %d." % self.movie.frame_count)
         
         self.frame_time = frame_time # Number of frames each frame should be displayed for before moving to the next.

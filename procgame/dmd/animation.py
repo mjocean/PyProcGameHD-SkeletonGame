@@ -198,14 +198,15 @@ class Animation(object):
                     # Opening from disk.  It may be a DMD, or it may be another format.
                     # We keep track of the DMD data representation so we can save it to
                     # the cache.
-                    if path.endswith('.dmd'):
+                    ext = path[-4:].lower()
+                    if ext =='.dmd':
                         # Note: Right now we don't cache .dmd files.
                         self.populate_from_dmd_file(f, composite_op = composite_op)
-                    elif path.endswith('.zip'):
+                    elif ext =='.zip':
                         z = zipfile.ZipFile(path, "r")
                         data = z.read(z.namelist()[0])    #Read in the first image data
                         self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
-                    elif path.endswith('.mp4'):
+                    elif ext =='.mp4' or ext == '.avi':
                         self.populate_from_mp4_file(path)
                     else:
                         logger.info('Loading %s...', path) # Log for images...
