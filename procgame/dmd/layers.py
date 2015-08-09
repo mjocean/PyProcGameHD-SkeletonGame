@@ -245,6 +245,8 @@ class MovieLayer(Layer):
     def reset(self):
         """Resets the animation back to the first frame."""
         self.frame_pointer = 0
+        # and reset the video capture position to 0
+        self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
     
     def add_frame_listener(self, frame_index, listener):
         """Registers a method (``listener``) to be called when a specific 
@@ -263,8 +265,6 @@ class MovieLayer(Layer):
             elif self.frame_pointer == (len(self.frames) + index):
                 listener()
                 
-    def reset(self):
-        self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
     
     def next_frame(self):
         """Returns the frame to be shown, or None if there is no frame."""
