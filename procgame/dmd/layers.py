@@ -894,7 +894,7 @@ class PanningLayer(Layer):
         return self.buffer
 
 class RotationLayer(Layer):
-    def __init__(self, x, y, rotation_per_update, content_layer):
+    def __init__(self, x, y, rotation_per_update, content_layer, opaque=False, fill_color=None):
         self.x = x
         self.y = y
         self.rotation = 0
@@ -902,6 +902,8 @@ class RotationLayer(Layer):
         self.content_layer = content_layer
         self.width = content_layer.width
         self.height = content_layer.height
+        self.opaque=opaque
+        self.fill_color = fill_color
 
     def next_frame(self):
         self.tmp = self.content_layer.next_frame()
@@ -913,6 +915,66 @@ class RotationLayer(Layer):
         self.buffer.target_x_offset = self.x
         self.buffer.target_y_offset = self.y
         return self.buffer
+
+class ZoomingLayer(Layer):
+    """ A layer that zooms another layer.  
+
+        TODO: Detect text style layers and change the relative x/y position of the next_frame to honor the
+                justification parameters of the underlying text layer.
+        """
+    orig_x = 0
+    orig_y = 0
+    orig_w = 0
+    orig_h = 0
+
+    def __init__(self, layer_to_zoom, hold=False, frames_per_zoom = 1, scale_start = 1.0, scale_stop = 2.0, total_zooms=30):
+        """Will call 'next_frame' on the @param layer_to_zoom, and will zoom 
+        that layer from @param scale_start through @param scale_stop, showing the frame at each scaled size
+        for @param frames_per_zoom many frames.  The total number of zoomed frames to be displayed is 
+        @param total_zooms.  If @param hold is True, then next_frame will continue to be called and displayed
+        at the final zoom scale.  If @param is False then the Layer will retun None after returning the last zoomed
+        frame for the appropriate number of frames_per zoom.
+        """
+        self.source_layer = layer_to_zoom 
+        self.scale_stop = scale_stop
+        self.scale_start = scale_start
+        self.scale_current = scale_start
+        self.frames_per_zoom = frames_per_zoom
+        self.frames_to_show = frames_per_zoom
+        self.total_zooms = total_zooms
+        self.total_zoomed = 0
+        self.nframe = None
+        self.hold = hold
+        self.scale_per_step = float(scale_stop - scale_start)/total_zooms
+        
+    def next_frame(self):       
+        if(self.total_zoomed > self.total_zooms and self.hold is False):
+            return None
+
+        if(self.nframe is not None):
+            del self.nframe
+        self.nframe = self.source_layer.next_frame().copy()
+        
+        if(self.nframe is None):
+            return None
+
+        # 1. Zoom this frame
+        self.nframe.scale(self.scale_current)
+
+        # TODO determine if layer_to_zoom is a text layer and adjust x/y to honor justification
+        
+        # 2. if we aren't done zooming, decrease the zoom counter and compute next zoom
+        if(self.total_zoomed < self.total_zooms):
+            self.frames_to_show -= 1
+            if(self.frames_to_show == 0):
+                # 3. if the zoom counter is zero, reset and change zoom amount by step
+                self.frames_to_show = self.frames_per_zoom
+                # compute next zoom
+                self.scale_current = self.scale_current + self.scale_per_step
+                
+                self.total_zoomed += 1
+
+        return self.nframe
 
 class HDTextLayer(TextLayer):
     """Layer that displays text."""
@@ -1358,7 +1420,7 @@ def main():
     import sdl2
     from procgame.dmd import font, AnimFont, layers
     import procgame
-    from font import *
+    #from font import *
 
     sdl2_DisplayManager.Init(450,225,2)
 

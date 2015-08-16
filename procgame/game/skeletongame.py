@@ -523,6 +523,8 @@ class SkeletonGame(BasicGame):
         """ overrides the defaults in game.py so that the flipper-relay is checked from the
             machine.yaml.  If not present, the default value of '79' is used """
         # 79 corresponds to the circuit on the power/driver board.  It will be 79 for all WPCAlphanumeric machines.
+        self.log("AN Flipper enable in SkelGame.py called")
+
         if('flipperEnable' in self.coils):
             if enable:
                 self.coils.flipperEnable.pulse(0)
@@ -618,7 +620,7 @@ class SkeletonGame(BasicGame):
         self.trough.launch_balls(1)
 
         self.enable_flippers(True)
-        # self.enable_alphanumeric_flippers(True)
+        self.enable_alphanumeric_flippers(True)
 
         if(self.use_ballsearch_mode):
             self.ball_search.enable()

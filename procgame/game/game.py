@@ -435,10 +435,10 @@ class GameController(object):
 			main_coil = self.coils[flipper+'Main']
 			if self.coils.has_key(flipper+'Hold'): 
 				style = 'wpc'
-				self.logger.info("Enabling WPC style flipper")
+				self.logger.info("%sabling WPC style flipper" % "En" if enable else "Dis")
 				hold_coil = self.coils[flipper+'Hold']
 			else: 
-				self.logger.info("Enabling Stern style flipper")
+				self.logger.info("%sabling Stern style flipper" % "En" if enable else "Dis")
 				style = 'stern'
 			switch_num = self.switches[flipper].number
 
@@ -472,6 +472,7 @@ class GameController(object):
 		
 	def enable_alphanumeric_flippers(self, enable):
 		# 79 corresponds to the circuit on the power/driver board.  It will be 79 for all WPCAlphanumeric machines.
+		self.log("AN Flipper enable in game.py called")
 		flipperRelayPRNumber = 79
 		if enable:
 			self.coils[79].pulse(0)

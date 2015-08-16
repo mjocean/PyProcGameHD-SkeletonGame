@@ -382,7 +382,7 @@ class Layer(object):
         self.alpha = None
 
     def scale(self, amount):
-        if(self.frames is None):
+        if(not hasattr(self, 'frames') or self.frames is None):
             self.frame.scale(amount)
         else:
             for f in self.frames: f.scale(amount)
