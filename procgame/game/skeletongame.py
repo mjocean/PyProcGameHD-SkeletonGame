@@ -337,7 +337,7 @@ class SkeletonGame(BasicGame):
 
             duration is the maximum number of seconds that this message will be visible on the screen
         """
-        self.dmdHelper.showMessage(msg, background_layer, font_style, opaque, duration, flashing=flashing)
+        self.dmdHelper.showMessage(msg, background_layer, font_style, opaque, duration, font_key=font_key, flashing=flashing)
     
     def generateLayer(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False):
         """ a helper to generate a frame containing a specified message on top of an image/animation

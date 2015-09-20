@@ -740,14 +740,16 @@ class GroupedLayer(Layer):
 
     def reset(self):
         for layer in self.layers:
-            layer.reset()
+            if(layer is not None):
+                layer.reset()
 
     def next_frame(self):       
         layers = []
         for layer in self.layers[::-1]:
-            layers.append(layer)
-            if layer.opaque:
-                break # if we have an opaque layer we don't render any lower layers
+            if(layer is not None):
+                layers.append(layer)
+                if layer.opaque:
+                    break # if we have an opaque layer we don't render any lower layers
         # the following would let groups engage in their old behavior of filling black
         # if not blacksrc'd but truly this is 'wrong' so programmers are recommended
         # to change their implementations, instead.
