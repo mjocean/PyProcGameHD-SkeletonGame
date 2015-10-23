@@ -161,7 +161,7 @@ class SkeletonGame(BasicGame):
             
             self.event_handlers = dict()
             # the evt_ methods:
-            self.known_events = ['tilt', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
+            self.known_events = ['tilt', 'single_ball_play', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
             for e in self.known_events:
                 self.event_handlers[e] = list()
 
@@ -649,6 +649,8 @@ class SkeletonGame(BasicGame):
             if(self.use_ballsearch_mode):
                 self.ball_search.disable()
             self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
+        elif self.trough.num_balls_in_play == 1:
+            self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
 
     def your_search_is_over(self):
         """ all balls have been accounted for --if you were blocking a game start, stop that. """
