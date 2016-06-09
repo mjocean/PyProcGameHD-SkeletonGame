@@ -43,7 +43,7 @@ class Attract(Mode):
                             records = [rec[f] for f in fields]
                         else:
                             records = [rec['category'], rec['player'], rec['score']]
-                        lyrTmp = self.game.generateLayer(records, value_for_key(v,'Background'), font_key=value_for_key(v,'Font'))
+                        lyrTmp = self.game.generateLayer(records, value_for_key(v,'Background'), font_key=value_for_key(v,'Font'), font_style=value_for_key(v,'FontStyle'))
 
                         if(lampshow is not None):
                             self.shows.append(lampshow)

@@ -1,15 +1,25 @@
 import os
-if (os.getenv("PYSDL2_DLL_PATH")  is None):
-    from procgame import config
-    os.environ["PYSDL2_DLL_PATH"] = config.value_for_key_path('PYSDL2_DLL_PATH', None)
+try:
+    import sdl2.ext
+except Exception, e:
+    if (os.getenv("PYSDL2_DLL_PATH")  is None):
+        from procgame import config
+        p = config.value_for_key_path('PYSDL2_DLL_PATH', None)
+        if(p is None):
+            print("Tried to load SDL2 but failed.  Please set PYSDL2_DLL_PATH in your system environment variables or in your config.yaml")
+        else:
+            os.environ["PYSDL2_DLL_PATH"] = p
+            try:
+                import sdl2.ext
+            except Exception, e2:
+                print("Tried to load SDL2 but failed.  The PYSDL2_DLL_PATH in your system environment variables or in your config.yaml do not point to a valid SDL2 DLL (or SDL2 is not properly installed on your system)")
+                print(e2)
 
-
-import sdl2.ext
 from sdl2.ext.draw import prepare_color
 from sdl2.ext.color import convert_to_color
 import ctypes
 import random 
-from sdl2 import endian
+from sdl2 import endian, hints
 import time
 
 from ctypes import byref, cast, POINTER, c_int, c_float, sizeof, c_uint32, c_double
@@ -101,7 +111,7 @@ class FontManagerExtended(sdl2.ext.FontManager):
             self.close()
 
 class sdl2_DisplayManager(object):
-    def __init__(self, dots_w, dots_h, scale=1, title="PyProcGame HD VGA", screen_position_x=0,screen_position_y=0, flags=None):
+    def __init__(self, dots_w, dots_h, scale=1, title="PyProcGameHD", screen_position_x=0,screen_position_y=0, flags=None, blur="0"):
         self.dots_w = dots_w
         self.dots_h = dots_h
         self.scale = scale
@@ -118,8 +128,9 @@ class sdl2_DisplayManager(object):
         # self.window2.show()
         self.window.show()
 
-        self.texture_renderer = sdl2.ext.Renderer(self.window) 
-        
+        self.texture_renderer = sdl2.ext.Renderer(self.window)
+        sdl2.hints.SDL_SetHint(sdl2.hints.SDL_HINT_RENDER_SCALE_QUALITY, blur)
+
         # setting scale might help if we want to use full-screen but not zoom,
         # unfortunately a bug in sdl2 prevents this at present
         # sc = c_float(0.8)
@@ -199,6 +210,13 @@ class sdl2_DisplayManager(object):
         ret = sdl2.SDL_SetTextureBlendMode(txB.texture, sdl2.SDL_BLENDMODE_MOD) # apply mod to 'source'
         if ret == -1:
             raise sdl2.ext.SDLError()
+
+        # SDL_BLENDMODE_MOD a/k/a color modulate
+        # dstRGB = srcRGB * dstRGB
+        # dstA = dstA
+        # alpha of destination is preserved
+        # src should be white and black to remove pixels
+        # destination RGB is src * dest
 
         self.blit(txB, t, (0,0,width,height)) # draw B on t
 
@@ -300,9 +318,9 @@ class sdl2_DisplayManager(object):
 
     #     return tx_surf
     
-    def Init(dots_w, dots_h, scale=1, title="Proof of Concept", x=0, y=0, flags=None):
+    def Init(dots_w, dots_h, scale=1, title="ppgHD", x=0, y=0, flags=None, blur="0"):
         global SDL2_DM 
-        SDL2_DM = sdl2_DisplayManager(dots_w, dots_h, scale, title, x, y, flags)
+        SDL2_DM = sdl2_DisplayManager(dots_w, dots_h, scale, title, x, y, flags, blur)
 
     Init = staticmethod(Init)
 
@@ -517,7 +535,6 @@ class sdl2_DisplayManager(object):
         """Creates a Sprite from a Python imaging Image's bits."""
         rmask = gmask = bmask = amask = 0
         
-
         if mode == "RGB":
             # 3x8-bit, 24bpp
             if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
@@ -588,6 +605,150 @@ class sdl2_DisplayManager(object):
 
         del imgsurface
         return tx
+
+    def make_bits_from_texture(self, frame, width, height):
+        # 1) backup the renderer's destination 
+        # bk = sdl2.SDL_GetRenderTarget(self.texture_renderer.renderer)
+        
+        # sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, frame.texture)
+        # self.texture_renderer.copy(frame.texture, srcrect=(0,0,width,height), dstrect=None)
+        # sdl2.render.SDL_RenderPresent(self.texture_renderer.renderer)
+
+        rmask = gmask = bmask = amask = 0
+
+        mode = "RGBA"
+        pixel_format = None
+        if mode == "RGB":
+            # 3x8-bit, 24bpp
+            if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
+                rmask = 0x0000FF
+                gmask = 0x00FF00
+                bmask = 0xFF0000
+                pixel_format = sdl2.pixels.SDL_PIXELFORMAT_BGR888
+            else:
+                rmask = 0xFF0000
+                gmask = 0x00FF00
+                bmask = 0x0000FF
+                pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGB888
+            depth = 24
+            pitch = width * 3
+        elif mode in ("RGBA", "RGBX"):
+            # RGBX: 4x8-bit, no alpha
+            # RGBA: 4x8-bit, alpha
+            if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
+                rmask = 0x000000FF
+                gmask = 0x0000FF00
+                bmask = 0x00FF0000
+                if mode == "RGBA":
+                    amask = 0xFF000000
+                    pixel_format = sdl2.pixels.SDL_PIXELFORMAT_ABGR8888
+                else:
+                    pixel_format = sdl2.pixels.SDL_PIXELFORMAT_BGRX8888                    
+            else:
+                rmask = 0xFF000000
+                gmask = 0x00FF0000
+                bmask = 0x0000FF00
+                if mode == "RGBA":
+                    amask = 0x000000FF
+                    pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGBA8888
+                else:
+                    pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGBX8888                    
+            depth = 32
+            pitch = width * 4
+        else:
+            raise ValueError, "Format not supported"
+
+        # ?!?
+        # tsurf = self.new_texture(128,32,(255,0,255,128))
+        # ssurf = sdl2.ext.SoftwareSprite(tsurf.te, True)
+        # del tsurf
+
+        # imgsurface = sdl2.surface.SDL_CreateRGBSurface(0, width, height,
+        #                                               depth, rmask,
+        #                                               gmask, bmask, amask)
+        # if not imgsurface:
+        #     raise sdl2.ext.SDLError()
+
+        # bits = (ctypes.c_uint8)*128*32*4
+        # for x in range(0, 128*32*4):
+        #     bits[x] = 128
+        # imgsurface = sdl2.surface.SDL_CreateRGBSurfaceFrom(bits, width, height,
+        #                                               depth, pitch, rmask,
+        #                                               gmask, bmask, amask)
+
+
+        #??
+        # bucket = (ctypes.c_uint8*(128*32*4))()
+        # not better
+
+        ## ALLOC MEMBER
+        bucket = ctypes.create_string_buffer(height*pitch*chr(128))
+        pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8))
+
+        # pxbuf = byref(bucket)
+        # pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8*128*32*3))
+
+        # pxbuf = ctypes.cast(bucket,
+        #                 ctypes.POINTER(ctypes.c_ubyte * 128*32*3)) #.contents        
+
+        # swtarget = sdl2.ext.SoftwareSprite(imgsurface.contents, True)
+        # rtarget = swtarget.surface
+
+        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint8))
+
+        # Bucket = ctypes.c_uint8*128*32*3
+        # pxbuf = Bucket()
+
+
+        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint8))
+        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint32))
+
+
+        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint32))
+        # pxbuf = ctypes.cast(rtarget.pixels, ctypes.POINTER(ctypes.c_uint32))
+        # pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8))
+
+        clip_r = sdl2.rect.SDL_Rect(0,0,width,height)
+
+        # print("---------------------%d----------------" % pitch)
+
+        ret = sdl2.render.SDL_RenderReadPixels(
+            self.texture_renderer.renderer, 
+            clip_r, pixel_format, 
+            pxbuf, ctypes.c_int(pitch))
+            # imgsurface.contents.pixels, ctypes.c_int(pitch))
+
+        # [POINTER(SDL_Renderer), POINTER(SDL_Rect), Uint32, c_void_p, c_int], c_int)
+
+        # ctypes.c_int(pitch)
+
+        # if ret != 0:
+        #    print "ERROR: %s " % ret
+        #    raise sdl2.ext.SDLError()
+
+        # i = 0
+        # while(i < width*height*3):
+        #     print("pixel %i: %s, %s, %s" % (i, bucket[i], bucket[i+1], bucket[i+2]))
+        #     i+=3
+
+        #4) Restore renderer's texture target
+        # sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, bk) # revert back
+
+        # go into a software sprite
+        # swtarget = sdl2.ext.SoftwareSprite(imgsurface.contents, True)
+        # tx = self.texture_from_surface(swtarget)
+
+        # tx = sdl2_DisplayManager.inst().make_texture_from_imagebits(width,height, pxbuf, mode=mode, composite_op=None)
+        # tx = sdl2_DisplayManager.inst().make_texture_from_imagebits(width,height, imgsurface.contents.pixels, mode=mode, composite_op=None)
+
+        # sdl2_DisplayManager.inst().clear((0,0,0,255))
+        # sdl2_DisplayManager.inst().screen_blit(source_tx=tx, expand_to_fill=True)
+        # sdl2_DisplayManager.inst().flip()
+
+        # del tx
+        # del pxbuf
+
+        return pxbuf
 
 
     def draw_rect(self, color, rect, filled=False):
@@ -734,7 +895,7 @@ class sdl2_DisplayManager(object):
 
 
 
-    def new_texture(self, width, height):
+    def new_texture(self, width, height, color=(0,0,0,0)):
         # ts = self.factory.create_texture_sprite(renderer=self.texture_renderer, size=(width,height),
         #                       pformat=sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,
         #                       access=sdl2.render.SDL_TEXTUREACCESS_STATIC )
@@ -746,7 +907,7 @@ class sdl2_DisplayManager(object):
                                                                   width, height)
         sdl2.SDL_SetTextureBlendMode(t, sdl2.SDL_BLENDMODE_BLEND)
 
-        self.texture_clear(t, (0,0,0,0))
+        self.texture_clear(t, color)
         #print("New texture created: %s " % t.contents)
         return sdl2.ext.TextureSprite(t.contents)
 

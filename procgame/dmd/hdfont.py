@@ -19,12 +19,12 @@ AnchorSW = AnchorS | AnchorW
 AnchorCenter = 0
 
 class HDFontStyle(object):
-    def __init__(self, interior_color=(155,155,255), line_width=1, line_color=(132,32,132)):
+    def __init__(self, interior_color=(155,155,255), line_width=1, line_color=(132,32,132), fill_color=None):
         super(HDFontStyle,self).__init__()
         self.line_color=line_color
         self.line_width=line_width
         self.interior_color=interior_color
-        self.fill_color=None
+        self.fill_color=fill_color
 
 
 class HDFont(object):
@@ -103,7 +103,7 @@ class HDFont(object):
         return img.convert()
 
 
-    def drawHD(self, frame, text, x, y, line_color, line_width, interior_color, fill_color):
+    def drawHD(self, frame, text, x, y, line_color, line_width, interior_color, fill_color, font_size=None):
         """Uses this font's characters to draw the given string at the given position."""
         #t = self.pygFont.render(text,False,(255,0,255),(0,0,0))
         # print("drawHD(%s) - line color=%s | line width=%d" % (text,line_color, line_width ))
@@ -119,7 +119,10 @@ class HDFont(object):
         if(text is None or text==""):
             return x
 
-        surf = sdl2_DisplayManager.inst().font_render_bordered_text(text, font_alias=self.name, size=self.font_size, width=None, color=interior_color, bg_color=fill_color, border_color=line_color, border_width=line_width)
+        if(font_size is None):
+            font_size = self.font_size
+
+        surf = sdl2_DisplayManager.inst().font_render_bordered_text(text, font_alias=self.name, size=font_size, width=None, color=interior_color, bg_color=fill_color, border_color=line_color, border_width=line_width)
         (w,h) = surf.size
 
         tmp = Frame(w,h, from_surface=surf)
@@ -134,7 +137,7 @@ class HDFont(object):
         return x+w
 
 
-    def draw(self, frame, text, x, y, color = None, bg_color = None):
+    def draw(self, frame, text, x, y, color = None, bg_color = None, font_size=None):
         """Uses this font's characters to draw the given string at the given position."""
         #t = self.pygFont.render(text,False,(255,0,255),(0,0,0))
         if(color is None):
@@ -146,7 +149,10 @@ class HDFont(object):
         if(text is None or text==""):
             return x
 
-        surf = sdl2_DisplayManager.inst().font_render_text(text, font_alias=self.name, size=self.font_size, width=None, color=color, bg_color=bg_color)
+        if(font_size is None):
+            font_size = self.font_size
+            
+        surf = sdl2_DisplayManager.inst().font_render_text(text, font_alias=self.name, size=font_size, width=None, color=color, bg_color=bg_color)
         (w,h) = surf.size
 
         tmp = Frame(w,h, from_surface=surf)
@@ -165,7 +171,7 @@ class HDFont(object):
         #raise ValueError, "Size is not supported in HDText (yet)"
         return sdl2_DisplayManager.inst().font_get_size( text, self.name, self.font_size)
     
-    def draw_in_rect(self, frame, text, rect=(0,0,128,32), anchor=AnchorCenter):
+    def draw_in_rect(self, frame, text, rect=(0,0,128,32), anchor=AnchorCenter, font_size=None):
         """Draw *text* on *frame* within the given *rect*, aligned in accordance with *anchor*.
         
         *rect* is a tuple of length 4: (origin_x, origin_y, height, width). 0,0 is in the upper left (NW) corner.
@@ -183,7 +189,10 @@ class HDFont(object):
         """
         origin_x, origin_y, width, height = rect
 
-        surf = sdl2_DisplayManager.inst().font_render_text(text, font_alias=self.name, size=self.font_size, width=None, color=None, bg_color=None)
+        if(font_size is None):
+            font_size = self.font_size
+
+        surf = sdl2_DisplayManager.inst().font_render_text(text, font_alias=self.name, size=font_size, width=None, color=None, bg_color=None)
 
         text_width, text_height = surf.size
         tmp = Frame(text_width,text_height, from_surface=surf)

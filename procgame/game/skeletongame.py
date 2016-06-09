@@ -178,12 +178,14 @@ class SkeletonGame(BasicGame):
             # call load_assets function to load fonts, sounds, etc.
             self.load_assets()
 
-            t1 = SolidLayer(self.dmd_width-16, self.dmd_height/2-16, (128,128,128,192))
-            t1.set_target_position(4,4)
-            t1.opaque=False
-            t2 = SolidLayer(self.dmd_width-8, self.dmd_height/2-8, (255,196,0,255))
-            self.animations['status_bg'] = GroupedLayer(self.dmd_width-8, self.dmd_height/2-8,[t2,t1])
-            self.animations['status_bg'].set_target_position(4,self.dmd_height/4+4)
+            # t1 = SolidLayer(self.dmd_width-16, self.dmd_height/2-16, (128,128,128,192))
+            # t1.set_target_position(4,4)
+            # t1.opaque=False
+            t2 = SolidLayer(int(self.dmd_width*.8), int(self.dmd_height*.5), (255,196,0,255))
+            # self.animations['status_bg'] = GroupedLayer(self.dmd_width-8, self.dmd_height/2-8,[t2,t1])
+            # self.animations['status_bg'].set_target_position(4,self.dmd_height/4+4)
+            self.animations['status_bg'] = GroupedLayer(int(self.dmd_width*.8), int(self.dmd_height*.5),[t2]) #,t1
+            self.animations['status_bg'].set_target_position(int(self.dmd_width*.1),int(self.dmd_height*.25))
 
             self.dmd = HDDisplayController(self)
 

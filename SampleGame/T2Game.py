@@ -33,7 +33,7 @@ class T2Game(SkeletonGame):
         self.trough_count = 3
 
         # optional definition for 'auto-closed' switches
-        self.osc_closed_switches = ['trough2','trough3']
+        self.osc_closed_switches = ['trough1', 'trough2','trough3']
 
         # call the super class which makes the game 
         # the so-called 'machine yaml; file must meet the following requirements:

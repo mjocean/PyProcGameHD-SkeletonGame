@@ -130,6 +130,18 @@ class Frame(object):
         #frame.set_data(self.get_data())
         return frame
     
+    def tint(self, r,g,b):
+        """ returns a copy of a Frame, tinted with the set R, G, B amounts.  Useful for cheap effects """
+        frame = Frame(self.width, self.height)
+        dframe = self.copy()
+        frame.fill_rect(0,0,self.width,self.height,(r,g,b))
+        # sdl2_DisplayManager.inst().blit(source_tx=self.pySurface, dest_tx=frame.pySurface, dest=(0,0,self.width,self.height), area=(0,0,self.width,self.height), special_flags = 0,blendmode='MOD')
+        sdl2_DisplayManager.inst().blit(source_tx=frame.pySurface, dest_tx=dframe.pySurface, dest=(0,0,self.width,self.height), area=(0,0,self.width,self.height), special_flags = 0,blendmode='MOD')
+
+        #frame.set_data(self.get_data())
+        return dframe
+
+
     def scale(self, percentage, new_w=None, new_h=None):
         # resizes a frame...
         # raise ValueError, "Scale not yet programmed..."

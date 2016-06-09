@@ -15,8 +15,15 @@ class AdvancedMode(Mode):
         """
         super(AdvancedMode, self).__init__(game, priority)
         self.mode_type = mode_type
+        self.mode_init()
 
         game.notifyOfNewMode(self)
+
+    def mode_init(self):
+        """ called when this mode is created 
+            --use to set up initial vars as needed 
+        """
+        pass
 
     def force_event_next(self):
         self.game.notifyNextModeNow(self)

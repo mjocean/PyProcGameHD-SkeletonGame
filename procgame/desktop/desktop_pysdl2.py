@@ -11,6 +11,11 @@ import copy
 import ctypes
 from .. import config
 import os
+from time import sleep
+try:
+    import serial
+except Exception, e:
+    print "pySerial not found; RGBDMD support will be unavailable"
 
 from procgame.events import EventManager
 
@@ -53,9 +58,29 @@ class Desktop():
         self.fullscreen = config.value_for_key_path(keypath='dmd_fullscreen', default=False)
         self.window_border = config.value_for_key_path(keypath='dmd_window_border', default=True)
         self.dmd_screen_size = ((self.dots_w)*self.screen_scale, (self.dots_h)*self.screen_scale)
+        self.dmd_soften = config.value_for_key_path(keypath='dmd_soften', default="0")
+        self.use_rgb_dmd_device = config.value_for_key_path(keypath='rgb_dmd.enabled', default=False)
+        if(self.use_rgb_dmd_device):
+            # turn off dots and scaling, since they are incompatible (at this time) --SDL2 bug.
+            self.screen_scale = 1
+            self.dot_filter = False
+            self.serial_port_number = config.value_for_key_path(keypath='rgb_dmd.com_port', default=None)
+            if(self.serial_port_number is None):
+                raise ValueError, "RGBDMD: config.yaml specified rgb_dmd enabled, but no com_port value (e.g., com3) given!"
+
         self.setup_window()
 
-        
+        if(self.use_rgb_dmd_device):
+            if(serial is None):
+                raise ValueError, "RGBDMD: config.yaml specified rgb_dmd enabled, but requird pySerial library not installed/found."
+            self.serialPort = serial.Serial(port=self.serial_port_number, baudrate=2500000)  
+            self.magic_cookie = bytearray([0xBA,0x11,0x00,0x03,  0x04,  0x00,  0x00,0x00])
+
+            self.serialPort.write(self.magic_cookie);
+
+            self.draw = self.draw_to_rgb_dmd            
+            return
+
         if(self.dot_filter==True):
             dmd_grid_path = config.value_for_key_path(keypath='dmd_grid_path', default='./')
             # self.dot_filter = False
@@ -90,7 +115,7 @@ class Desktop():
             sdl2.SDL_SetRenderTarget(sdl2_DisplayManager.inst().texture_renderer.renderer, bk) # revert back
         else:
             self.draw = self.draw_no_dot_effect
-            
+
 
     
     def add_key_map(self, key, switch_number):
@@ -158,7 +183,7 @@ class Desktop():
         if(self.window_border is False):
             flags = flags | sdl2.SDL_WINDOW_BORDERLESS
 
-        sdl2_DisplayManager.Init(self.dots_w, self.dots_h, self.screen_scale,  "HD VGA PyProcGame.  [CTRL-C to exit]", self.screen_position_x,self.screen_position_y, flags)
+        sdl2_DisplayManager.Init(self.dots_w, self.dots_h, self.screen_scale,  "PyProcGameHD.  [CTRL-C to exit]", self.screen_position_x,self.screen_position_y, flags, self.dmd_soften)
         sdl2_DisplayManager.inst().fonts_init(None,"Courier")
 
         # pygame.mouse.set_visible(False)
@@ -181,8 +206,12 @@ class Desktop():
     def draw(self, frame):
         """Draw the given :class:`~procgame.dmd.Frame` in the window."""
         sdl2_DisplayManager.inst().clear((0,0,0,255))
-        sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)
-    
+
+        if(not self.fullscreen==True):
+            sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)
+        else:
+            sdl2.SDL_RenderCopy(sdl2_DisplayManager.inst().texture_renderer.renderer, frame.pySurface.texture, None, sdl2.rect.SDL_Rect(0,0,self.window_w,self.window_h))
+
         # sdl2_DisplayManager.inst().screen_blit(source_tx=self.dot_tex, expand_to_fill=True)
         sdl2.SDL_RenderCopy(sdl2_DisplayManager.inst().texture_renderer.renderer, self.dot_tex, None, sdl2.rect.SDL_Rect(0,0,self.window_w,self.window_h))
 
@@ -193,9 +222,45 @@ class Desktop():
     def draw_no_dot_effect(self, frame):
         """Draw the given :class:`~procgame.dmd.Frame` in the window."""
         sdl2_DisplayManager.inst().clear((0,0,0,255))
+        if(not self.fullscreen==True):
+            sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)
+        else:
+            sdl2.SDL_RenderCopy(sdl2_DisplayManager.inst().texture_renderer.renderer, frame.pySurface.texture, None, sdl2.rect.SDL_Rect(self.screen_position_x,self.screen_position_y,self.screen_position_x+self.window_w,self.screen_position_y+self.window_h))
+        sdl2_DisplayManager.inst().flip()
+
+
+    def draw_to_rgb_dmd(self, frame):
+        sdl2_DisplayManager.inst().clear((0,0,0,255))
         sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)
         sdl2_DisplayManager.inst().flip()
 
+        bucket = sdl2_DisplayManager.inst().make_bits_from_texture(frame.pySurface, 128, 32)
+        
+        self.serialPort.write(self.magic_cookie);
+        s = bytearray([])
+        i = 0
+
+        while(i < 128*32*4):
+            # print("pixel %i: %s, %s, %s, %s" % (i/4, bucket[i], bucket[i+1], bucket[i+2], bucket[i+3]))
+            
+            s.append(bucket[i])
+            s.append(bucket[i+1])
+            s.append(bucket[i+2])
+            # s.append("%c%c%c" % (bucket[i], bucket[i+1], bucket[i+2]))
+            # self.serialPort.write("%c%c%c" % (bucket[i], bucket[i+1], bucket[i+2]))
+
+            i+=4
+        # print (s)
+        self.serialPort.write(s)            
+
+        del bucket
+        # print(type(b))
+
+        # del tx
+        # do python send
+
+
     def __str__(self):
         return '<Desktop pySDL2>'
+
 

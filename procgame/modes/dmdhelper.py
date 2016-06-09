@@ -24,6 +24,8 @@ class DMDHelper(Mode):
     def genMsgFrame(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False, flashing=False):
         if(font_style is None):
             font_style = dmd.HDFontStyle()
+        elif(isinstance(font_style,basestring)):
+            font_style = self.game.fontstyles[font_style]
         if(font_key is None):
             font = self.msgfont
         else:
