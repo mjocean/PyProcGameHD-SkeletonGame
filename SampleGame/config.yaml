@@ -32,7 +32,7 @@ screen_position_x: 123              # an offset for where the window should be l
 screen_position_y: 104              # 224*5x112*5 = 1120x560; the difference is 246x208 hence the offsets 123x104
 dmd_window_border: True             # show a window border?  In the machine, go without it, and with black wallpaper
 
-PYSDL2_DLL_PATH: c:\P-ROC\games\Buffy-accel\DLLs\ # where to find the sdl2.dll
+PYSDL2_DLL_PATH: c:\P-ROC\DLLs\ # where to find the sdl2.dll
 
 vp_game_map_file: /P-ROC/shared/vp_game_map.yaml  # relevant for Visual Pinball (only)
 
