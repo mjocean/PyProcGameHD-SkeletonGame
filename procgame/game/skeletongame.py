@@ -26,7 +26,7 @@ from ..modes import ScoreDisplay
 from ..modes import Trough, ballsave, BallSearch
 from ..modes import osc
 from ..modes import DMDHelper, SwitchMonitor
-from ..modes import score_display, bonusmode, service, Attract, Tilt, Tilted
+from ..modes import bonusmode, service, Attract, Tilt, Tilted
 
 from .. import sound
 from .. import config
@@ -121,13 +121,13 @@ class SkeletonGame(BasicGame):
             if(machineType is None):
                 self.config = config_named(machineYamlFile)
                 if not self.config:
-                    raise ValueError, 'machineType not set in SkeletonGame() init.' % (filename)
+                    raise ValueError, 'Yaml file "%s" could not be loaded and machineType not passed as arg to SkeletonGame() init.' % (machineYamlFile)
 
                 machineType = self.config['PRGame']['machineType']
             
             machine_type = pinproc.normalize_machine_type(machineType)
             if not machine_type:
-                raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (filename)
+                raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
 
             super(SkeletonGame, self).__init__(machine_type)
 
@@ -197,9 +197,11 @@ class SkeletonGame(BasicGame):
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
             self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
 
+            self.dmdHelper = DMDHelper(game=self)
+            self.modes.add(self.dmdHelper)
 
             if(self.use_stock_scoredisplay):
-                self.score_display = score_display.ScoreDisplay(self,0)
+                self.score_display = ScoreDisplay(self,0)
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
@@ -247,23 +249,23 @@ class SkeletonGame(BasicGame):
             bs_resetSwitches = list()
             self.ball_search_tries = 0
 
+            # add ball search options as per config.yaml
+            bs_stopSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'stop' or 'stop' in sw.ballsearch))]
+            bs_resetSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'reset' or 'reset' in sw.ballsearch))]
+            
+            self.ballsearch_resetSwitches = dict()
+            for sw in bs_resetSwitches:
+                v = 'closed' if sw.type == 'NC' or sw.type == 'nc' else 'open'
+                self.ballsearch_resetSwitches[sw.name]=v
+
+            self.ballsearch_stopSwitches = dict()
+            for sw in bs_stopSwitches:
+                v = 'active' if sw.type == 'NC' or sw.type == 'nc' else 'closed'
+                self.ballsearch_stopSwitches[sw.name]=v
+
+            self.ballsearch_coils = [dr.name for dr in self.coils if (hasattr(dr,'ballsearch') and dr.ballsearch == True)]
+
             if(self.use_ballsearch_mode):
-                # add ball search options as per config.yaml
-                bs_stopSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'stop' or 'stop' in sw.ballsearch))]
-                bs_resetSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'reset' or 'reset' in sw.ballsearch))]
-                
-                self.ballsearch_resetSwitches = dict()
-                for sw in bs_resetSwitches:
-                    v = 'closed' if sw.type == 'NC' or sw.type == 'nc' else 'open'
-                    self.ballsearch_resetSwitches[sw.name]=v
-
-                self.ballsearch_stopSwitches = dict()
-                for sw in bs_stopSwitches:
-                    v = 'active' if sw.type == 'NC' or sw.type == 'nc' else 'closed'
-                    self.ballsearch_stopSwitches[sw.name]=v
-
-                self.ballsearch_coils = [dr.name for dr in self.coils if (hasattr(dr,'ballsearch') and dr.ballsearch == True)]
-
                 if(len(bs_stopSwitches) == 0 and len(bs_resetSwitches) == 0):
                     self.log("Could not use Ball search mode as there were no ballsearch tags (reset/stop) on any game switches in the yaml. ")
                     self.log(" -- will default to using your games: do_ball_search() method...")
@@ -285,8 +287,6 @@ class SkeletonGame(BasicGame):
                 self.osc = osc.OSC_Mode(game=self, priority=1, closed_switches=self.osc_closed_switches)
                 self.modes.add(self.osc)
 
-            self.dmdHelper = DMDHelper(game=self)
-            self.modes.add(self.dmdHelper)
 
             self.switchmonitor = SwitchMonitor(game=self)
             self.modes.add(self.switchmonitor)
@@ -566,6 +566,12 @@ class SkeletonGame(BasicGame):
         self.load_settings('game_default_settings.yaml','game_user_settings.yaml')
 
         self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
+        # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
+
+        game_volume = self.user_settings['Sound']['Initial volume']
+        v = game_volume/10.0
+        self.log("VOLUME SET TO: %f" % v)
+        self.sound.set_volume(v)
 
         ## high score stuff:
         self.highscore_categories = []
@@ -849,6 +855,7 @@ class SkeletonGame(BasicGame):
 
     def service_mode_ended(self):
         self.save_settings()
+        self.load_settings_and_stats()
         self.reset()
 
     def disableAllLamps(self):

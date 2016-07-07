@@ -7,8 +7,9 @@ from pygame.font import *
 
 class BaseGameMode(procgame.game.AdvancedMode):
     """
-    A mode that runs whenever the GAME is in progress.
-    (notice the super() function call specifies type .Game)
+    An example of a mode that runs whenever the GAME is in progress.
+    Notice the super() function call in __init__ below specifies 
+     the mode_type is set to AdvancedMode.Game.  This means:
     - it is automatically added when a game starts
         (mode_started will be called once per game)
     - it is automatically removed when a game ends
@@ -43,10 +44,18 @@ class BaseGameMode(procgame.game.AdvancedMode):
         # self.leftTargets = [False, False, False, False, False]
         # self.kickbackEnabled = False
 
-        # but these are properties of the PLAYER not the mode, so we
-        # store them there, instead, when the player is added to the game!
+        # you CAN do this, and it's OK to do so, but these are properties 
+        #  of the PLAYER not the mode, so if there's more than one player, 
+        #  when the player number changes, these are no longer valid, but we
+        #  may want to restore them when this player's turn resumes.
+
+        #  We need to store some data per player.  Fortunately, that's
+        #  what the player object lets us do!
 
     def evt_player_added(self, player):
+        """ an event that gets fired whenever a player is added to the game (presses start);
+            the player argument is the newly created player who has just been added
+        """
         player.setState('multiplier', 0)
         player.setState('standupSwitchL', False) 
         player.setState('standupSwitchC', False) 
@@ -54,9 +63,17 @@ class BaseGameMode(procgame.game.AdvancedMode):
         player.setState('idle_balls', 0)
         player.setState('leftTargets', [False, False, False, False, False])
         player.setState('kickbackEnabled', False)
-
-
+        
+        """
+        Notice that progress is stored in the player object, so check with:
+            self.game.getPlayerState(key)
+        which is a wrapper around:
+            self.game.get_current_player().getState(key)
+        """
+        
     def evt_ball_starting(self):
+        """ an event that gets fired when a ball is starting (for any player) """
+
         # to use the ball saver, we give it the name of a ball-saver
         # method to be called when the ball is saved --that is 
         # defined below
@@ -199,8 +216,11 @@ class BaseGameMode(procgame.game.AdvancedMode):
     def sw_ballPopper_active_for_200ms(self, sw):
         # ballPopper is the vertical up kicker (VUK) in the Skull.
         # note that blindly kicking the ball up is unwise...
-        if(self.game.gun_mode.clearToLaunchFromSkull()):
-            self.game.coils.ballPopper.pulse()
+        
+        # check via something like:
+        #if(self.game.gun_mode.clearToLaunchFromSkull()):
+        #    self.game.coils.ballPopper.pulse()
+        self.game.coils.ballPopper.pulse()
 
         # either way, reset the droptarget
         self.game.lamps.dropTarget.pulse()

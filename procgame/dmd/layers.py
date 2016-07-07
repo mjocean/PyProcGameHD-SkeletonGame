@@ -36,6 +36,30 @@ class FrameLayer(Layer):
         return self.frame
 
 
+class ScaledLayer(Layer):
+    """ a layer that scales it's contents to a specific size 
+        most useful if a scaled layer contains a grouped layer
+    """
+    def __init__(self, width, height, content_layer):
+        super(ScaledLayer, self).__init__(content_layer.opaque)
+        self.width = width
+        self.height = height
+        self.content_layer = content_layer
+        self.nframe = None
+
+    def next_frame(self):
+        if(self.nframe is not None):
+            del self.nframe
+
+        t = self.content_layer.next_frame()
+
+        if(t is None):
+            return None
+        else:
+            self.nframe = t.copy()
+            self.nframe.scale(0.5, new_w=self.width, new_h=self.height)
+        return self.nframe
+
 class SolidLayer(Layer):
     def __init__(self, width, height, color, opaque=True):
         super(SolidLayer, self).__init__(opaque)
@@ -1011,9 +1035,9 @@ class HDTextLayer(TextLayer):
         # self.blink_frames_counter = 0
 
 
-    def set_text(self, text, seconds=None, blink_frames=None, style=None):
+    def set_text(self, text, seconds=None, blink_frames=None, style=None, force_update=False):
         """Displays the given message for the given number of seconds."""
-        if(self.text is not None and self.text == text): 
+        if((self.text is not None and self.text == text) and not force_update): 
             return self
         #print("set_text: '%s'" % text)
 

@@ -45,7 +45,7 @@ class AssetManager(object):
 
         path = asset_config_path
         if not os.path.exists(asset_config_path): # try another location...
-            self.logger.warning('asset configuration file found at %s' % path)
+            self.logger.warning('No asset configuration file found at %s' % path)
 
             if(quick_load):
                 asset_config_path = curr_file_path + "/asset_list_quick.yaml"
@@ -54,7 +54,7 @@ class AssetManager(object):
             path = asset_config_path
 
         if not os.path.exists(asset_config_path):
-            self.logger.warning('asset configuration file found at %s' % path)
+            self.logger.warning('No asset configuration file found at %s' % path)
 
             raise ValueError, "No asset configuration file found at '" + path + "'" 
 

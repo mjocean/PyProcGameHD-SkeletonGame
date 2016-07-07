@@ -169,11 +169,32 @@ class ScoreDisplay(Mode):
         if(fs is not None):
             fs = self.game.fontstyles[fs]
 
-        self.common = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height-5, self.font_common, "center", vert_justify="bottom", width=self.game.dmd.width)
+        self.common = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height, self.font_common, "center", vert_justify="bottom", width=self.game.dmd.width)
         self.common.style = fs
         # self.common.composite_op = "magentasrc"
 
         self.layer.layers += [self.common]
+
+        self.score_layer_player = []
+
+        for i in range(4): # pre-create score locations for four players
+            score = 0
+            is_active_player = False
+            font = self.font_for_score(score=score, is_active_player=is_active_player)
+            pos = self.pos_for_player(player_index=i, is_active_player=is_active_player)
+            justify = self.justify_for_player(player_index=i)
+            vjustify = "top" if i < 2 else "bottom"
+
+            if(is_active_player):
+                col = (132,132,132)
+                col_int = (255,255,0)
+            else:
+                col = (82,82,0)
+                col_int = (50,0,0)
+
+            self.score_layer_player.append(dmd.HDTextLayer(pos[0], pos[1], font, justify=justify, vert_justify=vjustify, opaque=False, width=200, height=100, line_color=col, line_width=1, interior_color=col_int, fill_color=None))
+        pass
+
 
     def reset(self):
         """ call this when the machine is reset to also reset 
@@ -280,6 +301,10 @@ class ScoreDisplay(Mode):
         # layer.composite_op = "magentasrc"
     
         # self.layer.layers += [layer]
+        
+
+        for i in range(0,4):
+            self.score_layer_player[i].enabled = False
 
     def update_layer_4p(self):
         self.layer.layers = [self.common]
@@ -291,8 +316,7 @@ class ScoreDisplay(Mode):
             pos = self.pos_for_player(player_index=i, is_active_player=is_active_player)
             justify = self.justify_for_player(player_index=i)
             vjustify = "top" if i < 2 else "bottom"
-            # layer = dmd.TextLayer(pos[0], pos[1], font, justify)
-
+            
             if(is_active_player):
                 col = (132,132,132)
                 col_int = (255,255,0)
@@ -300,11 +324,33 @@ class ScoreDisplay(Mode):
                 col = (82,82,0)
                 col_int = (50,0,0)
 
-            score_layer = dmd.HDTextLayer(pos[0], pos[1], font, justify=justify, vert_justify=vjustify, opaque=False, width=200, height=100, line_color=col, line_width=1, interior_color=col_int, fill_color=None)
+            force_update = False
+            if(self.score_layer_player[i].font != font):
+                self.score_layer_player[i].font = font
+                force_update = True
 
-            score_layer.set_text(self.format_score(score))
-            # score_layer.composite_op = "magentasrc"
-            self.layer.layers += [score_layer]
+            if(self.score_layer_player[i].x != pos[0]):
+                self.score_layer_player[i].x = pos[0]
+                force_update = True
+
+            if(self.score_layer_player[i].y != pos[1]):
+                self.score_layer_player[i].y = pos[1]
+                force_update = True                
+
+            self.score_layer_player[i].justify = justify
+            self.score_layer_player[i].Vjustify = vjustify
+            self.score_layer_player[i].set_text(self.format_score(score), style=
+                dmd.HDFontStyle(interior_color=col_int, line_width=1, line_color=col, fill_color=None),
+                force_update = force_update)
+
+            self.score_layer_player[i].enabled = True
+
+            self.layer.layers += [self.score_layer_player[i]]
+
+        # turn off unused display elements
+        for i in range(i+1,4):
+            self.score_layer_player[i].enabled = False
+        
         pass
 
     def mute_score(self, muted):

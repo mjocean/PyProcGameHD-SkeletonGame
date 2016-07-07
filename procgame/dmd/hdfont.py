@@ -56,10 +56,14 @@ class HDFont(object):
         font_path = font_file_path
         if(font_path is None):
             font_path = match_font(fontname)
-        p = sdl2_DisplayManager.inst().font_add(font_path=font_path, font_alias=fontname, size=None, color=None, bgcolor=None)
+        try:
+            p = sdl2_DisplayManager.inst().font_add(font_path=font_path, font_alias=fontname, size=None, color=None, bgcolor=None)
+        except Exception, e:
+            raise ValueError, "Specific font '%s' could not be found on your system or in path '%s' Please install/verify." % (fontname, font_file_path)
 
         if(p==None):
-            raise ValueError, "Specific font could not be found on your system.  Please install '" + fontname + "'."
+            raise ValueError, "Specific font '%s' could not be found on your system or in path '%s' Please install/verify." % (fontname, font_file_path)
+
         self.pygFont = p # pygame.font.Font(p,size)
 
         self.name = fontname
@@ -265,7 +269,16 @@ def hdfont_named(name, size, bold=False, font_file_path=None):
     return font
 
 
+def show_commandline_help():
+    print("HELP!:")
+    exit(1)
+
 def main():
+    from os import sys
+
+    if len(sys.argv) <= 1:
+        show_commandline_help()   
+
     import font
     from font import Font
     import layers
@@ -273,28 +286,60 @@ def main():
     import time 
     import sdl2
     t0 = time.clock()
+    import ctypes
+    from ctypes import byref, cast, POINTER, c_int, c_float, sizeof, c_uint32, c_double, c_voidp, c_void_p
+    from sdl2 import endian
+ 
+    exp_font_name = sys.argv[1]
 
-    sdl2_DisplayManager.Init(512,512,1)
+    font_size = 48
+
+    if len(sys.argv) > 2:
+        font_size = int(sys.argv[2])
+
+    sdl2_DisplayManager.Init(10,10,1)
     sdl2_DisplayManager.inst().fonts_init("Courier", "HHSam")
-    sdl2_DisplayManager.inst().font_add(font_path="assets/T2.ttf", font_alias="T2_30", size=30)#, color=None, bgcolor=None)
-    f = sdl2_DisplayManager.inst().font_add(font_path="assets/HH_Samuel.ttf", font_alias="HHSam_30", size=48)#, color=None, bgcolor=None)
+    
+    font_path = match_font(exp_font_name) #"coalition") 
+    sdl2_DisplayManager.inst().font_add(font_path=font_path, font_alias="export_font", size=font_size)#, color=None, bgcolor=None)
 
+    char_size = 0
     lChars = [ chr(i+ord(' ')) for i in xrange(0,95)]
+    for char_offset,c in zip(xrange(0,95),lChars):
+        # surf = f.textHollow(c, line_color, interior_color, line_width, fill_color)
+        (font_width,font_height) = sdl2_DisplayManager.inst().font_get_size(c,'export_font', font_size)
+        char_size = max(char_size, font_width, font_height)
 
-    char_size = 50
-    frame = Frame(width=512, height=512)
+    width = height = char_size * 10
+    font_sizes = ''
 
-    interior_color = (255,0,255)
-    line_width = 1
-    fill_color = (0,0,0)
-    line_color = (0,255,0)
+    # hack stuff to re-attach the correctly sized window
+    sdl2_DisplayManager.inst().window = sdl2.ext.Window("Font Preview", size=(width, height))  
+    sdl2_DisplayManager.inst().texture_renderer = sdl2.ext.Renderer(sdl2_DisplayManager.inst().window)  
+    sdl2_DisplayManager.inst().fill = sdl2_DisplayManager.inst().texture_renderer.fill
+    sdl2_DisplayManager.inst().clear = sdl2_DisplayManager.inst().texture_renderer.clear
+    sdl2_DisplayManager.inst().factory = sdl2.ext.SpriteFactory(renderer=sdl2_DisplayManager.inst().texture_renderer)  
+
+    sdl2_DisplayManager.inst().show_window()
+
+    frame = Frame(width, height)
+
+    #BGR?
+    interior_color = (255,255,255)
+    line_width = 0
+    #fill_color = (255,0,0)
+    line_color = (1,1,1)
 
     for char_offset,c in zip(xrange(0,95),lChars):
         # surf = f.textHollow(c, line_color, interior_color, line_width, fill_color)
         
-        surf = sdl2_DisplayManager.inst().font_render_bordered_text(c, font_alias='HHSam_30', size=48, border_width=2, border_color=(255,0,255), color=(0,255,0))
+        surf = sdl2_DisplayManager.inst().font_render_bordered_text(c, font_alias='export_font', size=font_size, border_width=line_width, border_color=line_color, color=interior_color)
         (w,h) = surf.size
-
+        (font_width,font_height) = sdl2_DisplayManager.inst().font_get_size(c,'export_font', font_size)
+        
+        #font_sizes += format(font_width,'x')
+        font_sizes  += str(font_width)
+        font_sizes += ","
         F = Frame(width=w, height=h, from_surface=surf)
             
         char_x = char_size * (char_offset % 10)
@@ -303,13 +348,67 @@ def main():
         Frame.copy_rect(dst=frame, dst_x=char_x, dst_y=char_y, src=F, src_x=0, src_y=0, width=w, height=h, op='copy')
         #x += width + self.tracking
 
+        
     sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)#, area=(10,10,400,200))
     
-    ss = sdl2.ext.SoftwareSprite(frame.pySurface)
-    sdl2.SDL_SaveBMP(ss.contents, "file.bmp")
+    texture_renderer = sdl2_DisplayManager.inst().texture_renderer
+    bk = sdl2.SDL_GetRenderTarget(texture_renderer.renderer)
+    
+    t =  sdl2.render.SDL_CreateTexture(texture_renderer.renderer, sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,
+                                                                  sdl2.render.SDL_TEXTUREACCESS_STREAMING,
+                                                                  width, height)
+    #create a new texture and blit the frame to it, then grab bits from that
+    texture_renderer.clear((0,0,0,0))
+    sdl2.SDL_SetRenderTarget(texture_renderer.renderer, t)
+    
+    
+
+    #sdl2_DisplayManager.inst().blit(source_tx=frame.pySurface, dest_tx = t, dest = (0,0,512,512))
+    texture_renderer.copy(frame.pySurface, (0,0,width,height),(0,0,width,height))
+    
+
+    pitch = c_int()
+    bytes = c_void_p()
+    rect=sdl2.SDL_Rect(0,0,width,height)
+    
+    sdl2.SDL_LockTexture(t, rect, ctypes.byref(bytes), ctypes.byref(pitch))
+        
+    if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
+        rmask = 0x000000FF
+        gmask = 0x0000FF00
+        bmask = 0x00FF0000
+        amask = 0xFF000000
+    else:
+        rmask = 0xFF000000
+        gmask = 0x00FF0000
+        bmask = 0x0000FF00
+        amask = 0x000000FF
+        
+    print rmask
+            
+    imgsurface = sdl2.surface.SDL_CreateRGBSurfaceFrom(bytes, width, height,
+                                                      32, pitch, rmask,
+                                                      gmask, bmask, amask)
+    if not imgsurface:
+        raise sdl2.ext.SDLError()
+    
+    sdl2.SDL_RenderReadPixels(texture_renderer.renderer, rect, 0, bytes, pitch)
+    sdl2.SDL_SaveBMP(imgsurface, 'image.png')
+    
+    
+    #4) Restore renderer's texture target
+    sdl2.SDL_SetRenderTarget(texture_renderer.renderer, bk)
+    
+    #ss = sdl2.ext.SoftwareSprite(surf, True)
+
+    #ss = sdl2.ext.SoftwareSprite(imgsurface, True)
+    #sdl2.SDL_SaveBMP(ss.contents, "file.bmp")
+    #
+    #
+    print font_sizes
 
     sdl2_DisplayManager.inst().flip()
-    sdl2.SDL_Delay(2000)
+    sdl2.SDL_Delay(2)
 
 
     # evilFont = Font()

@@ -6,6 +6,7 @@ from .. import dmd
 from ..dmd import TransitionLayer
 from ..dmd import Transition
 from ..dmd import HDTextLayer
+from ..dmd import HDFont
 from procgame.yaml_helper import value_for_key
 
 class DMDHelper(Mode):
@@ -81,6 +82,82 @@ class DMDHelper(Mode):
                    handler=self.msg_over)
 
 
+    def generateTextLayerFromYaml(self, yaml_struct):
+        """ parses a text descriptor format yaml and generates a text layer to be filled with text via set_text() 
+              For now, the score_display.yaml example(s) should suffice; better documentation forthcoming
+        """
+        enabled = value_for_key(yaml_struct, 'enabled', True)
+        if(not enabled):
+            return None
+
+        # get font
+        fname = value_for_key(yaml_struct, 'font')
+        if(fname is None):
+            raise ValueError, "yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present [%s]" % (fname, yaml_struct)
+
+        f = self.game.fonts[fname]
+        if(fname not in self.game.fonts):
+            raise ValueError, "yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname
+
+        # get font style
+        font_style = value_for_key(yaml_struct, 'font_style')
+        if(isinstance(font_style,dict)):
+            # dive deeper into this struct, making a new font_style on the fly for the user
+            ic = value_for_key(font_style, 'interior_color')
+            lc = value_for_key(font_style, 'line_color')
+            lw = value_for_key(font_style, 'line_width')
+            k = value_for_key(font_style, 'key')
+            font_style = dmd.HDFontStyle( interior_color=ic, 
+                                    line_width=lw, 
+                                    line_color=lc )
+            #self.fontstyles[k] = font_style
+
+        elif(isinstance(font_style,basestring)):
+            font_style=self.game.fontstyles[font_style]
+        else:
+            # no font style specified or value is none
+            font_style = None
+
+        # get positional data
+        location = value_for_key(yaml_struct, 'location')
+        if(location is None):
+            # no location data -- log an error and use the center of the display
+            raise ValueError, "No location information found in Yaml block."
+        else:
+            x = value_for_key(location, 'x', 0.5)
+            y = value_for_key(location, 'y', 0.5)
+            vj = value_for_key(location, 'v_justify', "center")
+            hj = value_for_key(location, 'h_justify', "center")
+
+            if(isinstance(x,int)):
+                # offset values -- use the values as given unless negative!
+                if(x < 0):
+                    x = self.game.dmd.width - x
+                pass
+            elif(isinstance(x,float)):
+                # percentage values - set to appropriate percentage of display width
+                x = self.game.dmd.width * x
+
+            if(isinstance(y,int)):
+                # offset values -- use the values as given unless negative!
+                if(y < 0):
+                    y = self.game.dmd.height - y
+                pass
+            elif(isinstance(y,float)):
+                # percentage values - set to appropriate percentage of display height
+                y = self.game.dmd.height * y
+
+        # create the layer -- it matters if we have an HD font or not...
+        if(isinstance(f,HDFont)):
+            tL = dmd.HDTextLayer(x=x, y=y, font=f, justify=hj, vert_justify=vj, opaque=False, width=None, height=None)
+            tL.style = font_style            
+        else:
+            tL = dmd.TextLayer(x=x, y=y, font=f, justify=hj, opaque=False, width=None, height=None, fill_color=None) 
+        
+        tL.enabled = value_for_key(yaml_struct,"visible",True)
+        return tL
+
+
     def genLayerFromYAML(self, yamlStruct):
         duration = None
         lampshow = None
@@ -95,7 +172,7 @@ class DMDHelper(Mode):
                 font_style=self.game.fontstyles[fsV]
             else:
                 font_style=None
-            lyrTmp = self.game.generateLayer(value_for_key(v,'Text'), value_for_key(v,'Animation'), font_key=value_for_key(v,'Font'), font_style=font_style)
+            lyrTmp = self.genMsgFrame(value_for_key(v,'Text'), value_for_key(v,'Animation'), font_key=value_for_key(v,'Font'), font_style=font_style)
             duration = value_for_key(v,'duration')
         elif ('Animation' in yamlStruct):
             v = yamlStruct['Animation']

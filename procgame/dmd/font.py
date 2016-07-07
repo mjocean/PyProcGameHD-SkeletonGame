@@ -3,6 +3,7 @@ from animation import Animation
 from dmd import Frame
 from procgame import config
 from procgame import util
+import csv
 
 # Anchor values are used by Font.draw_in_rect():
 AnchorN = 1
@@ -48,34 +49,50 @@ class Font(object):
         in the upper left at 0, 0.  The character widths are stored in the second frame
         within the 'raw' bitmap data in bytes 0-95.
         """
+        (font_info_file, ext) = os.path.splitext(filename)
+        (file_base_name, file_extension) = os.path.splitext(filename)
+        #if ext == '.bmp':
+        #    self.load_png_font(filename)
         self.__anim.load(filename, composite_op = 'blacksrc')
         if self.__anim.width != self.__anim.height:
             raise ValueError, "Width != height!"
-        if len(self.__anim.frames) == 1:
-            # We allow 1 frame for handmade fonts.
-            # This is so that they can be loaded as a basic bitmap, have their char widths modified, and then be saved.
-            print "Font animation file %s has 1 frame; adding one" % (filename)
-            self.__anim.frames += [Frame(self.__anim.width, self.__anim.height)]
-        elif len(self.__anim.frames) != 2:
-            raise ValueError, "Expected 2 frames: %d" % (len(self.__anim.frames))
+        if ext == '.dmd':
+            if len(self.__anim.frames) == 1:
+                # We allow 1 frame for handmade fonts.
+                # This is so that they can be loaded as a basic bitmap, have their char widths modified, and then be saved.
+                print "Font animation file %s has 1 frame; adding one" % (filename)
+                self.__anim.frames += [Frame(self.__anim.width, self.__anim.height)]
+            elif len(self.__anim.frames) != 2:
+                raise ValueError, "Expected 2 frames: %d" % (len(self.__anim.frames))
         self.char_size = self.__anim.width / 10
         self.bitmap = self.__anim.frames[0]
 
         self.char_widths = []
-        if(char_widths==None):
-            for i in range(96):
-                #print 'getting widths for character number: ' + str(i)
-                #print  'x ' + str(i%self.__anim.width)
-                self.char_widths += [self.__anim.frames[1].get_font_dot(i%self.__anim.width, i/self.__anim.width)]
-                #self.char_widths += [self.char_size] #JEK hack
-        else:
-            # print("font widths provided")
-            self.char_widths = char_widths
-            # for i in range(96):
-            #   self.__anim.frames[1].set_font_dot(i%self.__anim.width, i/self.__anim.width, self.char_widths[i])
+        if ext=='.dmd':
+            
+            if(char_widths==None):
+                for i in range(96):
+                    #print 'getting widths for character number: ' + str(i)
+                    #print  'x ' + str(i%self.__anim.width)
+                    self.char_widths += [self.__anim.frames[1].get_font_dot(i%self.__anim.width, i/self.__anim.width)]
+                    #self.char_widths += [self.char_size] #JEK hack
+            else:
+                # print("font widths provided")
+                self.char_widths = char_widths
+                # for i in range(96):
+                #   self.__anim.frames[1].set_font_dot(i%self.__anim.width, i/self.__anim.width, self.char_widths[i])
         
-
-
+        elif ext =='.bmp' or ext == '.png' or ext =='.jpg':
+                    #now read in the widths
+            (path,file) = os.path.split(filename)
+            csv_file = font_info_file + ".csv"
+            with open(csv_file, 'rb') as csvfile:
+                reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                for row in reader:                    
+                    for s in row:
+                        self.char_widths +=[int(s)]
+        else:
+            raise ValueError, "Font failed to load [%s] Expected font of type .dmd, .png, .bmp, or .jpg" % filename
         return self
     
     def save(self, filename):
@@ -327,5 +344,7 @@ def font_named(name):
         __font_cache[name] = font
         return font
     else:
-        raise ValueError, 'Font named "%s" not found; font_path=%s.  Have you configured font_path in config.yaml?' % (name, font_path)
+        if(font_path is None):
+            raise ValueError, 'Failed to load font "%s"; font_path was not set in your config.yaml (or config.yaml contains errors)' % (name)    
+        raise ValueError, 'Font named "%s" was not found in the following font_path=%s. Add the file or add additional folders to the font path in config.yaml' % (name, font_path)
 

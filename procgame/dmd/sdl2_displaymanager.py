@@ -7,13 +7,16 @@ except Exception, e:
         p = config.value_for_key_path('PYSDL2_DLL_PATH', None)
         if(p is None):
             print("Tried to load SDL2 but failed.  Please set PYSDL2_DLL_PATH in your system environment variables or in your config.yaml")
+            sys.exit()
         else:
             os.environ["PYSDL2_DLL_PATH"] = p
             try:
                 import sdl2.ext
             except Exception, e2:
-                print("Tried to load SDL2 but failed.  The PYSDL2_DLL_PATH in your system environment variables or in your config.yaml do not point to a valid SDL2 DLL (or SDL2 is not properly installed on your system)")
+                print("Tried to load SDL2 but failed. \nThe PYSDL2_DLL_PATH in your config.yaml ['%s'] does contain a valid SDL2 DLL (or SDL2 is not properly installed on your system)" % p)
                 print(e2)
+                import sys
+                sys.exit()
 
 from sdl2.ext.draw import prepare_color
 from sdl2.ext.color import convert_to_color
