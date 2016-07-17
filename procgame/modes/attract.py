@@ -79,6 +79,14 @@ class Attract(Mode):
             self.layer.reset()
         pass
 
+    def sw_flipperLwL_active_for_250ms(self, sw):
+        self.layer.force_next(False)
+        return False
+
+    def sw_flipperLwR_active_for_250ms(self, sw):
+        self.layer.force_next(True)
+        return False
+
     def next_both(self):
         self.next_show()
         self.next_sound()
