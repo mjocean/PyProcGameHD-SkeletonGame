@@ -1,5 +1,6 @@
 from dmd import *
 from procgame import config
+from random import randrange
 import hdfont
 try:
     import cv2
@@ -366,6 +367,7 @@ class FrameQueueLayer(Layer):
         if self.frame_time_counter == 0:
             self.frame_time_counter = self.frame_time
         return frame
+
 
 
 class TextLayer(Layer):
@@ -743,6 +745,7 @@ class ScriptlessLayer(ScriptedLayer):
         else:
             self.script.append({'layer':layer, 'seconds':seconds, 'callback':callback})
 
+
 class GroupedLayer(Layer):
     """:class:`.Layer` subclass that composites several sublayers (members of its :attr:`layers` list attribute) together."""
     
@@ -761,6 +764,14 @@ class GroupedLayer(Layer):
             self.layers = list()
         else:
             self.layers = layers
+
+    @property
+    def width(self):
+        return self.buffer.width
+
+    @property
+    def height(self):
+        return self.buffer.height
 
     def reset(self):
         for layer in self.layers:
@@ -793,6 +804,33 @@ class GroupedLayer(Layer):
         if composited_count == 0:
             return None
         return self.buffer
+
+class RandomizedLayer(GroupedLayer):
+    """ Layer that contains other layers and shows one at random when requested """
+    def __init__(self, layers):
+        if(layers is None):
+            raise ValueError, "Cannot initialize a RandomizedLayer with no content layers!"
+
+        super(RandomizedLayer, self).__init__(layers[0].width, layers[0].height, layers, layers[0].opaque)
+        self.layer = None
+
+    def reset(self):
+        for layer in self.layers:
+            if(layer is not None):
+                layer.reset()
+        self.randomize()
+
+    def randomize(self):
+        self.layer = None
+        idx = randrange(0,len(self.layers))
+        self.layer = self.layers[idx]
+        self.opaque = self.layers[idx].opaque
+        self.fill_color = self.layers[idx].opaque
+
+    def next_frame(self):       
+        if(self.layer is None):
+            return None
+        return self.layer.next_frame()
 
 class PanningLayer_pysurf(Layer):
     """Pans a frame about on a (width)x(height) buffer, possibly bouncing when it reaches the boundaries.

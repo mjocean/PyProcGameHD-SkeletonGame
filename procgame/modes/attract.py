@@ -1,7 +1,7 @@
 import procgame.game
 from ..game import Mode
 from .. import dmd
-from ..dmd import TransitionLayer, Transition
+from ..dmd import TransitionLayer, Transition, RandomizedLayer
 from ..dmd import HDFont, HDFontStyle
 import yaml
 from procgame.yaml_helper import value_for_key
@@ -52,6 +52,36 @@ class Attract(Mode):
                         else:
                             sl.append(lyrTmp, duration)
 
+                elif('RandomText' in l):
+                    v = l['RandomText']
+        
+                    fsV = value_for_key(v, 'FontStyle')
+                    if(fsV is not None):
+                        font_style=self.game.fontstyles[fsV]
+                    else:
+                        font_style=None
+        
+                    randomText = value_for_key(v,'TextOptions')
+                    headerText = value_for_key(v,'Header', None)
+                    duration = value_for_key(v,'duration')
+
+                    rndmLayers = []
+                    for line in randomText:
+                        selectedRandomText = line['Text']
+                        if(type(selectedRandomText) is list):
+                            completeText = selectedRandomText
+                        else:
+                            completeText = [selectedRandomText]
+
+                        if (headerText is not None):
+                            completeText[:0] = [headerText] # prepend the header text entry at the start of the list
+
+                        rndmLayers.append(self.game.generateLayer(completeText, value_for_key(v,'Animation'), font_key=value_for_key(v,'Font'), font_style=font_style))
+
+                    if(len(rndmLayers) > 0):
+                        lyrTmp = RandomizedLayer(layers=rndmLayers)
+
+                    sl.append(lyrTmp, duration, callback=cb)
                 else:
                     (lyrTmp, duration, lampshow, sound) = self.game.genLayerFromYAML(l)
 
