@@ -138,6 +138,56 @@ class LED(GameItem):
 											  self.brightness_compensation[i])))
 				self.current_color[i] = color[i]
 
+	def schedule(self, schedule, cycle_seconds=0, now=True, use_color=None):
+		""" all driver based gameitems are expected to support the `schedule()` 
+			command.  This adds compatibility with the schedule command for pdLED
+			based LEDs.  This is not an optimal way to use pdLEDs, however this
+			code is meant to be a stop gap measure """
+		self.logger.warning("Attempted to call schedule(%04x) on PD-LED %s" % (schedule, self.name))
+
+		if use_color==None:
+			if(hasattr(self, 'default_color')):
+				requested_color = self.default_color
+			else:
+				self.logger.warning("LED [%s] does not have a default color.  Using white" % self.name)
+				requested_color = "FFFFFF"
+		else:
+			requested_color = use_color
+			
+		my_string = str(bin(schedule)[2:].zfill(32))
+		#my_string = str(bin(int(schedule, 16))[2:].zfill(32))
+ 		self.logger.warning(my_string)
+		last = -1
+		script=[]
+		slices = 0
+		for b in my_string:
+			if  last != b:
+				#starting a new step in script
+				if last != -1:
+					#save off last script element
+					time_of_slice =  int(slices*1000/32)
+					script.append({"color": the_color, "time": time_of_slice})
+					#script += step
+		
+				if int(b) == 0 :
+					the_color="000000"
+				else:
+					the_color=requested_color
+				last = b
+				slices = 1
+				#start new element
+		
+			else:
+				slices +=1
+				
+		#process last chunk
+		time_of_slice =  int(slices*1000/32)
+		script.append({"color":the_color, "time":time_of_slice})
+		self.logger.info(self.name)
+		self.logger.info(script)
+		self.game.LEDs.run_script(self.name,script)
+		#self.LEDs.run_script(lamp_name,self.led_scripts[script])
+		
 	def set_fade_rate(self, fadetime):
 		"""Sets the default fade rate of the board this LED is on.
 
@@ -496,15 +546,15 @@ class PDBConfig(object):
 		# Loop through all of the drivers, initializing them with the polarity.
 		for i in range(0, 208):
 			state = {'driverNum': i,
-       	                'outputDriveTime': 0,
-       	                'polarity': True,
-       	                'state': False,
-       	                'waitForFirstTimeSlot': False,
-       	                'timeslots': 0,
-       	                'patterOnTime': 0,
-       	                'patterOffTime': 0,
-       	                'patterEnable': False,
-       	                'futureEnable': False}
+						'outputDriveTime': 0,
+						'polarity': True,
+						'state': False,
+						'waitForFirstTimeSlot': False,
+						'timeslots': 0,
+						'patterOnTime': 0,
+						'patterOffTime': 0,
+						'patterEnable': False,
+						'futureEnable': False}
 	
 			proc.driver_update_state(state)
 

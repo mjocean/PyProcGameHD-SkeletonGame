@@ -40,9 +40,13 @@ class BallSave(Mode):
 
     def start_lamp(self):
         """Starts blinking the ball save lamp.  Oftentimes called externally to start blinking the lamp before a ball is plunged."""
-        self.lamp.schedule(schedule=0xFF00FF00, cycle_seconds=0, now=True)
+        if(self.lamp is not None):
+            self.lamp.schedule(schedule=0xFF00FF00, cycle_seconds=0, now=True)
 
     def update_lamps(self):
+        if(self.lamp is None):
+            return
+
         if self.timer > 5:
             self.lamp.schedule(schedule=0xFF00FF00, cycle_seconds=0, now=True)
         elif self.timer > 2:
@@ -63,7 +67,8 @@ class BallSave(Mode):
         if self.trough_enable_ball_save:
             self.trough_enable_ball_save(False)
         self.timer = 0
-        self.lamp.disable()
+        if(self.lamp is not None):
+            self.lamp.disable()
         # Note: this is commented out in ap's version too...  
         # self.callback = None
 
@@ -101,7 +106,8 @@ class BallSave(Mode):
     def saving_ball(self):
         if not self.allow_multiple_saves:
             self.timer = 1
-            self.lamp.disable()
+            if(self.lamp is not None):
+                self.lamp.disable()
 
     def delayed_start_handler(self, sw):
         if self.mode_begin:

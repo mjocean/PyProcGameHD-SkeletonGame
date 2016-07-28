@@ -36,6 +36,12 @@ class FrameLayer(Layer):
                 self.blink_frames_counter -= 1
         return self.frame
 
+    def stop_blinking(self):
+        self.blink_frames = 0
+        self.blink_frames_counter = 0
+        if(self.frame is None):
+            self.frame = self.frame_old
+
 
 class ScaledLayer(Layer):
     """ a layer that scales it's contents to a specific size 

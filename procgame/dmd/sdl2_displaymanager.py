@@ -7,6 +7,7 @@ except Exception, e:
         p = config.value_for_key_path('PYSDL2_DLL_PATH', None)
         if(p is None):
             print("Tried to load SDL2 but failed.  Please set PYSDL2_DLL_PATH in your system environment variables or in your config.yaml")
+            import sys
             sys.exit()
         else:
             os.environ["PYSDL2_DLL_PATH"] = p
@@ -160,8 +161,14 @@ class sdl2_DisplayManager(object):
         else:
             raise ValueError, "sdl2_DisplayManager: fonts_init already completed previously.  Don't do it again."
 
-    def font_add(self, font_path, font_alias, size=None, color=None, bgcolor=None):
-        return self.font_manager.add(font_path = font_path, alias=font_alias, size=size)
+    def font_add(self, font_path, font_alias, size=None, color=None, bgcolor=None, bold=False):
+        tmp = self.font_manager.add(font_path = font_path, alias=font_alias, size=size)
+        # one day I will figure out why this does not work...
+        # if(bold):
+        #     sdl2.sdlttf.TTF_SetFontStyle(tmp, sdl2.sdlttf.TTF_STYLE_BOLD)
+        # else:
+        #     sdl2.sdlttf.TTF_SetFontStyle(tmp, sdl2.sdlttf.TTF_STYLE_NORMAL)            
+        return tmp
 
     def font_render_text(self, msg, font_alias=None, size=None, width=None, color=None, bg_color=None):
         # color = (color[0], color[1], color[2], 255)

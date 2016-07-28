@@ -1,5 +1,6 @@
 from ..game import Mode
 
+
 class Trough(Mode):
     """Manages trough by providing the following functionality:
 
@@ -45,7 +46,7 @@ class Trough(Mode):
                 delay=None, handler=self.early_save_switch_handler)
     
         self.add_switch_handler(name=self.shooter_lane_switchname, event_type='active', \
-                delay=0.5, handler=self.shooter_lane_active)
+                delay=0.25, handler=self.shooter_lane_active)
 
         # Reset variables
         self.num_balls_in_play = 0
@@ -102,7 +103,7 @@ class Trough(Mode):
             # the ball fell back into the trough.  Oof.
             self.game.log("trough: launch in progress, but shooter not seen --ball failed to serve to shooter lane!?")
             self.game.log("trough: re-trying serve to shooter lane")
-            self.common_launch_code()            
+            self.common_launch_code()
 
         if self.num_balls_in_play > 0:
             # Base future calculations on how many balls the machine 
@@ -251,7 +252,7 @@ class Trough(Mode):
                    handler=self.common_launch_code)
 
     def shooter_lane_active(self, sw):
-        """ Invoked automatically when the shooterlane has been active for 0.5 seconds """
+        """ Invoked automatically when the shooterlane has been active for 0.25 seconds """
         if(self.launch_in_progress):
             # great!  We are trying to launch a ball and the ball got there; commit
             self.num_balls_to_launch -= 1
@@ -271,3 +272,4 @@ class Trough(Mode):
                 self.launch_in_progress = False
                 if self.launch_callback:
                     self.launch_callback()
+

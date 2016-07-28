@@ -81,6 +81,14 @@ class Driver(GameItem):
     def __init__(self, game, name, number):
         GameItem.__init__(self, game, name, number)
         self.logger = logging.getLogger('game.driver')
+
+    def set_color(self, arg):
+        self.logger.debug('set_color failed for Driver %s - is NOT wsRGB', self.name)
+        pass
+
+    def restore_default_color(self):
+        self.logger.debug('restore_color failed for Driver %s - is NOT wsRGB', self.name)
+        pass
         
     def disable(self):
         """Disables (turns off) this driver."""

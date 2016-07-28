@@ -10,6 +10,19 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 from procgame.yaml_helper import value_for_key
 
+class DictWithDefault(dict):
+    # def set_default_miss_key(self, default_miss_key):
+    #     self.miss_key = default_miss_key
+    def __init__(self, default_miss_key):
+        dict.__init__(self)
+        self.miss_key = default_miss_key
+
+    def __missing__(self, key):
+        logging.error("***ASSET ERROR: An asset with key '%s' has not been loaded.  Using default '%s' instead" % (key, self.miss_key))
+        if(not self.miss_key in self):
+            raise KeyError("***ASSET ERROR: An asset with key '%s' has not been loaded.  And default '%s' could not be found to be used instead!" % (key, self.miss_key))
+        return self[self.miss_key]
+
 class AssetManager(object):
     """ The AssetManager class reads the asset_list.yaml file, loading from it Animations, Fonts, Lampshows, etc.
          the values data structure is loaded from :file:`./config/asset_list.yaml` when this submodule is loaded;
@@ -20,10 +33,9 @@ class AssetManager(object):
     game = None
 
     loaded_map = {}
-
-    animations = {}
-    lengths = {}
-    fonts = {}
+    animations = DictWithDefault(default_miss_key='missing')
+    lengths = DictWithDefault(default_miss_key='missing')
+    fonts = DictWithDefault(default_miss_key='default')
     sounds = {}
     fontstyles = {}
     numLoaded = 0
@@ -35,11 +47,9 @@ class AssetManager(object):
     def value_for_key_path(self, keypath, default=None):
         return value_for_key(self.values,keypath, default)
 
-    def loadConfig(self, curr_file_path, quick_load = False):
-        self.logger = logging.getLogger('game.assets')
-
-        if(quick_load):
-            asset_config_path = curr_file_path + "/config/asset_list_quick.yaml"
+    def loadConfig(self, curr_file_path, filename=None):
+        if(filename is not None):
+            asset_config_path = curr_file_path + "/config/" + filename
         else:
             asset_config_path = curr_file_path + "/config/asset_list.yaml"
 
@@ -47,8 +57,8 @@ class AssetManager(object):
         if not os.path.exists(asset_config_path): # try another location...
             self.logger.warning('No asset configuration file found at %s' % path)
 
-            if(quick_load):
-                asset_config_path = curr_file_path + "/asset_list_quick.yaml"
+            if(filename):
+                asset_config_path = curr_file_path + "/" + filename
             else:
                 asset_config_path = curr_file_path + "/asset_list.yaml"
             path = asset_config_path
@@ -67,8 +77,9 @@ class AssetManager(object):
             self.logger.error('Error loading asset config file from %s: %s', path, e)
 
 
-    def __init__(self, game, quick_load = False):
+    def __init__(self, game, yaml_values=None, yaml_file=None):
         super(AssetManager, self).__init__()
+        self.logger = logging.getLogger('game.assets')
         self.game = game
         self.dmd_path = game.dmd_path
         # self.screen=game.desktop.screen
@@ -81,7 +92,10 @@ class AssetManager(object):
         self.screen_height = sdl2_DisplayManager.inst().window_h
         self.screen_width = sdl2_DisplayManager.inst().window_w
 
-        self.loadConfig(game.curr_file_path,quick_load)
+        if(yaml_values is not None):
+            self.values = yaml_values
+        else:
+            self.loadConfig(game.curr_file_path,yaml_file)
 
         splash_file = self.value_for_key_path('UserInterface.splash_screen', None)
         self.rect_color = self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255))
@@ -276,8 +290,9 @@ class AssetManager(object):
             k  = value_for_key(s,'key')
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
+            streaming_load = value_for_key(s,'streaming_load',True)
             self.updateProgressBar("Audio: Music", fname)
-            self.game.sound.register_music(k,self.game.music_path+fname, volume=volume)
+            self.game.sound.register_music(k,self.game.music_path+fname, volume=volume) #, streaming_load=streaming_load)
             self.numLoaded += 1
 
         for s in effects:
@@ -291,11 +306,9 @@ class AssetManager(object):
         for s in voice:
             k  = value_for_key(s,'key')
             fname = value_for_key(s,'file')
-            channel = value_for_key(s,'channel',0)
             volume = value_for_key(s,'volume',.5)
             self.updateProgressBar("Audio Voices", fname)
-            # self.game.sound.register_sound(k,self.game.voice_path+fname, channel=channel, volume=volume)
-            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume)
+            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume) #, is_voice=True)
             self.numLoaded += 1
 
 

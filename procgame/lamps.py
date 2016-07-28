@@ -304,6 +304,11 @@ class LampController(object):
     def play_show(self, key, repeat=False, callback='None'):
         # Always stop any previously running show first.
         self.stop_show()
+        if(key not in self.shows):
+            self.logger.error('LAMPSHOW: Attempted to play unregistered lamp show "%s"...', key)
+            self.show_playing = False
+            return
+            
         self.show.load(self.shows[key], repeat, callback)
         self.game.modes.add(self.show)
         self.show_playing = True
