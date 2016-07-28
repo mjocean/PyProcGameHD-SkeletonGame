@@ -57,7 +57,6 @@ Fonts:
       - 255
       - 0
       - 128
-  FontStyles:
   - key: blueish
     interior_color:
       - 0
