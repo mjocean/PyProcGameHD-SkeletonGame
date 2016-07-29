@@ -161,7 +161,7 @@ class SkeletonGame(BasicGame):
             
             self.event_handlers = dict()
             # the evt_ methods:
-            self.known_events = ['tilt', 'single_ball_play', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
+            self.known_events = ['tilt', 'shoot_again', 'single_ball_play', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
             for e in self.known_events:
                 self.event_handlers[e] = list()
 
@@ -209,15 +209,35 @@ class SkeletonGame(BasicGame):
                 self.tilt_mode = Tilt(game=self, priority=98, font_big=self.fonts['tilt-font-big'], 
                     font_small=self.fonts['tilt-font-small'], tilt_sw='tilt', slam_tilt_sw='slamTilt')
 
-            self.ball_save = ballsave.BallSave(self, lamp=self.lamps.shootAgain, delayed_start_switch='shooter')
+            if 'shootAgain' in self.lamps:
+                shoot_again = self.lamps.shootAgain
+            else: 
+                sa = self.lamps.items_tagged('shoot_again')
+                if(type(sa) is list and len(sa)==0):
+                    logging.getLogger('BallSave').warning("No shoot again lamp could be found.  Either name a lamp ShootAgain or tag one 'shoot_again'")
+                    shoot_again = None
+                elif(type(sa) is list):
+                    shoot_again = sa[0]
+                    logging.getLogger('BallSave').warning("Multiple lamps have been tagged 'shoot_again' -- only the first will be used.")
+                else:
+                    shoot_again = sa
 
-            trough_switchnames = []
+            self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch='shooter')
+
             # Note - Game specific item:
+            trough_switchnames = self.switches.items_tagged('trough')
             # This range should include the number of trough switches for 
             # the specific game being run.  In range(1,x), x = last number + 1.
-            self.trough_count = self.config['PRGame']['numBalls']
-            for i in range(1,self.trough_count+1):
-                trough_switchnames.append('trough' + str(i))
+
+            if(len(trough_switchnames)==0):
+                logging.getLogger('Trough').warning("No switches have been tagged 'trough'.  Switches with names that start Trough will be used.")                
+                trough_switchnames = [t.name for t in self.switches if t.name.startswith("trough") ]
+            else:
+                trough_switchnames = [t.name for t in trough_switchnames]
+
+            if(len(trough_switchnames)==0):
+                logging.getLogger('Trough').error("No switches have been tagged 'trough' and no switch names start with 'trough'")
+                raise ValueError("Machine YAML must contain switches either tagged 'trough' or with names that start with 'trough'")
 
             # early_save_switchnames = ['outlaneR', 'outlaneL']
 
@@ -377,6 +397,9 @@ class SkeletonGame(BasicGame):
         return highscore.get_highscore_data(self.highscore_categories)
 
     def notifyOfNewMode(self,new_mode):
+        if(new_mode in self.known_modes[new_mode.mode_type]):
+            self.log("Skel: Ignoring already known mode '%s'" % new_mode)    
+            return
         self.known_modes[new_mode.mode_type].append(new_mode)
         self.log("Skel: Known advanced modes added '%s'" % new_mode)
 
@@ -410,7 +433,7 @@ class SkeletonGame(BasicGame):
         else:
             d = next_handler.handler(self.args)
 
-        if(d is not None and type(d) is int and d > 0):
+        if(d is not None and (type(d) is int or type(d) is float) and d > 0):
             self.curr_delayed_by_mode = next_handler.mode()
             self.switchmonitor.delay(name='notifyNextMode',
                event_type=None, 
@@ -448,7 +471,21 @@ class SkeletonGame(BasicGame):
             # not okay, wrong caller!!
             self.log("Skel: notifyNextModeNow called by %s, but currently blocked by %s!?" % (caller_mode, self.curr_delayed_by_mode))
 
-    def notifyModes(self, event, args=None, event_complete_fn=None):
+    def notifyModes(self, event, args=None, event_complete_fn=None, only_active_modes=True):
+        """ this method will notify all AdvencedMode derived modes of the given event.  Modes
+            will be notified in priority order and notifications happen over time -- that is, 
+            the next mode will be notified after the previous mode has completed dealing with this
+            notification.  To facilitate this, modes that handle the event (by defining a 
+            method of the same name as the event) should respond to notifications by returning a 
+            number of seconds required to complete the handling of this event.  Should a method
+            complete handling of the event earlier than originally anticipated (e.g., a user
+            skips an animation sequence), that mode should call the AdvancedMode method:
+            self.force_event_next()
+
+            Setting the only_active_modes=False will notify _all_ known modes, not just active
+            modes.  This will be of _very_ limited utility, however is useful for events such as
+            evt_player_added.
+        """
         delay = 0
         self.notify_list = list()
         self.event_complete_fn = event_complete_fn
@@ -458,8 +495,12 @@ class SkeletonGame(BasicGame):
 
         self.log("Skel: preparing to notify modes of event %s." % event)
 
-        only_active_handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None and h.mode() in self.modes]
-        for h in only_active_handlers:
+        if(only_active_modes):
+            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None and h.mode() in self.modes]
+        else:
+            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None]
+
+        for h in handlers:
             self.log("Skel: event handler queuing handler in mode [%s]" % (h.mode()))
             self.notify_list.append(h)
 
@@ -477,6 +518,9 @@ class SkeletonGame(BasicGame):
         self.ball_search_tries = 0
 
         self.game_start_pending = False
+
+        # reload settings
+        self.load_settings_and_stats()
 
         # try to set the game up to be in a clean state from the outset:
         if(self.trough.num_balls() < self.num_balls_total):
@@ -621,6 +665,12 @@ class SkeletonGame(BasicGame):
 
         self.notifyModes('evt_ball_starting', args=None, event_complete_fn=self.actually_start_ball)
 
+    def shoot_again(self):
+        """ this intentionally does NOT call the super class method because
+            we want to block 'ball_starting' from being called immediately """
+        self.log("Skel: SHOOT AGAIN")
+        self.notifyModes('evt_shoot_again', args=None, event_complete_fn=self.ball_starting, only_active_modes=False)
+
     def actually_start_ball(self):
         super(SkeletonGame, self).ball_starting()
 
@@ -671,7 +721,10 @@ class SkeletonGame(BasicGame):
 
     def add_player(self):
         player = super(SkeletonGame, self).add_player()
-        self.notifyModes('evt_player_added', args=(player), event_complete_fn=None)
+        # you shouldn't need this...
+        # if(hasattr(self, 'evt_player_added')):
+        #     self.evt_player_added(player)
+        self.notifyModes('evt_player_added', args=(player), event_complete_fn=None, only_active_modes=False)
         return player
 
     def slam_tilted(self):
