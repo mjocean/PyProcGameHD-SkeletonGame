@@ -198,10 +198,14 @@ PRCoils:
     outhole:
         number: C03
         pulseTime: 30
-        ballsearch: True
+        ballsearch: True 
+        # coils tagged for ballsearch are fired when the ball has not been
+        # seen or at the start of the game when all balls can't be found
+        # so these coils are coils that help return the ball to the trough
     trough:
         number: C04
-        ballsearch: True
+        # NOTE: trough should NOT be tagged for ballsearch since firing the
+        # trough would not help fill the trough...
     slingR:
         number: C05
     slingL:
