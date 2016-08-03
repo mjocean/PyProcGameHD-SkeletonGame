@@ -49,14 +49,20 @@ class SwitchMonitor(Mode):
         return SwitchStop
 
     def sw_down_closed(self, sw):
-        volume = self.game.sound.volume_down()
-        self.game.set_status("Volume Down : " + str(volume))
-        return True
+        if not self.game.service_mode in self.game.modes:
+            volume = self.game.sound.volume_down()
+            self.game.set_status("Volume Down : %d" % int(volume))
+            self.game.user_settings['Sound']['Initial volume'] = volume
+            self.game.save_settings()
+        return SwitchContinue
 
     def sw_up_closed(self, sw):
-        volume = self.game.sound.volume_up()
-        self.game.set_status("Volume Up : " + str(volume))
-        return True
+        if not self.game.service_mode in self.game.modes:
+            volume = self.game.sound.volume_up()
+            self.game.set_status("Volume Up  : %d" % int(volume))
+            self.game.user_settings['Sound']['Initial volume'] = volume
+            self.game.save_settings()
+        return SwitchContinue
 
     # def sw_coinDoor_active_for_1s(self,sw):
     #     # disable coils
