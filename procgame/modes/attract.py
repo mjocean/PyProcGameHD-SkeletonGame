@@ -32,72 +32,21 @@ class Attract(Mode):
             s = values["Sequence"]
             t = 0
             for l in s:
-                if ('HighScores' in l):
-                    v = l['HighScores']
-                    fields = value_for_key(v,'Order')
-                    duration =  value_for_key(v,'duration', 2.0)
-                    lampshow = value_for_key(v, 'lampshow')
-                    sound = value_for_key(v, 'sound')
-                    for rec in self.game.get_highscore_data():
-                        if fields is not None:
-                            records = [rec[f] for f in fields]
-                        else:
-                            records = [rec['category'], rec['player'], rec['score']]
-                        lyrTmp = self.game.generateLayer(records, value_for_key(v,'Background'), font_key=value_for_key(v,'Font'), font_style=value_for_key(v,'FontStyle'))
+                (lyrTmp, duration, lampshow, sound) = self.game.genLayerFromYAML(l)
 
-                        if(lampshow is not None):
-                            self.shows.append(lampshow)
-                            sl.append(lyrTmp, duration, callback=self.next_show)
-                            lampshow = None
-                        else:
-                            sl.append(lyrTmp, duration)
+                cb = None
+                if(lampshow is not None and sound is not None):
+                    self.shows.append(lampshow)
+                    self.sounds.append(sound)
+                    cb = self.next_both
+                elif(lampshow is not None):
+                    self.shows.append(lampshow)
+                    cb = self.next_show
+                elif(sound is not None):
+                    self.sounds.append(sound)
+                    cb = self.next_sound
 
-                elif('RandomText' in l):
-                    v = l['RandomText']
-        
-                    fsV = value_for_key(v, 'FontStyle')
-                    if(fsV is not None):
-                        font_style=self.game.fontstyles[fsV]
-                    else:
-                        font_style=None
-        
-                    randomText = value_for_key(v,'TextOptions')
-                    headerText = value_for_key(v,'Header', None)
-                    duration = value_for_key(v,'duration')
-
-                    rndmLayers = []
-                    for line in randomText:
-                        selectedRandomText = line['Text']
-                        if(type(selectedRandomText) is list):
-                            completeText = selectedRandomText
-                        else:
-                            completeText = [selectedRandomText]
-
-                        if (headerText is not None):
-                            completeText[:0] = [headerText] # prepend the header text entry at the start of the list
-
-                        rndmLayers.append(self.game.generateLayer(completeText, value_for_key(v,'Animation'), font_key=value_for_key(v,'Font'), font_style=font_style))
-
-                    if(len(rndmLayers) > 0):
-                        lyrTmp = RandomizedLayer(layers=rndmLayers)
-
-                    sl.append(lyrTmp, duration, callback=cb)
-                else:
-                    (lyrTmp, duration, lampshow, sound) = self.game.genLayerFromYAML(l)
-
-                    cb = None
-                    if(lampshow is not None and sound is not None):
-                        self.shows.append(lampshow)
-                        self.sounds.append(sound)
-                        cb = self.next_both
-                    elif(lampshow is not None):
-                        self.shows.append(lampshow)
-                        cb = self.next_show
-                    elif(sound is not None):
-                        self.sounds.append(sound)
-                        cb = self.next_sound
-
-                    sl.append(lyrTmp, duration, callback=cb)
+                sl.append(lyrTmp, duration, callback=cb)
 
         sl.opaque=True
         self.layer = sl

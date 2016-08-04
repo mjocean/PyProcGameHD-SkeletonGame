@@ -1,3 +1,5 @@
+# updated to include examples of text_layer, panning_layer, group_layer, and markup_layer
+
 Sequence:
     - Combo:
         Text:
@@ -10,6 +12,63 @@ Sequence:
         lampshow: attract_show_2
         sound: sling
         duration: 2.0
+    - text_layer:
+        x: width
+        y: height
+        v_justify: bottom
+        h_justify: right
+        Text: "Look down here"
+        Font: med
+        duration: 1.0
+    - text_layer:
+        x: 0
+        y: 0
+        v_justify: top
+        h_justify: left
+        Text: "Look up here"        
+        Font: med
+        duration: 1.0
+    - text_layer:
+        x: .50   # 50% of the display width
+        y: -5    # 5 "dots" up from the bottom
+        h_justify: center
+        v_justify: bottom
+        Text: "Look over here"        
+        Font: med
+        duration: 1.0
+    - panning_layer:
+        width: 500
+        height: 500        
+        origin_x: 0
+        origin_y: -130 
+        scroll_x: 0
+        scroll_y: 2
+        frames_per_movement: 2 
+        bounce: False
+        contents:
+            group_layer:
+                width: 500
+                height: 500
+                contents:
+                    - animation_layer:
+                        name: dark_chrome
+                    - markup_layer:
+                        width: 450
+                        Bold: 
+                            Font: med
+                            FontStyle: blueish
+                        Normal: 
+                            Font: small
+                            FontStyle: blueish
+                        Message: 
+                            - "#Special Thanks to:#"
+                            - "#Gerry Stellenberg"
+                            - "Adam Preble#"
+                            - "#Josh (Rosh)"
+                            - "[Scott Danesi]"
+                            - "[(Deadpin) Matt"
+                            - "Mark (Snux)]"
+        duration: 4.0        
 ## Random Text #############################################################    
 ## This section will display a Combo style text where the contents will 
 ##   be selected at random line from Text list
@@ -67,4 +126,4 @@ Sequence:
             - player
             - category
             - score
-        duration: 1.0
+        duration: 4.0 # increase duration since it is now the length of all high score frames, together!

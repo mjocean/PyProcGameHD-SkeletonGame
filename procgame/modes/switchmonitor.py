@@ -52,7 +52,7 @@ class SwitchMonitor(Mode):
         if not self.game.service_mode in self.game.modes:
             volume = self.game.sound.volume_down()
             self.game.set_status("Volume Down : %d" % int(volume))
-            self.game.user_settings['Sound']['Initial volume'] = volume
+            self.game.user_settings['Sound']['Initial volume'] = int(volume)
             self.game.save_settings()
         return SwitchContinue
 
@@ -60,7 +60,7 @@ class SwitchMonitor(Mode):
         if not self.game.service_mode in self.game.modes:
             volume = self.game.sound.volume_up()
             self.game.set_status("Volume Up  : %d" % int(volume))
-            self.game.user_settings['Sound']['Initial volume'] = volume
+            self.game.user_settings['Sound']['Initial volume'] = int(volume)
             self.game.save_settings()
         return SwitchContinue
 
