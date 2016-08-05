@@ -2,6 +2,7 @@ from procgame.dmd import Frame, font_named
 
 class MarkupFrameGenerator:
     """Renders a :class:`~procgame.dmd.Frame` for given text-based markup.
+        This is updated from the standard PyProcGame version in several ways.
 
         The markup format presently uses three markup tokens: 
         ``#`` (for headlines) and ``[`` and ``]`` for plain text.  The markup tokens
@@ -9,9 +10,14 @@ class MarkupFrameGenerator:
         will be left-justified.  Lines with a trailing ``#`` or ``]`` will be right-
         justified.  Lines with both will be centered.
 
-        The width and min_height are specified with instantiation.
+        lines that begin and end with a curly-brace ``{`` and ``}`` are expected to refer
+        to a known animation asset in the ``asset_list.yaml``;  this line will be replaced
+        with the contents of the first frame of that animation.
 
-        Fonts can be adjusted by assigning the :attr:`font_plain` and :attr:`font_bold` member variables.
+        The width and min_height are specified with instantiation.
+           
+        Font and FontStyle for the Bold and Plain fonts should be set using the 
+        :meth:`set_font_plain()` and :meth:`set_font_bold` methods.
         """
     
     font_plain = None
@@ -21,19 +27,17 @@ class MarkupFrameGenerator:
 
     font_plain_style = None
     font_bold_style = None
-    animation_library = None
+    game = None
 
-    def __init__(self, width=128, min_height=32, animation_library=None):
+    def __init__(self, game, width=128, min_height=32):
         self.width = width
         self.min_height = min_height
         self.frame = None
-        self.animation_library = animation_library
+        self.game = game
+        self.font_plain = game.fonts['Font07x5.dmd']
+        self.font_bold = game.fonts['Font09Bx7.dmd']
 
-         
-        self.font_plain = font_named('Font07x5.dmd')
-        self.font_bold = font_named('Font09Bx7.dmd')
-
-    def set_plain_font(self,font, interior_color=None, border_width=None, border_color=None):
+    def set_plain_font(self, font, interior_color=None, border_width=None, border_color=None):
         self.font_plain = font
         if(interior_color is not None and border_width is not None and border_color is not None):
             if(self.font_plain_style is None):
@@ -145,10 +149,12 @@ class MarkupFrameGenerator:
         return y
 
     def __draw_frame(self, y, anim, draw):
-        if(self.animation_library is None):
+        if(self.game is None):
+            return y
+        if(anim not in self.game.animations):
             return y
 
-        src = self.animation_library[anim].frames[0]
+        src = self.game.animations[anim].frames[0]
         if draw:
             Frame.copy_rect(dst=self.frame, dst_x=0, dst_y=y, src=src, src_x=0, src_y=0, width=self.frame.width, height=src.height)
         y+=src.height

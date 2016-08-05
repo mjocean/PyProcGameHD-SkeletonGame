@@ -625,8 +625,6 @@ class SkeletonGame(BasicGame):
         cat.titles = ['Grand Champion', 'High Score 1', 'High Score 2', 'High Score 3', 'High Score 4']
         self.highscore_categories.append(cat)
 
-        self.last_score = 0
-
         for category in self.highscore_categories:
             category.load_from_game(self)
 
@@ -841,19 +839,18 @@ class SkeletonGame(BasicGame):
         # Handle stats for last ball here
         self.ball = 0
         self.log("Skel: 'GAME ENDED")
-        self.last_score = self.current_player().score
-        self.log("Skel: 'players score %s" % self.last_score)
 
-        self.game_data['Audits']['Avg Ball Time'] = self.calc_time_average_string(self.game_data['Audits']['Balls Played'], self.game_data['Audits']['Avg Ball Time'], self.ball_time)
+        # ball time is handled in ball drained callback
         
         # Also handle game stats.
         for i in range(0,len(self.players)):
             game_time = self.get_game_time(i)
-            self.game_data['Audits']['Avg Game Time'] = self.calc_time_average_string( self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Game Time'], game_time)
             self.game_data['Audits']['Games Played'] += 1
-
-        for i in range(0,len(self.players)):
+            self.game_data['Audits']['Avg Game Time'] = self.calc_time_average_string( self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Game Time'], game_time)
             self.game_data['Audits']['Avg Score'] = self.calc_number_average(self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Score'], self.players[i].score)
+
+            self.log("Skel: 'player %d score %d" % (i, self.players[i].score))
+            
         self.save_game_data('game_user_data.yaml')
 
         # show any animations you want in ball_ending

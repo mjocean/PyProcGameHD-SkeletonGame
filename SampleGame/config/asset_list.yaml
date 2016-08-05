@@ -68,6 +68,9 @@ Fonts:
       - 0
       - 128
   HDFonts:
+  - key: 'default'  # NOTE: The font keyed 'default' is used if a specific name cannot be found!
+    file: 'Oswald-Heavy.ttf'
+    size: 15
   - key: 'Tiny7'
     file: 'Oswald-Heavy.ttf'
     size: 14

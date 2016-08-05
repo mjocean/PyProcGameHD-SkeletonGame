@@ -17,9 +17,9 @@ class SwitchMonitor(Mode):
     # Enter service mode when the enter button is pushed.
     def sw_enter_active(self, sw):
         if not self.game.service_mode in self.game.modes:
-            self.game.start_service_mode()
             self.game.sound.stop_music()
             self.game.lampctrl.stop_show()
+            self.game.start_service_mode()
         return SwitchStop
 
     def sw_startButton_active(self, sw):

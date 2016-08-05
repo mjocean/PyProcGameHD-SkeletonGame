@@ -43,11 +43,13 @@ class DMDHelper(Mode):
             i = 1
             for line in msg:
                 if (line != ""):
+                    line = str(line)
                     tL = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*i/(num_lines+1), font, "center", vert_justify="center", opaque=False, width=self.game.dmd.width, height=100,line_color=font_style.line_color, line_width=font_style.line_width, interior_color=font_style.interior_color,fill_color=font_style.fill_color).set_text(line, blink_frames=flashing)
                     t_layers.append(tL)
                 i = i + 1
             t = dmd.GroupedLayer(self.game.dmd.width, self.game.dmd.height, t_layers)
         else:
+            msg = str(msg)
             t = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, font, "center",  vert_justify="center",opaque=False, width=self.game.dmd.width, height=100,line_color=font_style.line_color, line_width=font_style.line_width, interior_color=font_style.interior_color,fill_color=font_style.fill_color).set_text(msg, blink_frames=flashing)
 
         if(background_layer is None):
@@ -223,6 +225,7 @@ class DMDHelper(Mode):
             sound = value_for_key(v, 'sound')
             (fnt, font_style) = self.__parse_font_data(v)
 
+            background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
             lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
             entry_ct = len(self.game.get_highscore_data())
@@ -231,9 +234,36 @@ class DMDHelper(Mode):
                     records = [rec[f] for f in fields]
                 else:
                     records = [rec['category'], rec['player'], rec['score']]
-                lT = self.game.generateLayer(records, value_for_key(v,'Background'), font_key=fnt, font_style=font_style)
+                lT = self.game.generateLayer(records, background, font_key=fnt, font_style=font_style)
 
-                lyrTmp.append(lT, duration/entry_ct)
+                lyrTmp.append(lT, duration)
+
+            duration = entry_ct*duration
+
+        elif('LastScores' in yamlStruct):
+            v = yamlStruct['LastScores']
+
+            duration =  value_for_key(v,'duration', 2.0)
+            lampshow = value_for_key(v, 'lampshow')
+            sound = value_for_key(v, 'sound')
+
+            (fnt, font_style) = self.__parse_font_data(v)
+
+            last_score_count = len(self.game.old_players)
+
+            if(last_score_count==0):
+                return None
+
+            background = value_for_key(v,'Background', value_for_key(v,'Animation'))
+
+            lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+            lyrTmp.append(self.game.generateLayer(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
+
+            for player in self.game.old_players:
+                lT = self.game.generateLayer([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
+                lyrTmp.append(lT, duration)
+
+            duration = (last_score_count+1)*duration
 
         elif('RandomText' in yamlStruct):
             v = yamlStruct['RandomText']
@@ -256,10 +286,11 @@ class DMDHelper(Mode):
                 rndmLayers.append(self.game.generateLayer(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
 
             if(len(rndmLayers) > 0):
-                lyrTmp = RandomizedLayer(layers=rndmLayers)
+                lyrTmp = RandomizedLayer(layers=rndmLayers)            
         else:
             lyrTmp = self.generateLayerFromYaml(yamlStruct)
-            duration = value_for_key(yamlStruct[yamlStruct.keys()[0]],'duration',None)
+            v = yamlStruct[yamlStruct.keys()[0]]
+            duration = value_for_key(v,'duration',None)
 
         if(v is not None):
             lampshow = value_for_key(v, 'lampshow')
@@ -403,7 +434,7 @@ class DMDHelper(Mode):
             if(isinstance(txt,list)):
                 txt = "\n".join(txt)
 
-            gen = dmd.MarkupFrameGenerator(width=w)
+            gen = dmd.MarkupFrameGenerator(width=w, game=self.game)
             gen.set_bold_font(bold_font, interior_color=bold_style.interior_color, border_width=bold_style.line_width, border_color=bold_style.line_color)
             gen.set_plain_font(plain_font, interior_color=plain_style.interior_color, border_width=plain_style.line_width, border_color=plain_style.line_color)
 
