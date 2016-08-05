@@ -762,7 +762,16 @@ class GroupedLayer(Layer):
     :meth:`~procgame.dmd.Layer.composite_next` method.  Compositing is ended after a layer that returns
     non-``None`` from :meth:`~Layer.composite_next` is :attr:`~Layer.opaque`."""
     
-    def __init__(self, width, height, layers=None, fill_color=None, opaque=False):
+    def __init__(self, width=None, height=None, layers=None, fill_color=None, opaque=False):
+        """ size is auto-detected from layers if omitted """
+        if(width is None or height is None):
+            if(layers is None):
+                raise ValueError, "Cannot create an unsized grouped layer with no contents!"
+            if(width is None):
+                width = max([l.get_width() for l in layers])
+            if(height is None):
+                height = max([l.get_height() for l in layers])
+
         super(GroupedLayer, self).__init__(opaque)
         self.buffer = Frame(width, height)
         self.fill_color = fill_color

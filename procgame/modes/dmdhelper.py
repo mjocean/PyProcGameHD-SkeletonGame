@@ -8,6 +8,7 @@ from ..dmd import Transition
 from ..dmd import HDTextLayer
 from ..dmd import HDFont
 from ..dmd import RandomizedLayer
+from ..dmd import AnimatedLayer
 from procgame.yaml_helper import value_for_key
 
 class DMDHelper(Mode):
@@ -200,7 +201,7 @@ class DMDHelper(Mode):
         lyrTmp = None
         v = None
 
-        print("parsing [%s]" % yamlStruct)
+        # print("parsing [%s]" % yamlStruct)
         if('Combo' in yamlStruct):
             v = yamlStruct['Combo']
 
@@ -212,7 +213,7 @@ class DMDHelper(Mode):
             v = yamlStruct['Animation']
             lyrTmp = self.game.animations[value_for_key(v,'Name')]
             lyrTmp.reset()
-            duration = lyrTmp.duration()
+            duration = value_for_key(v,'duration',lyrTmp.duration())
         elif ('HighScores' in yamlStruct):
             v = yamlStruct['HighScores']
 
@@ -271,12 +272,12 @@ class DMDHelper(Mode):
         """ a helper to generate Display Layers given properly formatted YAML """
         new_layer = None
 
-        print("parsing' [%s]" % yaml_struct)
+        # print("parsing' [%s]" % yaml_struct)
         if('display' in yaml_struct ):
             yaml_struct = yaml_struct['display']
             return self.generateLayerFromYaml(yaml_struct)
         elif('sequence_layer' in yaml_struct):
-            print "SEQ"
+            # print "SEQ"
             
             v = yaml_struct['sequence_layer']
             
@@ -297,7 +298,7 @@ class DMDHelper(Mode):
             #sl.set_target_position(x, y)
             new_layer.hold = not repeat
         elif('panning_layer' in yaml_struct):
-            print "scroll"
+            # print "scroll"
             v = yaml_struct['panning_layer']
             w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
             h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
@@ -306,7 +307,7 @@ class DMDHelper(Mode):
             origin_y = value_for_key(v,'origin_y',None)
             scroll_x = value_for_key(v,'scroll_x',None)
             scroll_y = value_for_key(v,'scroll_y',None)
-            frames_per_movement = value_for_key(v,'frames_per_movement',None)
+            frames_per_movement = value_for_key(v,'frames_per_movement', 1)
             bounce = value_for_key(v,'bounce',None)
 
             c = self.generateLayerFromYaml(value_for_key(v,'contents'))
@@ -314,7 +315,7 @@ class DMDHelper(Mode):
             new_layer = dmd.PanningLayer(width=w, height=h, frame=c, origin=(origin_x, origin_y), translate=(scroll_x, scroll_y), numFramesDrawnBetweenMovementUpdate=frames_per_movement, bounce=bounce)
 
         elif('group_layer' in yaml_struct):
-            print "GROUP"
+            # print "GROUP"
             v = yaml_struct['group_layer']
             (x,y) = self.__parse_position_data(v)
 
@@ -326,8 +327,7 @@ class DMDHelper(Mode):
             fill_color = value_for_key(v, 'fill_color', None)
 
             lyrs = []
-            # max_w = 0
-            # max_h = 0
+
             duration = 0
             for c in contents:
                 l = self.generateLayerFromYaml(c)
@@ -338,40 +338,52 @@ class DMDHelper(Mode):
                     def_duration = 0.0
                 d = value_for_key(c,'duration',def_duration)
                 duration=max(d,duration)
-                # max_w = max(l.width, max_w)
-                # max_h = max(l.height, max_h)
+
             new_layer = dmd.GroupedLayer(w, h, lyrs, fill_color=fill_color)
             if(opaque):
                 new_layer.opaque = opaque
             new_layer.set_target_position(x, y)
 
         elif('animation_layer' in yaml_struct):
-            print "ANIM"
+            # print "ANIM"
 
             v = yaml_struct['animation_layer']
             (x,y) = self.__parse_position_data(v)
-            opaque = value_for_key(v, 'opaque', None)
-            repeat = value_for_key(v, 'repeat', None)
-            new_layer = self.game.animations[value_for_key(v,'name')]
-            if(opaque):
-                new_layer.opaque=opaque
-            if(repeat is not None):
-                new_layer.repeat = repeat
+
+            source_layer = self.game.animations[value_for_key(v,'name',value_for_key(v,'Name'))]
+
+            opaque = value_for_key(v, 'opaque', source_layer.opaque)
+            repeat = value_for_key(v, 'repeat', source_layer.repeat)
+            hold_last_frame = value_for_key(v, 'hold_last_frame', source_layer.hold)
+
+            frame_list = value_for_key(v, 'frame_list', {})
+            
+            if(len(frame_list)==0):
+                new_layer = source_layer
+            else:
+                new_layer = AnimatedLayer(frame_time=source_layer.frame_time, frames=[source_layer.frames[idx] for idx in frame_list])
+
+            new_layer.opaque=opaque
+            new_layer.repeat = repeat
+            new_layer.hold = (hold_last_frame or len(frame_list)==1)
+
             new_layer.reset()
             new_layer.set_target_position(x, y)
 
         elif ('text_layer' in yaml_struct):
-            print "TEXT"
+            # print "TEXT"
 
             v = yaml_struct['text_layer']
 
             new_layer = self.generateTextLayerFromYaml(v)
             txt = value_for_key(v,'Text') 
 
-            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
-            h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
+            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, default=None)
+            h = self.__parse_relative_num(v, 'height', self.game.dmd.height, default=None)
 
-            new_layer.set_text(txt)
+            blink_frames = value_for_key(v,'blink_frames', None) 
+
+            new_layer.set_text(txt, blink_frames=blink_frames)
 
             if(w is None):
                 new_layer.width = new_layer.text_width
@@ -381,7 +393,7 @@ class DMDHelper(Mode):
             # fill_color = value_for_key(v,'fill_color',(0,0,0))
 
         elif ('markup_layer' in yaml_struct):
-            print "MARKUP"
+            # print "MARKUP"
             v = yaml_struct['markup_layer']
 
             w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)

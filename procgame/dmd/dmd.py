@@ -393,6 +393,23 @@ class Layer(object):
         self.blendmode = None
         self.alpha = None
 
+    def get_width(self):
+        if(hasattr(self,'width')):
+            return self.width
+        elif(not hasattr(self, 'frames') or self.frames is None):
+            return self.frame.width
+        else:
+            return max([f.width for f in self.frames])
+
+    def get_height(self):
+        if(hasattr(self,'height')):
+            return self.height
+        elif(not hasattr(self, 'frames') or self.frames is None):
+            return self.frame.height
+        else:
+            return max([f.height for f in self.frames])
+
+
     def scale(self, amount):
         if(not hasattr(self, 'frames') or self.frames is None):
             self.frame.scale(amount)
