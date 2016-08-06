@@ -135,17 +135,22 @@ class DMDHelper(Mode):
             return (x,y,hj,vj)
         return (x,y)
 
-    def __parse_font_data(self, yaml_struct):
+    def __parse_font_data(self, yaml_struct, required=True):
         """ returns a Font and FontStyle as loaded from a yaml based descriptor of
             Font and FontStyle information. """
         # get font
         fname = value_for_key(yaml_struct, 'font', value_for_key(yaml_struct, 'Font'))
         if(fname is None):
-            raise ValueError, "yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present [%s]" % (fname, yaml_struct)
+            if(required):
+                raise ValueError, "Cannot find required Font tag in yaml segment [%s]" % (yaml_struct)
+            else:
+                f = None 
+        else:
+            if(fname not in self.game.fonts):
+                self.game.log("yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname)
 
-        f = self.game.fonts[fname]
-        if(fname not in self.game.fonts):
-            raise ValueError, "yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname
+            # the assetManager will take care of providing a default font even if the above doesn't work
+            f = self.game.fonts[fname]
 
         # get font style
         font_style = value_for_key(yaml_struct, 'font_style', value_for_key(yaml_struct, 'FontStyle'))
@@ -207,7 +212,7 @@ class DMDHelper(Mode):
         if('Combo' in yamlStruct):
             v = yamlStruct['Combo']
 
-            (fnt, font_style) = self.__parse_font_data(v)
+            (fnt, font_style) = self.__parse_font_data(v, required=False)
 
             lyrTmp = self.genMsgFrame(value_for_key(v,'Text'), value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
             duration = value_for_key(v,'duration')
@@ -223,7 +228,7 @@ class DMDHelper(Mode):
             duration =  value_for_key(v,'duration', 2.0)
             lampshow = value_for_key(v, 'lampshow')
             sound = value_for_key(v, 'sound')
-            (fnt, font_style) = self.__parse_font_data(v)
+            (fnt, font_style) = self.__parse_font_data(v, required=False)
 
             background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
@@ -234,7 +239,7 @@ class DMDHelper(Mode):
                     records = [rec[f] for f in fields]
                 else:
                     records = [rec['category'], rec['player'], rec['score']]
-                lT = self.game.generateLayer(records, background, font_key=fnt, font_style=font_style)
+                lT = self.genMsgFrame(records, background, font_key=fnt, font_style=font_style)
 
                 lyrTmp.append(lT, duration)
 
@@ -247,7 +252,7 @@ class DMDHelper(Mode):
             lampshow = value_for_key(v, 'lampshow')
             sound = value_for_key(v, 'sound')
 
-            (fnt, font_style) = self.__parse_font_data(v)
+            (fnt, font_style) = self.__parse_font_data(v, required=False)
 
             last_score_count = len(self.game.old_players)
 
@@ -257,17 +262,17 @@ class DMDHelper(Mode):
             background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
             lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-            lyrTmp.append(self.game.generateLayer(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
+            lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
 
             for player in self.game.old_players:
-                lT = self.game.generateLayer([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
+                lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
                 lyrTmp.append(lT, duration)
 
             duration = (last_score_count+1)*duration
 
         elif('RandomText' in yamlStruct):
             v = yamlStruct['RandomText']
-            (fnt, font_style) = self.__parse_font_data(v)
+            (fnt, font_style) = self.__parse_font_data(v, required=False)
             randomText = value_for_key(v,'TextOptions')
             headerText = value_for_key(v,'Header', None)
             duration = value_for_key(v,'duration')
@@ -283,7 +288,7 @@ class DMDHelper(Mode):
                 if (headerText is not None):
                     completeText[:0] = [headerText] # prepend the header text entry at the start of the list
 
-                rndmLayers.append(self.game.generateLayer(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
+                rndmLayers.append(self.genMsgFrame(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
 
             if(len(rndmLayers) > 0):
                 lyrTmp = RandomizedLayer(layers=rndmLayers)            
