@@ -49,7 +49,8 @@ class DMDHelper(Mode):
                 i = i + 1
             t = dmd.GroupedLayer(self.game.dmd.width, self.game.dmd.height, t_layers)
         else:
-            msg = str(msg)
+            if(msg is not None):
+                msg = str(msg)
             t = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, font, "center",  vert_justify="center",opaque=False, width=self.game.dmd.width, height=100,line_color=font_style.line_color, line_width=font_style.line_width, interior_color=font_style.interior_color,fill_color=font_style.fill_color).set_text(msg, blink_frames=flashing)
 
         if(background_layer is None):
@@ -218,7 +219,7 @@ class DMDHelper(Mode):
             duration = value_for_key(v,'duration')
         elif ('Animation' in yamlStruct):
             v = yamlStruct['Animation']
-            lyrTmp = self.game.animations[value_for_key(v,'Name')]
+            lyrTmp = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'))]
             lyrTmp.reset()
             duration = value_for_key(v,'duration',lyrTmp.duration())
         elif ('HighScores' in yamlStruct):
@@ -439,7 +440,7 @@ class DMDHelper(Mode):
             if(isinstance(txt,list)):
                 txt = "\n".join(txt)
 
-            gen = dmd.MarkupFrameGenerator(width=w, game=self.game)
+            gen = dmd.MarkupFrameGenerator(game=self.game, font_plain=plain_font, font_bold=bold_font, width=w)
             gen.set_bold_font(bold_font, interior_color=bold_style.interior_color, border_width=bold_style.line_width, border_color=bold_style.line_color)
             gen.set_plain_font(plain_font, interior_color=plain_style.interior_color, border_width=plain_style.line_width, border_color=plain_style.line_color)
 

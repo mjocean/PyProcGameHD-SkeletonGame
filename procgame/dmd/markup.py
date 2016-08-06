@@ -16,7 +16,7 @@ class MarkupFrameGenerator:
 
         The width and min_height are specified with instantiation.
            
-        Font and FontStyle for the Bold and Plain fonts should be set using the 
+        Font and FontStyle for the Bold and Plain fonts can be set using the 
         :meth:`set_font_plain()` and :meth:`set_font_bold` methods.
         """
     
@@ -29,13 +29,13 @@ class MarkupFrameGenerator:
     font_bold_style = None
     game = None
 
-    def __init__(self, game, width=128, min_height=32):
+    def __init__(self, game, font_plain, font_bold, width=128, min_height=32):
         self.width = width
         self.min_height = min_height
         self.frame = None
         self.game = game
-        self.font_plain = game.fonts['Font07x5.dmd']
-        self.font_bold = game.fonts['Font09Bx7.dmd']
+        self.font_plain = font_plain
+        self.font_bold = font_bold
 
     def set_plain_font(self, font, interior_color=None, border_width=None, border_color=None):
         self.font_plain = font
