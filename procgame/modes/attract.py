@@ -109,7 +109,7 @@ class Attract(Mode):
             no lampshow listed.  The old lampshow will continue *but* we need to
             stop the last song, if still playing """
 
-        self.game.log("Attract: stopping audio")
+        # self.game.log("Attract: stopping audio")
         self.game.sound.fadeout_music() # stop old music if music is already playing
         # would be wise to stop previous sound, too
         # self.game.sound.stop(last_sound_key) # what _is_ the last sound key..?
