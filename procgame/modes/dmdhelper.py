@@ -17,6 +17,7 @@ class DMDHelper(Mode):
     
     def __init__(self, game):
         super(DMDHelper, self).__init__(game=game, priority=12)
+        self.logger = logging.getLogger('dmdhelper')
         self.timer_name = 'message_display_ended'
         self.msgfont = self.game.fonts['med']
         pass
@@ -148,7 +149,7 @@ class DMDHelper(Mode):
                 f = None 
         else:
             if(fname not in self.game.fonts):
-                self.game.log("yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname)
+                self.logger.error("yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname)
 
             # the assetManager will take care of providing a default font even if the above doesn't work
             f = self.game.fonts[fname]
@@ -208,246 +209,261 @@ class DMDHelper(Mode):
         sound = None
         lyrTmp = None
         v = None
+        try:
+            if('Combo' in yamlStruct):
+                v = yamlStruct['Combo']
 
-        # print("parsing [%s]" % yamlStruct)
-        if('Combo' in yamlStruct):
-            v = yamlStruct['Combo']
+                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                msg = value_for_key(v,'Text')
+                if(msg is None):
+                    self.logger.warning("Processing YAML, Combo section contains no 'Text' tag.  Consider using Animation instead.")
 
-            (fnt, font_style) = self.__parse_font_data(v, required=False)
+                lyrTmp = self.genMsgFrame(msg, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
+                duration = value_for_key(v,'duration')
+            elif ('Animation' in yamlStruct):
+                v = yamlStruct['Animation']
+                lyrTmp = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'), exception_on_miss=True)]
+                lyrTmp.reset()
+                duration = value_for_key(v,'duration',lyrTmp.duration())
+            elif ('HighScores' in yamlStruct):
+                v = yamlStruct['HighScores']
 
-            lyrTmp = self.genMsgFrame(value_for_key(v,'Text'), value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
-            duration = value_for_key(v,'duration')
-        elif ('Animation' in yamlStruct):
-            v = yamlStruct['Animation']
-            lyrTmp = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'))]
-            lyrTmp.reset()
-            duration = value_for_key(v,'duration',lyrTmp.duration())
-        elif ('HighScores' in yamlStruct):
-            v = yamlStruct['HighScores']
+                fields = value_for_key(v,'Order')
+                duration =  value_for_key(v,'duration', 2.0)
+                lampshow = value_for_key(v, 'lampshow')
+                sound = value_for_key(v, 'sound')
+                (fnt, font_style) = self.__parse_font_data(v, required=False)
 
-            fields = value_for_key(v,'Order')
-            duration =  value_for_key(v,'duration', 2.0)
-            lampshow = value_for_key(v, 'lampshow')
-            sound = value_for_key(v, 'sound')
-            (fnt, font_style) = self.__parse_font_data(v, required=False)
+                background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
-            background = value_for_key(v,'Background', value_for_key(v,'Animation'))
+                lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+                entry_ct = len(self.game.get_highscore_data())
+                for rec in self.game.get_highscore_data():
+                    if fields is not None:
+                        records = [rec[f] for f in fields]
+                    else:
+                        records = [rec['category'], rec['player'], rec['score']]
+                    lT = self.genMsgFrame(records, background, font_key=fnt, font_style=font_style)
 
-            lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-            entry_ct = len(self.game.get_highscore_data())
-            for rec in self.game.get_highscore_data():
-                if fields is not None:
-                    records = [rec[f] for f in fields]
-                else:
-                    records = [rec['category'], rec['player'], rec['score']]
-                lT = self.genMsgFrame(records, background, font_key=fnt, font_style=font_style)
+                    lyrTmp.append(lT, duration)
 
-                lyrTmp.append(lT, duration)
+                duration = entry_ct*duration
 
-            duration = entry_ct*duration
+            elif('LastScores' in yamlStruct):
+                v = yamlStruct['LastScores']
 
-        elif('LastScores' in yamlStruct):
-            v = yamlStruct['LastScores']
+                duration =  value_for_key(v,'duration', 2.0)
+                lampshow = value_for_key(v, 'lampshow')
+                sound = value_for_key(v, 'sound')
 
-            duration =  value_for_key(v,'duration', 2.0)
-            lampshow = value_for_key(v, 'lampshow')
-            sound = value_for_key(v, 'sound')
+                (fnt, font_style) = self.__parse_font_data(v, required=False)
 
-            (fnt, font_style) = self.__parse_font_data(v, required=False)
+                last_score_count = len(self.game.old_players)
 
-            last_score_count = len(self.game.old_players)
+                if(last_score_count==0):
+                    return None
 
-            if(last_score_count==0):
-                return None
+                background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
-            background = value_for_key(v,'Background', value_for_key(v,'Animation'))
+                lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+                lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
 
-            lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-            lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
+                for player in self.game.old_players:
+                    lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
+                    lyrTmp.append(lT, duration)
 
-            for player in self.game.old_players:
-                lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
-                lyrTmp.append(lT, duration)
+                duration = (last_score_count+1)*duration
 
-            duration = (last_score_count+1)*duration
+            elif('RandomText' in yamlStruct):
+                v = yamlStruct['RandomText']
+                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                randomText = value_for_key(v,'TextOptions', exception_on_miss=True)
+                headerText = value_for_key(v,'Header', None)
+                duration = value_for_key(v,'duration')
 
-        elif('RandomText' in yamlStruct):
-            v = yamlStruct['RandomText']
-            (fnt, font_style) = self.__parse_font_data(v, required=False)
-            randomText = value_for_key(v,'TextOptions')
-            headerText = value_for_key(v,'Header', None)
-            duration = value_for_key(v,'duration')
+                rndmLayers = []
+                for line in randomText:
+                    selectedRandomText = line['Text']
+                    if(type(selectedRandomText) is list):
+                        completeText = selectedRandomText
+                    else:
+                        completeText = [selectedRandomText]
 
-            rndmLayers = []
-            for line in randomText:
-                selectedRandomText = line['Text']
-                if(type(selectedRandomText) is list):
-                    completeText = selectedRandomText
-                else:
-                    completeText = [selectedRandomText]
+                    if (headerText is not None):
+                        completeText[:0] = [headerText] # prepend the header text entry at the start of the list
 
-                if (headerText is not None):
-                    completeText[:0] = [headerText] # prepend the header text entry at the start of the list
+                    rndmLayers.append(self.genMsgFrame(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
 
-                rndmLayers.append(self.genMsgFrame(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
+                if(len(rndmLayers) > 0):
+                    lyrTmp = RandomizedLayer(layers=rndmLayers)            
+            else:
+                lyrTmp = self.generateLayerFromYaml(yamlStruct) # not sure what this is, let the other method parse it
+                v = yamlStruct[yamlStruct.keys()[0]]    # but we reach in and grab it to pull duration, lampshow and sound.
+                duration = value_for_key(v,'duration',None)
 
-            if(len(rndmLayers) > 0):
-                lyrTmp = RandomizedLayer(layers=rndmLayers)            
-        else:
-            lyrTmp = self.generateLayerFromYaml(yamlStruct)
-            v = yamlStruct[yamlStruct.keys()[0]]
-            duration = value_for_key(v,'duration',None)
+            if(v is not None):
+                lampshow = value_for_key(v, 'lampshow')
+                sound = value_for_key(v, 'sound')
 
-        if(v is not None):
-            lampshow = value_for_key(v, 'lampshow')
-            sound = value_for_key(v, 'sound')
+        except Exception, e:
+            current_tag = None
+            if(yamlStruct is not None and len(yamlStruct.keys())>0):
+                current_tag = yamlStruct.keys()[0]
+            self.logger.critical("YAML processing failure occured within tag '%s' of yaml section: \n'%s'" % (current_tag,yamlStruct))
+            raise e
 
         return (lyrTmp, duration, lampshow, sound)
-
 
     def generateLayerFromYaml(self, yaml_struct):
         """ a helper to generate Display Layers given properly formatted YAML """
         new_layer = None
 
-        # print("parsing' [%s]" % yaml_struct)
-        if('display' in yaml_struct ):
-            yaml_struct = yaml_struct['display']
-            return self.generateLayerFromYaml(yaml_struct)
-        elif('sequence_layer' in yaml_struct):
-            # print "SEQ"
-            
-            v = yaml_struct['sequence_layer']
-            
-            new_layer = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-            repeat = value_for_key(v, 'repeat', True)
+        try:
+            if('display' in yaml_struct ):
+                yaml_struct = yaml_struct['display']
+                return self.generateLayerFromYaml(yaml_struct)
 
-            for c in v['contents']:
-                if not 'item' in c:
-                    raise ValueError, "malformed YAML file; sequence must contain a list of 'item's"
-                c = c['item']
-                l = self.generateLayerFromYaml(c)
-                if(hasattr(l,'duration') and callable(l.duration)):
-                    def_duration = l.duration()
+            elif('sequence_layer' in yaml_struct):                
+                v = yaml_struct['sequence_layer']
+                
+                new_layer = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+                repeat = value_for_key(v, 'repeat', True)
+
+                for c in v['contents']:
+                    if not 'item' in c:
+                        raise ValueError, "malformed YAML file; sequence must contain a list of 'item's"
+                    c = c['item']
+                    l = self.generateLayerFromYaml(c)
+                    if(hasattr(l,'duration') and callable(l.duration)):
+                        def_duration = l.duration()
+                    else:
+                        def_duration = 2.0
+                    d = value_for_key(c,'duration',def_duration)
+                    new_layer.append(l,d)
+                #sl.set_target_position(x, y)
+                new_layer.hold = not repeat
+            
+            elif('panning_layer' in yaml_struct):
+                v = yaml_struct['panning_layer']
+
+                w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
+                h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
+
+                origin_x = value_for_key(v,'origin_x',0)
+                origin_y = value_for_key(v,'origin_y',0)
+                scroll_x = value_for_key(v,'scroll_x', exception_on_miss=True)
+                scroll_y = value_for_key(v,'scroll_y', exception_on_miss=True)
+                frames_per_movement = value_for_key(v,'frames_per_movement', 1)
+                bounce = value_for_key(v,'bounce',False)
+
+                c = self.generateLayerFromYaml(value_for_key(v,'contents', exception_on_miss=True))
+
+                new_layer = dmd.PanningLayer(width=w, height=h, frame=c, origin=(origin_x, origin_y), translate=(scroll_x, scroll_y), numFramesDrawnBetweenMovementUpdate=frames_per_movement, bounce=bounce)
+
+            elif('group_layer' in yaml_struct):
+                v = yaml_struct['group_layer']
+
+                (x,y) = self.__parse_position_data(v)
+
+                w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
+                h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
+
+                contents = value_for_key(v,'contents', exception_on_miss=True)
+                opaque = value_for_key(v, 'opaque', None)
+                fill_color = value_for_key(v, 'fill_color', None)
+
+                lyrs = []
+
+                duration = 0
+                for c in contents:
+                    l = self.generateLayerFromYaml(c)
+                    lyrs.append(l)
+                    if(hasattr(l,'duration') and callable(l.duration)):
+                        def_duration = l.duration()
+                    else:
+                        def_duration = 0.0
+                    d = value_for_key(c,'duration',def_duration)
+                    duration=max(d,duration)
+
+                new_layer = dmd.GroupedLayer(w, h, lyrs, fill_color=fill_color)
+                if(opaque):
+                    new_layer.opaque = opaque
+                new_layer.set_target_position(x, y)
+
+            elif('animation_layer' in yaml_struct):
+                v = yaml_struct['animation_layer']
+
+                (x,y) = self.__parse_position_data(v)
+
+                source_layer = self.game.animations[value_for_key(v,'name',value_for_key(v,'Name'), exception_on_miss=True)]
+
+                opaque = value_for_key(v, 'opaque', source_layer.opaque)
+                repeat = value_for_key(v, 'repeat', source_layer.repeat)
+                hold_last_frame = value_for_key(v, 'hold_last_frame', source_layer.hold)
+
+                frame_list = value_for_key(v, 'frame_list', {})
+                
+                if(len(frame_list)==0):
+                    new_layer = source_layer
                 else:
-                    def_duration = 2.0
-                d = value_for_key(c,'duration',def_duration)
-                new_layer.append(l,d)
-            #sl.set_target_position(x, y)
-            new_layer.hold = not repeat
-        elif('panning_layer' in yaml_struct):
-            # print "scroll"
-            v = yaml_struct['panning_layer']
-            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
-            h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
+                    new_layer = AnimatedLayer(frame_time=source_layer.frame_time, frames=[source_layer.frames[idx] for idx in frame_list])
 
-            origin_x = value_for_key(v,'origin_x',None)
-            origin_y = value_for_key(v,'origin_y',None)
-            scroll_x = value_for_key(v,'scroll_x',None)
-            scroll_y = value_for_key(v,'scroll_y',None)
-            frames_per_movement = value_for_key(v,'frames_per_movement', 1)
-            bounce = value_for_key(v,'bounce',None)
+                new_layer.opaque=opaque
+                new_layer.repeat = repeat
+                new_layer.hold = (hold_last_frame or len(frame_list)==1)
 
-            c = self.generateLayerFromYaml(value_for_key(v,'contents'))
+                new_layer.reset()
+                new_layer.set_target_position(x, y)
 
-            new_layer = dmd.PanningLayer(width=w, height=h, frame=c, origin=(origin_x, origin_y), translate=(scroll_x, scroll_y), numFramesDrawnBetweenMovementUpdate=frames_per_movement, bounce=bounce)
+            elif ('text_layer' in yaml_struct):
+                v = yaml_struct['text_layer']
 
-        elif('group_layer' in yaml_struct):
-            # print "GROUP"
-            v = yaml_struct['group_layer']
-            (x,y) = self.__parse_position_data(v)
+                new_layer = self.generateTextLayerFromYaml(v)
+                txt = value_for_key(v,'Text', exception_on_miss=True) 
 
-            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
-            h = self.__parse_relative_num(v, 'height', self.game.dmd.height, None)
+                w = self.__parse_relative_num(v, 'width', self.game.dmd.width, default=None)
+                h = self.__parse_relative_num(v, 'height', self.game.dmd.height, default=None)
 
-            contents = value_for_key(v,'contents')
-            opaque = value_for_key(v, 'opaque', None)
-            fill_color = value_for_key(v, 'fill_color', None)
+                blink_frames = value_for_key(v,'blink_frames', None) 
 
-            lyrs = []
+                new_layer.set_text(txt, blink_frames=blink_frames)
 
-            duration = 0
-            for c in contents:
-                l = self.generateLayerFromYaml(c)
-                lyrs.append(l)
-                if(hasattr(l,'duration') and callable(l.duration)):
-                    def_duration = l.duration()
-                else:
-                    def_duration = 0.0
-                d = value_for_key(c,'duration',def_duration)
-                duration=max(d,duration)
+                if(w is None):
+                    new_layer.width = new_layer.text_width
+                if(h is None):
+                    new_layer.height = new_layer.text_height
 
-            new_layer = dmd.GroupedLayer(w, h, lyrs, fill_color=fill_color)
-            if(opaque):
-                new_layer.opaque = opaque
-            new_layer.set_target_position(x, y)
+                # fill_color = value_for_key(v,'fill_color',(0,0,0))
 
-        elif('animation_layer' in yaml_struct):
-            # print "ANIM"
+            elif ('markup_layer' in yaml_struct):
+                v = yaml_struct['markup_layer']
 
-            v = yaml_struct['animation_layer']
-            (x,y) = self.__parse_position_data(v)
+                w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
+                (bold_font, bold_style) = self.__parse_font_data(value_for_key(v, 'Bold', exception_on_miss=True))
+                (plain_font, plain_style) = self.__parse_font_data(value_for_key(v, 'Normal', exception_on_miss=True))
+                txt = value_for_key(v, "Message", exception_on_miss=True)
+                if(isinstance(txt,list)):
+                    txt = "\n".join(txt)
 
-            source_layer = self.game.animations[value_for_key(v,'name',value_for_key(v,'Name'))]
+                gen = dmd.MarkupFrameGenerator(game=self.game, font_plain=plain_font, font_bold=bold_font, width=w)
+                gen.set_bold_font(bold_font, interior_color=bold_style.interior_color, border_width=bold_style.line_width, border_color=bold_style.line_color)
+                gen.set_plain_font(plain_font, interior_color=plain_style.interior_color, border_width=plain_style.line_width, border_color=plain_style.line_color)
 
-            opaque = value_for_key(v, 'opaque', source_layer.opaque)
-            repeat = value_for_key(v, 'repeat', source_layer.repeat)
-            hold_last_frame = value_for_key(v, 'hold_last_frame', source_layer.hold)
+                frm = gen.frame_for_markup(txt)
+                new_layer = dmd.FrameLayer(frame=frm)
 
-            frame_list = value_for_key(v, 'frame_list', {})
-            
-            if(len(frame_list)==0):
-                new_layer = source_layer
             else:
-                new_layer = AnimatedLayer(frame_time=source_layer.frame_time, frames=[source_layer.frames[idx] for idx in frame_list])
+                unknown_tag = None
+                if(yaml_struct is not None and len(yaml_struct.keys())>0):
+                    unknown_tag = yaml_struct.keys()[0]
+                raise ValueError, "Unknown tag '%s' in yaml section.  Check spelling/caps/etc." % (unknown_tag)
 
-            new_layer.opaque=opaque
-            new_layer.repeat = repeat
-            new_layer.hold = (hold_last_frame or len(frame_list)==1)
+        except Exception, e:
+            current_tag = None
+            if(yaml_struct is not None and len(yaml_struct.keys())>0):
+                current_tag = yaml_struct.keys()[0]
+            self.logger.critical("YAML processing failure occured within tag '%s' of yaml section: \n'%s'" % (current_tag,yaml_struct))
+            raise e
 
-            new_layer.reset()
-            new_layer.set_target_position(x, y)
-
-        elif ('text_layer' in yaml_struct):
-            # print "TEXT"
-
-            v = yaml_struct['text_layer']
-
-            new_layer = self.generateTextLayerFromYaml(v)
-            txt = value_for_key(v,'Text') 
-
-            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, default=None)
-            h = self.__parse_relative_num(v, 'height', self.game.dmd.height, default=None)
-
-            blink_frames = value_for_key(v,'blink_frames', None) 
-
-            new_layer.set_text(txt, blink_frames=blink_frames)
-
-            if(w is None):
-                new_layer.width = new_layer.text_width
-            if(h is None):
-                new_layer.height = new_layer.text_height
-
-            # fill_color = value_for_key(v,'fill_color',(0,0,0))
-
-        elif ('markup_layer' in yaml_struct):
-            # print "MARKUP"
-            v = yaml_struct['markup_layer']
-
-            w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
-            (bold_font, bold_style) = self.__parse_font_data(value_for_key(v, 'Bold'))
-            (plain_font, plain_style) = self.__parse_font_data(value_for_key(v, 'Normal'))
-            txt = value_for_key(v, "Message")
-            if(isinstance(txt,list)):
-                txt = "\n".join(txt)
-
-            gen = dmd.MarkupFrameGenerator(game=self.game, font_plain=plain_font, font_bold=bold_font, width=w)
-            gen.set_bold_font(bold_font, interior_color=bold_style.interior_color, border_width=bold_style.line_width, border_color=bold_style.line_color)
-            gen.set_plain_font(plain_font, interior_color=plain_style.interior_color, border_width=plain_style.line_width, border_color=plain_style.line_color)
-
-            frm = gen.frame_for_markup(txt)
-            new_layer = dmd.FrameLayer(frame=frm)
-
-        else:
-            raise ValueError, "Unknown tag '%s' in yaml section" % yaml_struct
 
         return new_layer
