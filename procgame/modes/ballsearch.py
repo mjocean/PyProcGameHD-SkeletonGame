@@ -1,9 +1,11 @@
 from ..game import Mode
 from .. import dmd
+import logging
 
 class BallSearch(Mode):
 	"""Ball Search mode."""
 	def __init__(self, game, priority, countdown_time, coils=[], reset_switches=[], stop_switches=[], enable_switch_names=[], special_handler_modes=[]):
+		self.logger = logging.getLogger('ballsearch')
 		self.stop_switches = stop_switches
 		self.countdown_time = countdown_time
 		self.coils = coils
@@ -27,7 +29,7 @@ class BallSearch(Mode):
 			self.stop_switch_check_functions.append(sw_state_fn)
 
 		if(len(reset_switches) == 0 and len(stop_switches)==0):
-			self.game.log("BallSearch: Initialized without any stop/reset switches.  Removing functionality")
+			self.logger.warning("Initialized without any stop/reset switches.  Removing functionality")
 			self.perform_search = self.__perform_search
 			self.reset = self.__reset
 
@@ -43,12 +45,12 @@ class BallSearch(Mode):
 		pass
 
 	def enable(self):
-		self.game.log("BallSearch: Enabled (waiting)")
+		self.logger.info("Enabled (waiting)")
 		self.enabled = 1;
 		self.reset('None')
 
 	def disable(self):
-		self.game.log("BallSearch: Disabled")
+		self.logger.info("Disabled")
 		self.stop(None)
 		self.enabled = 0;
 
@@ -73,12 +75,12 @@ class BallSearch(Mode):
 			if schedule_search:
 				self.cancel_delayed(name='ball_search_countdown');
 				self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
-				self.game.logger.info("BallSearch: RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
+				self.logger.debug("RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
 			else:
-				self.game.logger.info("BallSearch: RESET via '%s'; next search is not scheduled.")
+				self.logger.debug("RESET via '%s'; next search is not scheduled.")
 
 	def stop(self,sw):
-		self.game.logger.info("BallSearch: countdown STOPPED via '%s'" % ("" if sw is None else sw))
+		self.logger.debug("countdown STOPPED via '%s'" % ("" if sw is None else sw))
 		self.cancel_delayed(name='ball_search_countdown');
 
 	def full_stop(self):
@@ -87,9 +89,10 @@ class BallSearch(Mode):
 			self.cancel_delayed('ball_search_coil1')
 
 	def perform_search(self, completion_wait_time, completion_handler = None, silent=False):
-		self.game.log("BallSearch: perform_search(completion_wait_time=%d)" % completion_wait_time)
+		self.logger.debug("perform_search(completion_wait_time=%d)" % completion_wait_time)
+
 		if (completion_wait_time != 0):
-			self.game.log("BallSearch: BALLS MISSING!!")
+			self.logger.info("Initiated")
 			if(silent is False):
 				self.game.set_status("Balls Missing") # Replace with permanent message
 		self.completion_handler = completion_handler
@@ -97,7 +100,7 @@ class BallSearch(Mode):
 		for coil in self.coils:
 			self.delay(name='ball_search_coil1', event_type=None, delay=delay, handler=self.pop_coil, param=str(coil))
 			delay = delay + .150
-		self.delay(name='start_special_handler_modes', event_type=None, delay=delay, handler=self.start_special_handler_modes)
+		self.delay(name='start_special_handler_modes', event_type=None, delay=delay+completion_wait_time, handler=self.start_special_handler_modes)
 
 		if (completion_wait_time != 0):
 			pass
@@ -106,7 +109,7 @@ class BallSearch(Mode):
 			self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 	
 	def pop_coil(self,coil):
-		#self.game.log("BallSearch: FIRING '%s'" % coil)
+		self.logger.debug("FIRING '%s'" % coil)
 		self.game.coils[coil].pulse()
 
 	def start_special_handler_modes(self):

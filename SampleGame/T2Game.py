@@ -20,8 +20,11 @@ from my_modes import BaseGameMode, ExBlankMode
 
 # set up a few more things before we get started 
 # the logger's configuration and format
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 curr_file_path = os.path.dirname(os.path.abspath( __file__ ))
+
+logging.getLogger('game.driver').setLevel(logging.INFO)
+logging.getLogger('game.vdriver').setLevel(logging.INFO)
 
 class T2Game(SkeletonGame):
 

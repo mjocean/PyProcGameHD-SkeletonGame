@@ -7,8 +7,6 @@ import procgame.game
 import procgame.lamps
 import procgame.tools
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
 class LampGame(procgame.game.GameController):
 	
 	show_filename = None
