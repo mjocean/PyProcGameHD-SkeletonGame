@@ -7,7 +7,7 @@ import os
 import sys
 import yaml
 import logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 from procgame.yaml_helper import value_for_key
 
 class DictWithDefault(dict):

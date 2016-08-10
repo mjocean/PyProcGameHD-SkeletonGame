@@ -1,4 +1,5 @@
 from ..game import Mode
+import logging
 
 class BallSave(Mode):
     """Manages a game's ball save functionality by Keeping track of ball save timer and the number of balls to be saved.
@@ -11,6 +12,7 @@ class BallSave(Mode):
     """ 
     def __init__(self, game, lamp, delayed_start_switch='None'):
         super(BallSave, self).__init__(game, 3)
+        self.logger = logging.getLogger('ballsave')
         self.lamp = lamp
         self.num_balls_to_save = 1
         self.mode_begin = 0
@@ -91,7 +93,9 @@ class BallSave(Mode):
         self.timer -= 1
         if (self.timer >= 1):
             self.delay(name='ball_save_timer', event_type=None, delay=1, handler=self.timer_countdown)
+            self.logger.debug("ball saver time left = %d" % self.timer)
         else:
+            self.logger.debug("ball saver disabled - timed out")
             self.disable()
 
         self.update_lamps()
