@@ -1,5 +1,4 @@
 import logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 from ..game import Mode
 from procgame.game import SwitchStop, SwitchContinue
@@ -28,7 +27,6 @@ class SwitchMonitor(Mode):
                 return SwitchContinue
 
         if(self.game.attract_mode in self.game.modes):
-            self.game.modes.remove(self.game.attract_mode)
             # Initialize game   
             self.game.start_game()
             # Start_game takes care of adding the first player and starting a ball in SkelGame
