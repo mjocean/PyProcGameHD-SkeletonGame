@@ -307,7 +307,8 @@ class ScoreDisplay(Mode):
             self.score_layer_player[i].enabled = False
 
     def update_layer_4p(self):
-        self.layer.layers = [self.common]
+        self.layer.layers = [self.bgFrame]
+        self.layer.layers += [self.common]
 
         for i in range(len(self.game.players[:4])): # Limit to first 4 players for now.
             score = self.game.players[i].score
