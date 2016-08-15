@@ -125,7 +125,12 @@ class SkeletonGame(BasicGame):
             if not machine_type:
                 raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
 
+            # try:
             super(SkeletonGame, self).__init__(machine_type)
+            # except IOError, e:
+            #     self.log("Error connecting to P-ROC -- running virtual mode")
+            #     config.values['pinproc_class'] = 'procgame.fakepinproc.FakePinPROC'
+            #     super(SkeletonGame, self).__init__(machine_type)
 
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
             self.dmd_height = config.value_for_key_path('dmd_dots_h', 240) 
@@ -439,7 +444,7 @@ class SkeletonGame(BasicGame):
         if(new_mode in self.known_modes[new_mode.mode_type]):
             self.logger.debug("Skel: Ignoring already known mode '%s'" % new_mode)    
             return
-        self.known_modes[new_mode.mode_type].append(new_mode)
+        self.known_modes[new_mode.mode_type].append(weakref.ref(new_mode))
         self.logger.debug("Skel: Known advanced modes added '%s'" % new_mode)
 
         # Format: evt_name(self):
@@ -571,7 +576,7 @@ class SkeletonGame(BasicGame):
 
         # handle modes that need to be alerted of the game reset!
         for m in self.known_modes[AdvancedMode.System]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.modes.add(self.trough)
         self.modes.add(self.ball_save)
@@ -710,7 +715,7 @@ class SkeletonGame(BasicGame):
         self.logger.info("Skel: BALL STARTING")
 
         for m in self.known_modes[AdvancedMode.Ball]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.notifyModes('evt_ball_starting', args=None, event_complete_fn=self.actually_start_ball)
 
@@ -830,7 +835,7 @@ class SkeletonGame(BasicGame):
 
         super(SkeletonGame, self).ball_ended()
         for m in self.known_modes[AdvancedMode.Ball]:
-            self.modes.remove(m)
+            self.modes.remove(m())
 
     def reset_search(self):
         if(self.game_start_pending):
@@ -871,9 +876,9 @@ class SkeletonGame(BasicGame):
             self.logger.info("Skel: game_started: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
             if(self.use_ballsearch_mode):
                 self.ball_search.perform_search(3,  completion_handler=self.reset_search)
-                self.logger.debug("Skel: game_started: Programmer custom ball search initiated")
-            else:
                 self.logger.debug("Skel: game_started: Standard ball search initiated")
+            else:
+                self.logger.debug("Skel: game_started: Programmer custom ball search initiated")
                 self.do_ball_search(silent=False)
                 self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
             return
@@ -890,7 +895,7 @@ class SkeletonGame(BasicGame):
         super(SkeletonGame, self).game_started()
 
         for m in self.known_modes[AdvancedMode.Game]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.ball_search_tries = 0
         self.game_data['Audits']['Games Started'] += 1
@@ -932,7 +937,7 @@ class SkeletonGame(BasicGame):
 
         # remove Game-duration modes
         for m in self.known_modes[AdvancedMode.Game]:
-            self.modes.remove(m)
+            self.modes.remove(m())
         pass
 
         seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2)
