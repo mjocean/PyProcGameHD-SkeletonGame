@@ -235,7 +235,21 @@ class SkeletonGame(BasicGame):
                 logging.getLogger('Trough').error("No switches have been tagged 'trough' and no switch names start with 'trough'")
                 raise ValueError("Machine YAML must contain switches either tagged 'trough' or with names that start with 'trough'")
 
-            # early_save_switchnames = ['outlaneR', 'outlaneL']
+            shooter_lane_sw_name = None
+            if('shooter' in self.switches):
+                shooter_lane_sw_name = 'shooter'
+            else:
+                sa = self.switches.items_tagged('shooter')
+                if(type(sa) is list and len(sa)==0):
+                    logging.getLogger('BallSave').error("No shooter lane switch could be found.  Either name a switch 'shooter' or tag one 'shooter'")
+                    shooter_lane_sw_name = None
+                elif(type(sa) is list):
+                    shooter_lane_sw_name = sa[0].name
+                    logging.getLogger('BallSave').warning("Multiple switches have been tagged 'shooter' -- only the first will be used.")
+                else:
+                    shooter_lane_sw_name = sa.name
+
+            early_save_switchnames = [save_sw.name for save_sw in self.switches.items_tagged('early_save')]
 
             # Note - Game specific item:
             # Here, trough6 is used for the 'eject_switchname'.  This must
@@ -252,7 +266,7 @@ class SkeletonGame(BasicGame):
                         break
                 if(trough_coil_name is None):
                     raise ValueError, "machine YAML must define a coil named 'Trough' or that starts with"
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, [], 'shooter', drain_callback=None)
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None)
 
             # Only once the ball is fed to the shooter lane is it possible for the ball
             # drain to actually end a ball

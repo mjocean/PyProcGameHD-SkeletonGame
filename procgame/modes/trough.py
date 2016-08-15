@@ -54,6 +54,40 @@ class Trough(Mode):
         self.inactive_shooter_time = shooter_lane_inactivity_time
         self.plunge_coilname = plunge_coilname
 
+        # if there is an outhole, add an auto-kickover
+        outhole_sw_name = None
+        if('outhole' in self.game.switches):
+            outhole_sw_name = 'outhole'            
+        else: 
+            sa = self.switches.items_tagged('outhole')
+            if(type(sa) is list and len(sa)==0):
+                self.logger.info("No outhole switch found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml.")
+            elif(type(sa) is list):
+                outhole_sw_name = sa[0].name
+                self.logger.warning("Multiple switches have been tagged 'outhole' -- since that makes no sense, only the first will be used.")
+            else:
+                outhole_sw_name = sa.name
+
+        # at the point that there is an outhole switch, we need to find the outhole coil
+        if(outhole_sw_name is not None):
+            # find an outhole coilname
+            self.outhole_coil = None
+            if('outhole' in self.game.coils):
+                self.outhole_coil = self.game.coils['outhole']
+            else:
+                sa = self.coils.items_tagged('outhole')
+                if(type(sa) is list and len(sa)==0):
+                    self.logger.eror("Outhole switch found but no 'outhole' coil found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml for switch and coil!")
+                elif(type(sa) is list):
+                    self.outhole_coil = sa[0]
+                    self.logger.warning("Multiple coils have been tagged 'outhole' -- since that makes no sense, only the first will be used.")
+                else:
+                    self.outhole_coil = sa
+
+            if(self.outhole_coil is not None):
+                self.add_switch_handler(name=outhole_sw_name, event_type='active',\
+                    delay=0.3, handler=self.outhole_handler)
+
         # Install switch handlers.
         # Use a delay of 750ms which should ensure balls are settled.
         for switch in position_switchnames:
@@ -100,6 +134,19 @@ class Trough(Mode):
         self.launched_callback = None
 
         #self.debug()
+
+    def outhole_handler(self, sw):
+        """ a method to auto pulse the outhole coil when the outhole switch is closed for a sufficiently
+            long enough time for the ball to settle.  This is hard coded to 300ms but should almost certainly
+            be programmatic... -- note, this method will be registered if the machine yaml includes a
+            switch named outhole (or tag:outhole) and a coil named (or tagged) outhole.  Since the trough
+            logic is based on the trough switches themselves, all this switch needs to do is move a ball
+            into the trough for proper handling.  Since modern machines may not have an outhole trough setup,
+            it is not an error to not have an outhole switch/coil pair. 
+        """
+        if(self.outhole_coil is not None):
+            self.outhole_coil.pulse()
+        return SwitchContinue
 
     def debug(self):
         self.game.set_status(str(self.num_balls_in_play) + "," + str(self.num_balls_locked))
