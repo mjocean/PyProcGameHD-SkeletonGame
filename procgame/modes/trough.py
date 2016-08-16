@@ -1,4 +1,5 @@
 from ..game import Mode
+from ..game import SwitchContinue
 import logging
 
 class Trough(Mode):

@@ -352,8 +352,14 @@ class SkeletonGame(BasicGame):
         self.trough.launch_callback = None
         self.trough.launched_callback = None
 
+    def cleanup(self):
+        """ stub incase subclass doesn't provide an implementation """
+        pass
+
     def end_run_loop(self):
         cleanup()
+        if(hasattr(self,'cleanup')):
+            self.cleanup()
         super(SkeletonGame,self).end_run_loop()        
 
 
