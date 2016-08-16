@@ -71,13 +71,14 @@ class BallSearch(Mode):
 				# the switch, and then call it using getattr()
 				if sw_state_fn():
 					schedule_search = 0
+					break
 
 			if schedule_search:
 				self.cancel_delayed(name='ball_search_countdown');
 				self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 				self.logger.debug("RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
 			else:
-				self.logger.debug("RESET via '%s'; next search is not scheduled.")
+				self.logger.debug("RESET (requested); next search is not scheduled due to current switch states.")
 
 	def stop(self,sw):
 		self.logger.debug("countdown STOPPED via '%s'" % ("" if sw is None else sw))
