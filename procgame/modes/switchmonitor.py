@@ -9,17 +9,15 @@ class SwitchMonitor(Mode):
     """A mode that monitors for specific switches and helps advance state as appropriate"""
     
     def __init__(self, game):
-        super(SwitchMonitor, self).__init__(game=game, priority=12)
+        super(SwitchMonitor, self).__init__(game=game, priority=32767)
         pass
-
 
     # Enter service mode when the enter button is pushed.
     def sw_enter_active(self, sw):
         if not self.game.service_mode in self.game.modes:
-            self.game.sound.stop_music()
-            self.game.lampctrl.stop_show()
             self.game.start_service_mode()
-        return SwitchStop
+            return SwitchStop
+        return SwitchContinue
 
     def sw_startButton_active(self, sw):
         for m in self.game.modes:
@@ -52,6 +50,7 @@ class SwitchMonitor(Mode):
             self.game.set_status("Volume Down : %d" % int(volume))
             self.game.user_settings['Sound']['Initial volume'] = int(volume)
             self.game.save_settings()
+            return SwitchStop
         return SwitchContinue
 
     def sw_up_closed(self, sw):
@@ -60,6 +59,7 @@ class SwitchMonitor(Mode):
             self.game.set_status("Volume Up  : %d" % int(volume))
             self.game.user_settings['Sound']['Initial volume'] = int(volume)
             self.game.save_settings()
+            return SwitchStop
         return SwitchContinue
 
     # def sw_coinDoor_active_for_1s(self,sw):

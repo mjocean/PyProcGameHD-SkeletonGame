@@ -51,6 +51,7 @@ import locale
 import random
 import re
 import weakref
+# from weakref import WeakValueDictionary
 
 from game import config_named
 
@@ -90,17 +91,6 @@ def run_proc_game(game_class):
         if(exc_info is not None):
             raise exc_info[0], exc_info[1], exc_info[2]
             print "---------"
-
-
-class GameEventHandler(object):
-    def __init__(self, name, mode, handler, param=None):
-        self.name = name
-        self.handler = handler
-        self.param = param
-        self.mode = weakref.ref(mode) # use a weak reference
-
-    def __str__(self):
-        return '<name=%s handler=%s mode=%s>' % (self.name, self.handler, self.mode())
 
 
 class SkeletonGame(BasicGame):
@@ -154,17 +144,25 @@ class SkeletonGame(BasicGame):
             
             self.hdfont_path = config.value_for_key_path('hdfont_dir', curr_file_path + "/assets/fonts/")
 
+            # known_modes are all AdvancedModes that have been created; they are stored by type
+            # what is stored is a weakref to each, so we don't mess up reference counts/garbage collection
             self.known_modes = {}
             self.known_modes[AdvancedMode.System] = []
             self.known_modes[AdvancedMode.Ball] = []
             self.known_modes[AdvancedMode.Game] = []
             self.known_modes[AdvancedMode.Manual] = []
             
-            self.event_handlers = dict()
+            # event hanlders are lists of AdvancedModes (again, weakref) that care about these specific 
+            # events (i.e., these classes define functions to handle these specific events)
+            self.event_handlers = {}
             # the evt_ methods:
-            self.known_events = ['tilt', 'shoot_again', 'single_ball_play', 'ball_ending', 'ball_starting', 'ball_saved', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
+            self.known_events = [ 'evt_tilt', 'evt_shoot_again', 'evt_single_ball_play', \
+                                    'evt_ball_ending', 'evt_ball_starting', 'evt_ball_saved', \
+                                    'evt_game_ending', 'evt_game_starting', 'evt_tilt_ball_ending', \
+                                    'evt_player_added']
+
             for e in self.known_events:
-                self.event_handlers[e] = list()
+                self.event_handlers[e] = []
 
             self.game_tilted = False # indicates if any kind of tilt has occured; tilt, slam_tilt
             
@@ -447,25 +445,49 @@ class SkeletonGame(BasicGame):
         return highscore.get_highscore_data(self.highscore_categories)
 
     def notifyOfNewMode(self,new_mode):
-        if(new_mode in self.known_modes[new_mode.mode_type]):
-            self.logger.debug("Skel: Ignoring already known mode '%s'" % new_mode)    
-            return
+        """ let the skeletongame instance know about the new mode.  Use weakref to 
+            record information about the new mode so we don't accidentally keep it 
+            around longer than needed.  learning of the new mode happens whenever 
+            an advancedMode is created, and allows skeletongame to handle auto-add/remove
+            of a mode based on the specified mode_type.
+
+            NOTE: if a second instance of the same mode type is created, this raises an error.
+            Do not re create modes in reset(), just reset() the mode itself
+        """
+        if(weakref.ref(new_mode) in self.known_modes[new_mode.mode_type]):
+            self.logger.warning("Skel: A second instance of an already known mode has been created '%s'" % new_mode)
+            raise ValueError, "This cannot happen. Someone notified us of the same mode instance twice!"
+
+        for m in self.known_modes[new_mode.mode_type]:
+            if type(m())==type(new_mode):
+                raise ValueError, "Your code attempted to create a second instance of the Mode '%s' --this is likely an error." % type(new_mode)
+
         self.known_modes[new_mode.mode_type].append(weakref.ref(new_mode))
         self.logger.debug("Skel: Known advanced modes added '%s'" % new_mode)
 
-        # Format: evt_name(self):
-        handler_func_re = re.compile('evt_(?P<name>[a-zA-Z0-9_]+)?')
-        for item in dir(new_mode):
-            m = handler_func_re.match(item)
-            if m == None:
-                continue
-            handlerfn = getattr(new_mode, item)
-            evt_name = m.group('name')
-            self.add_evt_handler(new_mode, evt_name, handler=handlerfn)
+        # import sys
+        # for thing in self.known_modes[new_mode.mode_type]:
+        #     self.logger.debug("skel: mode='%s' ref_ct=%d'" % (thing, sys.getrefcount(thing)))
+
+        # # Format: evt_name(self):
+        # handler_func_re = re.compile('evt_(?P<name>[a-zA-Z0-9_]+)?')
+        # for item in dir(new_mode):
+        #     m = handler_func_re.match(item)
+        #     if m == None:
+        #         continue
+        #     handlerfn = getattr(new_mode, item)
+        #     evt_name = m.group('name')
+        #     self.add_evt_handler(new_mode, evt_name, handler=handlerfn)
+
+    def add_evt_handler(self, mode, evt_name):
+        if(evt_name not in self.event_handlers):
+            raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (mode, evt_name)
+
+        self.event_handlers[evt_name].append(weakref.ref(mode))
 
     def notifyNextMode(self):
+        self.curr_delayed_by_mode = None
         if(len(self.notify_list)==0):
-            self.curr_delayed_by_mode = None
             if(self.event_complete_fn is not None):
                 self.logger.debug("Skel: completing event '%s' by calling '%s'" % (self.event, self.event_complete_fn))
                 self.event_complete_fn()
@@ -476,15 +498,16 @@ class SkeletonGame(BasicGame):
         # otherwise there are more modes awaiting notification
         next_handler = self.notify_list.pop()
 
-        self.logger.debug("Skel: calling mode '%s' event handler for event '%s'" % (next_handler.mode(), self.event))
+        self.logger.debug("Skel: calling mode '%s' event handler for event '%s'" % (next_handler, self.event))
 
-        if(self.args is None):
-            d = next_handler.handler()
-        else:
-            d = next_handler.handler(self.args)
+        d = next_handler.handle_game_event(self.event,params=self.args)
+        # if(self.args is None):
+        #     d = evt_handler()
+        # else:
+        #     d = evt_handler(self.args)
 
         if(d is not None and (type(d) is int or type(d) is float) and d > 0):
-            self.curr_delayed_by_mode = next_handler.mode()
+            self.curr_delayed_by_mode = next_handler
             self.switchmonitor.delay(name='notifyNextMode',
                event_type=None, 
                delay=d, 
@@ -492,9 +515,9 @@ class SkeletonGame(BasicGame):
         elif(type(d) is tuple):
             if(d[1] == True): # flag to stop event propegation and jump to the event 
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
-                self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler.mode(), self.event))
+                self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler, self.event))
             if(d[0] > 0):
-                self.curr_delayed_by_mode = next_handler.mode()
+                self.curr_delayed_by_mode = next_handler
                 self.switchmonitor.delay(name='notifyNextMode',
                    event_type=None, 
                    delay=d[0], 
@@ -503,13 +526,6 @@ class SkeletonGame(BasicGame):
                 self.notifyNextMode() # note: next call will either fire event or notify next mode accordingly
         else:
             self.notifyNextMode()
-
-
-    def add_evt_handler(self, mode, evt_name, handler):
-        if(evt_name not in self.event_handlers):
-            raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (mode, evt_name)
-        ge = GameEventHandler(evt_name, mode, handler)
-        self.event_handlers[evt_name].append(ge)
         
     def notifyNextModeNow(self, caller_mode):
         if(caller_mode == self.curr_delayed_by_mode):
@@ -540,23 +556,24 @@ class SkeletonGame(BasicGame):
         self.notify_list = list()
         self.event_complete_fn = event_complete_fn
         self.args = args
-        if(event.startswith('evt_')):
-            self.event = event[4:]
+        # if(event.startswith('evt_')):
+        #     self.event = event[4:]
+        self.event = event
 
         self.logger.info("Skel: preparing to notify modes of event %s." % event)
 
         if(only_active_modes):
-            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None and h.mode() in self.modes]
+            handlers = [h() for h in self.event_handlers[self.event] if h() is not None and h() in self.modes]
         else:
-            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None]
+            handlers = [h() for h in self.event_handlers[self.event] if h() is not None]
 
         for h in handlers:
-            self.logger.debug("Skel: event '%s' queuing handler found in mode [%s]" % (event, h.mode()))
+            self.logger.debug("Skel: event '%s' queuing handler found in mode [%s]" % (event, h))
             self.notify_list.append(h)
 
         # note this sort is in reverse priority order because we pop 
         # off the back!
-        self.notify_list.sort(lambda x, y: x.mode().priority - y.mode().priority)
+        self.notify_list.sort(lambda x, y: x.priority - y.priority)
 
         self.notifyNextMode()
 
@@ -565,6 +582,11 @@ class SkeletonGame(BasicGame):
         self.logger.info("Skel: RESET()")
 
         super(SkeletonGame,self).reset()
+        
+        # clear the notification list
+        # TODO: is this _really_ necessary?
+        self.notify_list = None
+
         self.ball_search_tries = 0
 
         self.game_start_pending = False
@@ -835,7 +857,8 @@ class SkeletonGame(BasicGame):
 
         # turn off the flippers
         self.enable_flippers(False)
-        # self.enable_alphanumeric_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+
         if(self.use_ballsearch_mode):
             self.ball_search.disable() # possibly redundant if ball ends normally, but not redundant when slam tilted
 
@@ -977,11 +1000,21 @@ class SkeletonGame(BasicGame):
         self.dmd.update()       
 
     def start_service_mode(self):
-        self.disableAllLamps()
-
+        """ dump all existing modes that are running
+            stop music, stop lampshows, disable flippers
+            then add the service mode.
+        """
         for m in self.modes:
             self.modes.remove(m)
 
+        self.lampctrl.stop_show()
+        self.disableAllLamps()
+        self.sound.stop_music()
+
+        # disable flippers
+        self.enable_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+        
         self.modes.add(self.service_mode)
 
     def service_mode_ended(self):
