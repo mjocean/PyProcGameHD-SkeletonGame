@@ -695,7 +695,10 @@ class SkeletonGame(BasicGame):
     def load_settings_and_stats(self):
         self.load_game_data('game_default_data.yaml','game_user_data.yaml')
 
-        self.load_settings('game_default_settings.yaml','game_user_settings.yaml')
+        if(self.load_settings('game_default_settings.yaml','game_user_settings.yaml')):
+            # settings changed as a result of reconciling with the default template! re-save
+            self.logger.warning('settings changed.  Re-Saving!')
+            self.save_settings()
 
         self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
         # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
@@ -728,7 +731,7 @@ class SkeletonGame(BasicGame):
         super(SkeletonGame, self).load_game_data(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
 
     def load_settings(self, file_default, file_game):
-        super(SkeletonGame, self).load_settings(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
+        return super(SkeletonGame, self).load_settings(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
 
     def load_assets(self):
         """ function to clean up code/make things easier to read; 

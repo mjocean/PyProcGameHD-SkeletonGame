@@ -371,24 +371,60 @@ class GameController(object):
         
         See also: :meth:`save_settings`
         """
+        settings_changed = False
+
         self.user_settings = {}
         self.settings = yaml.load(open(template_filename, 'r'))
         if os.path.exists(user_filename):
             self.user_settings = yaml.load(open(user_filename, 'r'))
         
+        # this pass ensures the user settings include everything in the 
+        # game settings by assigning defaults for anything missing
         for section in self.settings:
             for item in self.settings[section]:
                 if not section in self.user_settings:
                     self.user_settings[section] = {}
+                    settings_changed = True
+                if not item in self.user_settings[section]:
+                    settings_changed = True
+                    self.logger.error("Missing setting in user settings file; will be replaced with default:\n%s:{%s}\n-------" % (section,item))                        
                     if 'default' in self.settings[section][item]:
                         self.user_settings[section][item] = self.settings[section][item]['default']
                     else:
                         self.user_settings[section][item] = self.settings[section][item]['options'][0]
-                elif not item in self.user_settings[section]:
-                    if 'default' in self.settings[section][item]:
-                        self.user_settings[section][item] = self.settings[section][item]['default']
-                    else:
-                        self.user_settings[section][item] = self.settings[section][item]['options'][0]
+                else:
+                    if 'increments' not in self.settings[section][item]:
+                        if(self.user_settings[section][item] not in self.settings[section][item]['options']):
+                            settings_changed = True
+                            self.logger.error("Invalid value found in user settings file; will be replaced with default:\n%s:{%s}\n-------" % (section,item))
+                            if 'default' in self.settings[section][item]:
+                                self.user_settings[section][item] = self.settings[section][item]['default']
+                            else:
+                                self.user_settings[section][item] = self.settings[section][item]['options'][0]
+
+
+        # this pass logs settings that occur in the user settings 
+        # but not in game settings and removes them
+        invalid_sections = []
+        for section in self.user_settings:
+            if(section not in self.settings):
+                settings_changed = True
+                self.logger.error("Deprecated section found in user settings file; will be removed:\n%s\n-------" % section)
+                invalid_sections.append(section)        
+            else:
+                invalid_items = []
+                for item in self.user_settings[section]:
+                    if item not in self.settings[section]:
+                        settings_changed = True
+                        self.logger.error("Deprecated setting found in user settings file; will be removed:\n%s:{%s}\n-------" % (section, item))
+                        invalid_items.append(item)
+                for item in invalid_items:
+                    self.user_settings[section].pop(item)
+        for section in invalid_sections:
+            self.user_settings.pop(section)
+
+        return settings_changed
+
 
     def save_settings(self, filename):
         """Writes the game settings to *filename*.  See :meth:`load_settings`."""
