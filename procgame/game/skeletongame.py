@@ -22,7 +22,7 @@ from . import Player
 from .advancedmode import AdvancedMode
 from ..dmd import HDDisplayController, font_named, sdl2_DisplayManager
 from ..dmd.layers import SolidLayer, GroupedLayer
-from ..modes import ScoreDisplay
+from ..modes import ScoreDisplay, ScoreDisplayHD
 from ..modes import Trough, ballsave, BallSearch
 from ..modes import osc
 from ..modes import DMDHelper, SwitchMonitor
@@ -199,8 +199,11 @@ class SkeletonGame(BasicGame):
             self.dmdHelper = DMDHelper(game=self)
             self.modes.add(self.dmdHelper)
 
-            if(self.use_stock_scoredisplay):
+            if(self.use_stock_scoredisplay is True):
                 self.score_display = ScoreDisplay(self,0)
+            elif(self.use_stock_scoredisplay=='HD'):
+                self.score_display = ScoreDisplayHD(self, 0)        
+
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
@@ -553,7 +556,7 @@ class SkeletonGame(BasicGame):
             evt_player_added.
         """
         delay = 0
-        self.notify_list = list()
+        self.notify_list = []
         self.event_complete_fn = event_complete_fn
         self.args = args
         # if(event.startswith('evt_')):
@@ -608,7 +611,8 @@ class SkeletonGame(BasicGame):
 
         self.modes.add(self.trough)
         self.modes.add(self.ball_save)
-        if(self.use_stock_scoredisplay):
+
+        if(self.use_stock_scoredisplay is not False):
             self.score_display.reset()
             self.modes.add(self.score_display)
 

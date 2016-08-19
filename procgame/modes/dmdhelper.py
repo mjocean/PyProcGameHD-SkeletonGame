@@ -209,22 +209,7 @@ class DMDHelper(Mode):
         lyrTmp = None
         v = None
         try:
-            if('Combo' in yamlStruct):
-                v = yamlStruct['Combo']
-
-                (fnt, font_style) = self.__parse_font_data(v, required=False)
-                msg = value_for_key(v,'Text')
-                if(msg is None):
-                    self.logger.warning("Processing YAML, Combo section contains no 'Text' tag.  Consider using Animation instead.")
-
-                lyrTmp = self.genMsgFrame(msg, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
-                duration = value_for_key(v,'duration')
-            elif ('Animation' in yamlStruct):
-                v = yamlStruct['Animation']
-                lyrTmp = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'), exception_on_miss=True)]
-                lyrTmp.reset()
-                duration = value_for_key(v,'duration',lyrTmp.duration())
-            elif ('HighScores' in yamlStruct):
+            if ('HighScores' in yamlStruct):
                 v = yamlStruct['HighScores']
 
                 fields = value_for_key(v,'Order')
@@ -317,10 +302,32 @@ class DMDHelper(Mode):
         """ a helper to generate Display Layers given properly formatted YAML """
         new_layer = None
 
+        if(yaml_struct is None or (isinstance(yaml_struct,basestring) and yaml_struct=='None')):
+            return None
+
         try:
             if('display' in yaml_struct ):
                 yaml_struct = yaml_struct['display']
                 return self.generateLayerFromYaml(yaml_struct)
+
+            elif('Combo' in yaml_struct):
+                v = yaml_struct['Combo']
+
+                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                msg = value_for_key(v,'Text')
+                if(msg is None):
+                    self.logger.warning("Processing YAML, Combo section contains no 'Text' tag.  Consider using Animation instead.")
+
+                new_layer = self.genMsgFrame(msg, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
+                
+            elif ('Animation' in yaml_struct):
+                v = yaml_struct['Animation']
+                
+                new_layer = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'), exception_on_miss=True)]
+                new_layer.reset()
+                
+                if(value_for_key(v,'duration') is None): # no value found, set it so it will be later.
+                    v['duration'] = new_layer.duration()
 
             elif('sequence_layer' in yaml_struct):                
                 v = yaml_struct['sequence_layer']

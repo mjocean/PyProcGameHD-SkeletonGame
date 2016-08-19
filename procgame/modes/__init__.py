@@ -4,6 +4,7 @@ __all__ = [
     'drops'
     'replay',
     'scoredisplay',
+    'scoredisplayhd'
     'service',
     'trough',
     'OSC',
