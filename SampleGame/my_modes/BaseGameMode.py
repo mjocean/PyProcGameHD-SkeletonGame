@@ -74,20 +74,18 @@ class BaseGameMode(procgame.game.AdvancedMode):
     def evt_ball_starting(self):
         """ an event that gets fired when a ball is starting (for any player) """
 
-        # ball saver syntax has changed.  We no longer need to supply a callback
-        # method instead, evt_ball_saved() will be called if a ball is saved.
-        # to enable it, use this 
-        # (defaults are 1 ball, save time length is based on service mode setting)
-        self.game.enable_ball_saver()
-
         # since we might actually want to account for time spent in the trough, 
         # let's reset the timer when the shooter lane goes inactive.
 
         self.game.sound.fadeout_music()
         self.game.sound.play_music('base-music-bgm')
 
-    def shooter_inactive(self):
-        # self.game.disable_ball_saver()
+    def shooter_inactive_for_250ms(self):
+        # ball saver syntax has changed.  We no longer need to supply a callback
+        # method instead, evt_ball_saved() will be called if a ball is saved.
+        # to enable it, use this 
+        # (defaults are 1 ball, save time length is based on service mode setting)
+
         self.game.enable_ball_saver()
         
 

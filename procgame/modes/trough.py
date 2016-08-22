@@ -60,7 +60,7 @@ class Trough(Mode):
         if('outhole' in self.game.switches):
             outhole_sw_name = 'outhole'            
         else: 
-            sa = self.switches.items_tagged('outhole')
+            sa = self.game.switches.items_tagged('outhole')
             if(type(sa) is list and len(sa)==0):
                 self.logger.info("No outhole switch found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml.")
             elif(type(sa) is list):

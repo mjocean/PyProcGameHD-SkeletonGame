@@ -425,7 +425,7 @@ class SkeletonGame(BasicGame):
         warnings.warn(message, DeprecationWarning, stacklevel=2)
         # raise NameError, message
 
-    def enable_ball_saver(self, num_balls_to_save=1, time=None, now=True, allow_multiple_saves=False):
+    def enable_ball_saver(self, num_balls_to_save=1, time=None, now=True, allow_multiple_saves=False, tick_rate=1):
         """ turns on the ball saver -- omit time to use the setting from the service menu
             --note, if this happens 'too early' in your game, just enable the saver again at 
             a later point to extend the timer """
@@ -433,7 +433,7 @@ class SkeletonGame(BasicGame):
             time = self.user_settings['Gameplay (Feature)']['Ball Save Timer']
         
         self.logger.debug("ball saver enabled balls=[%d], time left=[%d]" % (num_balls_to_save,time))
-        self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves)
+        self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves, tick_rate)
         self.ball_save.callback = callback=self.__ball_saved
 
     def __ball_saved(self):
