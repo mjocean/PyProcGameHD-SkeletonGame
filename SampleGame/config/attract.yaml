@@ -16,8 +16,8 @@ Sequence:
             - "MOcean"
             - ""
             - "Presents"
-        Font: med
-        FontStyle: weird
+        # Font: med  -- these are optional for 
+        # FontStyle: weird  -- Combo layers
         Animation: dark_chrome
         lampshow: attract_show_2
         sound: sling

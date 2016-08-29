@@ -224,7 +224,21 @@ class SkeletonGame(BasicGame):
                 else:
                     shoot_again = sa
 
-            self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch='shooter')
+            shooter_lane_sw_name = None
+            if('shooter' in self.switches):
+                shooter_lane_sw_name = 'shooter'
+            else:
+                sa = self.switches.items_tagged('shooter')
+                if(type(sa) is list and len(sa)==0):
+                    logging.getLogger('BallSave').error("No shooter lane switch could be found.  Either name a switch 'shooter' or tag one 'shooter'")
+                    shooter_lane_sw_name = None
+                elif(type(sa) is list):
+                    shooter_lane_sw_name = sa[0].name
+                    logging.getLogger('BallSave').warning("Multiple switches have been tagged 'shooter' -- only the first will be used.")
+                else:
+                    shooter_lane_sw_name = sa.name
+
+            self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch=shooter_lane_sw_name)
 
             # Note - Game specific item:
             trough_switchnames = self.switches.items_tagged('trough')
@@ -240,20 +254,6 @@ class SkeletonGame(BasicGame):
             if(len(trough_switchnames)==0):
                 logging.getLogger('Trough').error("No switches have been tagged 'trough' and no switch names start with 'trough'")
                 raise ValueError("Machine YAML must contain switches either tagged 'trough' or with names that start with 'trough'")
-
-            shooter_lane_sw_name = None
-            if('shooter' in self.switches):
-                shooter_lane_sw_name = 'shooter'
-            else:
-                sa = self.switches.items_tagged('shooter')
-                if(type(sa) is list and len(sa)==0):
-                    logging.getLogger('BallSave').error("No shooter lane switch could be found.  Either name a switch 'shooter' or tag one 'shooter'")
-                    shooter_lane_sw_name = None
-                elif(type(sa) is list):
-                    shooter_lane_sw_name = sa[0].name
-                    logging.getLogger('BallSave').warning("Multiple switches have been tagged 'shooter' -- only the first will be used.")
-                else:
-                    shooter_lane_sw_name = sa.name
 
             early_save_switchnames = [save_sw.name for save_sw in self.switches.items_tagged('early_save')]
 
