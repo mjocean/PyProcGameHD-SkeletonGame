@@ -35,7 +35,7 @@ class Attract(Mode):
                 layer_data = self.game.genLayerFromYAML(l)
                 if(layer_data is None):
                     continue
-                    
+
                 (lyrTmp, duration, lampshow, sound) = layer_data
 
                 cb = None
@@ -68,11 +68,11 @@ class Attract(Mode):
             self.layer.reset()
         pass
 
-    def sw_flipperLwL_active_for_250ms(self, sw):
+    def sw_flipperLwL_active_for_50ms(self, sw):
         self.layer.force_next(False)
         return False
 
-    def sw_flipperLwR_active_for_250ms(self, sw):
+    def sw_flipperLwR_active_for_50ms(self, sw):
         self.layer.force_next(True)
         return False
 
@@ -92,20 +92,20 @@ class Attract(Mode):
     def next_sound(self):
         """ play the sound that corresponds to this specific step in the sequence """
         sound_key = self.sound_keys[self.layer.script_index]
-    
+
         self.stop_sounds()
-        
+
         self.game.log("Attract: Playing next sound: %s" % sound_key)
-    
+
         if(sound_key in self.game.sound.music):
             if(self.game.user_settings['Machine (Standard)']['Attract Mode Music']=='On'):
                 self.game.sound.play_music(sound_key)
         else:
             if(self.game.user_settings['Machine (Standard)']['Attract Mode Sounds']=='On'):
                 self.game.sound.play(sound_key)
-    
+
     def stop_sounds(self):
-        """ this is invoked if the next item in the sequence has no sound listed and 
+        """ this is invoked if the next item in the sequence has no sound listed and
             no lampshow listed.  The old lampshow will continue *but* we need to
             stop the last song, if still playing """
 
@@ -122,7 +122,4 @@ class Attract(Mode):
         self.game.lampctrl.stop_show()
         self.game.disableAllLamps()
         self.game.sound.fadeout_music()
-        pass 
-
-        
-
+        pass
