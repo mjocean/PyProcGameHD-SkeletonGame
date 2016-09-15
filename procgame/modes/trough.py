@@ -54,6 +54,7 @@ class Trough(Mode):
         self.drain_callback = drain_callback
         self.inactive_shooter_time = shooter_lane_inactivity_time
         self.plunge_coilname = plunge_coilname
+        self.num_to_autoplunge = 0
 
         # if there is an outhole, add an auto-kickover
         outhole_sw_name = None

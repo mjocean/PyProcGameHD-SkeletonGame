@@ -257,6 +257,11 @@ class SkeletonGame(BasicGame):
 
             early_save_switchnames = [save_sw.name for save_sw in self.switches.items_tagged('early_save')]
 
+            # Added auto-config for auto plunger
+            plunge_coilname = None
+            if ('autoPlunger' in self.coils)
+                plunge_coilname = 'autoPlunger'
+
             # Note - Game specific item:
             # Here, trough6 is used for the 'eject_switchname'.  This must
             # be the switch of the next ball to be ejected.  Some games
@@ -272,7 +277,7 @@ class SkeletonGame(BasicGame):
                         break
                 if(trough_coil_name is None):
                     raise ValueError, "machine YAML must define a coil named 'Trough' or that starts with"
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None)
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None,plunge_coilname=plunge_coilname)
 
             # Only once the ball is fed to the shooter lane is it possible for the ball
             # drain to actually end a ball
