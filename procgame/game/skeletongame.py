@@ -168,6 +168,7 @@ class SkeletonGame(BasicGame):
             
             # create a sound controller (self.game.sound from within modes)
             self.sound = sound.SoundController(self)
+            self.modes.add(self.sound)
 
             self.settings = []
 
@@ -176,15 +177,6 @@ class SkeletonGame(BasicGame):
 
             # call load_assets function to load fonts, sounds, etc.
             self.load_assets()
-
-            # t1 = SolidLayer(self.dmd_width-16, self.dmd_height/2-16, (128,128,128,192))
-            # t1.set_target_position(4,4)
-            # t1.opaque=False
-            t2 = SolidLayer(int(self.dmd_width*.8), int(self.dmd_height*.5), (255,196,0,255))
-            # self.animations['status_bg'] = GroupedLayer(self.dmd_width-8, self.dmd_height/2-8,[t2,t1])
-            # self.animations['status_bg'].set_target_position(4,self.dmd_height/4+4)
-            self.animations['status_bg'] = GroupedLayer(int(self.dmd_width*.8), int(self.dmd_height*.5),[t2]) #,t1
-            self.animations['status_bg'].set_target_position(int(self.dmd_width*.1),int(self.dmd_height*.25))
 
             self.dmd = HDDisplayController(self)
 
@@ -208,36 +200,14 @@ class SkeletonGame(BasicGame):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
             if(self.use_stock_tiltmode):
+                # find a tilt switch 
+                tilt_sw_name = self.find_item_name('tilt',self.switches)
+                slamtilt_sw_name = self.find_item_name('slamTilt',self.switches)
                 self.tilt_mode = Tilt(game=self, priority=98, font_big=self.fonts['tilt-font-big'], 
-                    font_small=self.fonts['tilt-font-small'], tilt_sw='tilt', slam_tilt_sw='slamTilt')
+                    font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
-            if 'shootAgain' in self.lamps:
-                shoot_again = self.lamps.shootAgain
-            else: 
-                sa = self.lamps.items_tagged('shoot_again')
-                if(type(sa) is list and len(sa)==0):
-                    logging.getLogger('BallSave').warning("No shoot again lamp could be found.  Either name a lamp ShootAgain or tag one 'shoot_again'")
-                    shoot_again = None
-                elif(type(sa) is list):
-                    shoot_again = sa[0]
-                    logging.getLogger('BallSave').warning("Multiple lamps have been tagged 'shoot_again' -- only the first will be used.")
-                else:
-                    shoot_again = sa
-
-            shooter_lane_sw_name = None
-            if('shooter' in self.switches):
-                shooter_lane_sw_name = 'shooter'
-            else:
-                sa = self.switches.items_tagged('shooter')
-                if(type(sa) is list and len(sa)==0):
-                    logging.getLogger('BallSave').error("No shooter lane switch could be found.  Either name a switch 'shooter' or tag one 'shooter'")
-                    shooter_lane_sw_name = None
-                elif(type(sa) is list):
-                    shooter_lane_sw_name = sa[0].name
-                    logging.getLogger('BallSave').warning("Multiple switches have been tagged 'shooter' -- only the first will be used.")
-                else:
-                    shooter_lane_sw_name = sa.name
-
+            shoot_again = self.find_item_name('shoot_again', self.lamps)
+            shooter_lane_sw_name = self.find_item_name('shooter',self.switches)
             self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch=shooter_lane_sw_name)
 
             # Note - Game specific item:
@@ -258,9 +228,7 @@ class SkeletonGame(BasicGame):
             early_save_switchnames = [save_sw.name for save_sw in self.switches.items_tagged('early_save')]
 
             # Added auto-config for auto plunger
-            plunge_coilname = None
-            if ('autoPlunger' in self.coils)
-                plunge_coilname = 'autoPlunger'
+            plunge_coilname = self.find_item_name('autoPlunger', self.coils)
 
             # Note - Game specific item:
             # Here, trough6 is used for the 'eject_switchname'.  This must
@@ -368,13 +336,19 @@ class SkeletonGame(BasicGame):
             self.cleanup()
         super(SkeletonGame,self).end_run_loop()        
 
+    def find_item_name(self, identifier, group):
+        """ returns the name of a switch either named or tagged with the given tag """
+        tmp = group.item_named_or_tagged(identifier)
+        if(tmp is None):
+            return tmp
+        return tmp.name
 
     def clear_status(self):
         self.dmdHelper.layer = None
 
     def set_status(self, msg, duration=2.0):
         """ a helper used to display a message on the DMD --low-tech version of displayText """
-        self.displayText(msg, font_key='default_msg', background_layer='status_bg', flashing=8, duration=duration)
+        self.displayText(msg, font_key=self.status_font_name, background_layer='status_bg', font_style=self.status_font_style, flashing=8, duration=duration)
 
     def displayText(self, msg, background_layer=None, font_key=None, font_style=None, opaque=False, duration=2.0, flashing=False):
         """ a helper to show a specified message on the display for duration seconds.  Calling 
@@ -610,6 +584,7 @@ class SkeletonGame(BasicGame):
             else:
                 self.do_ball_search(silent=True)
 
+        self.modes.add(self.sound)
         # handle modes that need to be alerted of the game reset!
         for m in self.known_modes[AdvancedMode.System]:
             self.modes.add(m())

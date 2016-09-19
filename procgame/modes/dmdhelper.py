@@ -9,6 +9,7 @@ from ..dmd import HDFont
 from ..dmd import RandomizedLayer
 from ..dmd import AnimatedLayer
 from procgame.yaml_helper import value_for_key
+import yaml
 
 class DMDHelper(Mode):
     """A mode that displays a message to the player on the DMD"""
@@ -19,6 +20,19 @@ class DMDHelper(Mode):
         self.logger = logging.getLogger('dmdhelper')
         self.timer_name = 'message_display_ended'
         self.msgfont = self.game.fonts['med']
+
+        self.game.status_font_name = 'status_font'
+
+        if('status_font_style' in self.game.fontstyles):
+            self.game.status_font_style = 'status_font_style'
+        else:
+            self.game.status_font_style = None
+
+        if('status_bg' not in self.game.animations or self.game.animations['status_bg'] is None):
+            t2 = dmd.SolidLayer(int(self.game.dmd_width*.8), int(self.game.dmd_height*.5), (255,196,0,255))                
+            self.game.animations['status_bg'] = dmd.GroupedLayer(int(self.game.dmd_width*.8), int(self.game.dmd_height*.5),[t2]) #,t1
+            self.game.animations['status_bg'].set_target_position(int(self.game.dmd_width*.1),int(self.game.dmd_height*.25))
+
         pass
 
     def msg_over(self):
@@ -136,7 +150,7 @@ class DMDHelper(Mode):
             return (x,y,hj,vj)
         return (x,y)
 
-    def __parse_font_data(self, yaml_struct, required=True):
+    def parse_font_data(self, yaml_struct, required=True):
         """ returns a Font and FontStyle as loaded from a yaml based descriptor of
             Font and FontStyle information. """
         # get font
@@ -182,7 +196,7 @@ class DMDHelper(Mode):
         if(not enabled):
             return None
 
-        (f, font_style) = self.__parse_font_data(yaml_struct)
+        (f, font_style) = self.parse_font_data(yaml_struct)
         (x,y,hj,vj) = self.__parse_position_data(yaml_struct, for_text=True)
         opaque = value_for_key(yaml_struct, 'opaque', False)
 
@@ -216,7 +230,7 @@ class DMDHelper(Mode):
                 duration =  value_for_key(v,'duration', 2.0)
                 lampshow = value_for_key(v, 'lampshow')
                 sound = value_for_key(v, 'sound')
-                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                (fnt, font_style) = self.parse_font_data(v, required=False)
 
                 background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
@@ -240,7 +254,7 @@ class DMDHelper(Mode):
                 lampshow = value_for_key(v, 'lampshow')
                 sound = value_for_key(v, 'sound')
 
-                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                (fnt, font_style) = self.parse_font_data(v, required=False)
 
                 last_score_count = len(self.game.old_players)
 
@@ -260,7 +274,7 @@ class DMDHelper(Mode):
 
             elif('RandomText' in yamlStruct):
                 v = yamlStruct['RandomText']
-                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                (fnt, font_style) = self.parse_font_data(v, required=False)
                 randomText = value_for_key(v,'TextOptions', exception_on_miss=True)
                 headerText = value_for_key(v,'Header', None)
                 duration = value_for_key(v,'duration')
@@ -313,7 +327,7 @@ class DMDHelper(Mode):
             elif('Combo' in yaml_struct):
                 v = yaml_struct['Combo']
 
-                (fnt, font_style) = self.__parse_font_data(v, required=False)
+                (fnt, font_style) = self.parse_font_data(v, required=False)
                 msg = value_for_key(v,'Text')
                 if(msg is None):
                     self.logger.warning("Processing YAML, Combo section contains no 'Text' tag.  Consider using Animation instead.")
@@ -445,8 +459,8 @@ class DMDHelper(Mode):
                 v = yaml_struct['markup_layer']
 
                 w = self.__parse_relative_num(v, 'width', self.game.dmd.width, None)
-                (bold_font, bold_style) = self.__parse_font_data(value_for_key(v, 'Bold', exception_on_miss=True))
-                (plain_font, plain_style) = self.__parse_font_data(value_for_key(v, 'Normal', exception_on_miss=True))
+                (bold_font, bold_style) = self.parse_font_data(value_for_key(v, 'Bold', exception_on_miss=True))
+                (plain_font, plain_style) = self.parse_font_data(value_for_key(v, 'Normal', exception_on_miss=True))
                 txt = value_for_key(v, "Message", exception_on_miss=True)
                 if(isinstance(txt,list)):
                     txt = "\n".join(txt)

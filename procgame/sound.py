@@ -244,16 +244,16 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
         # see if a voice call is already queued in PyGame
         queued_sound = mixer.Channel(CH_VOICE).get_queue() 
-        self.logger.info("cvf: checking if voice playback is complete")
+        self.logger.info("cvf: checking if voice playback is complete (pyg queue: %s)" % queued_sound)
 
         if (queued_sound):
             # we have a sound in the pyGame queue, so set a new delay; using too great a percentage to wait
             # (ie, waiting too long) could occur in the event that A is short and B is short, so we err on
             # the side of a few extra checks, checking again in 50% of the duration of B to see if A is done,
             # eventually it will be and we will catch this instant with at least 50% of B remaining:
-            self.logger.info("cvf: Found an element in the pygame audio queue - stalling")
             delay_length = 0.5 * queued_sound.get_length()
 
+            self.logger.info("cvf: Found an element in the pygame audio queue - check again in %f" % delay_length)
             self.delay(delay=delay_length, handler=self.check_voice_finished, name="voice_finished")
             return
 
@@ -268,21 +268,20 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             # 'moving between queues sound: ' + key
             
             mixer.Channel(CH_VOICE).queue(self.sounds[key]['sound_list'][0])
-
             length = self.sounds[key]['sound_list'][0].get_length()
             #length = ceil(length * 100) / 100.0
-            length = length +.02
+            length = length -.02
             #print 'set up a sound finished handler with a delay of :' + str(length)
             self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
-            self.logger.info("cvf: Found an element in the self.queue - stalling")
+            self.logger.info("cvf: Feeding an element from self.q into pygame audio queue (len(q)=%d)- check again in %f" % (len(self.queue),length))
             return 
 
         # otherwise?  Check if playback is just done!
         if(mixer.Channel(CH_VOICE).get_busy()):
-            self.logger.info("cvf: No queued elements but still playing - stalling")
+            self.logger.info("cvf: No queued elements but sound still playing - stalling")
             self.delay(delay=0.1, handler=self.check_voice_finished, name="voice_finished")
         else:
-            self.logger.info("cvf: voice playback complete!")
+            self.logger.info("cvf: voice playback complete.  Won't check until next play_voice()")
             self.__music_ducking(False)
 
     def play(self,key, loops=0, max_time=0, fade_ms=0, channel=None):
@@ -344,46 +343,57 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
         if not self.enabled: return 0
 
+        self.logger.debug("play_voice(key=%s, action=%s)" % (key,action))
+
         # THIS ASSUMES THIS WAS REGISTERD AS A 'VOICE' and will play on the 'VOICE' channel
 
         if action==PLAY_NOTBUSY:
             if mixer.Channel(CH_VOICE).get_busy() or (mixer.Channel(CH_VOICE).get_queue() is not None):
+                self.logger.debug("play_voice(key=%s, action=%s) - Voice module already busy - returning" % (key,action))
                 return 0
         
         if key in self.sounds:
-            self.cancel_delayed(name="voice_finished")
             if action==PLAY_FORCE:  #we need to clear our queue and stop anything playing
                 # dump our queue
+                self.logger.debug("play_voice(key=%s, action=%s) - FORCE requested, flushing queue" % (key,action))
                 self.queue.clear()
                 mixer.Channel(CH_VOICE).stop()
                 mixer.Channel(CH_VOICE).stop()  # incase there was something in the pygame queue?
                 # cancel sound completed callback, since it's no longer relevant
+                self.cancel_delayed(name="voice_finished")
                 
-
             # Check if there is a queue
-            if (mixer.Channel(CH_VOICE).get_queue() or len(self.queue)>0) and action != PLAY_FORCE:
+            if (mixer.Channel(CH_VOICE).get_queue() or len(self.queue)>0): # PLAY_FORCE will have cleared the queue:
                 # the delayed voice_finished for the currently playing track will
                 # move this into playback for us eventually
                 self.queue.append({'key':key,'tag':tag})
+                length = 1
+                self.logger.debug("play_voice(key=%s, action=%s) - queued to wait (len(q)=%d))" % (key,action,len(self.queue)))
             else:
                 # there is no queue, so just play it now!
                 if len(self.sounds[key]['sound_list']) > 0:
                     random.shuffle(self.sounds[key]['sound_list'])
+                length = self.sounds[key]['sound_list'][0].get_length() * 0.98
+
                 if action==PLAY_QUEUED:
                     # using queue since we are not 100% sure audio finsihed
-                    mixer.Channel(CH_VOICE).queue(self.sounds[key]['sound_list'][0])  
-                    #duration = self.sounds[key]['sound_list'][0].get_length() * (loops+1)
-                elif action == PLAY_FORCE:
+                    mixer.Channel(CH_VOICE).queue(self.sounds[key]['sound_list'][0])
+                    if(self.is_delayed('voice_finished')):
+                        self.logger.debug("play_voice(key=%s, action=%s) - will play next (queue extended by %f)" % (key,action,length))
+                        self.extend_delay_by('voice_finished', length)
+                    else:
+                        self.logger.debug("play_voice(key=%s, action=%s) - will play next (new queue check in %f)" % (key,action,length))
+                        self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
+                elif action == PLAY_FORCE or action == PLAY_NOTBUSY:
                     # use play instead of queue since we want it to play now
                     # mixer.Channel(CH_VOICE).stop() # uncomment to use stop, if your driver won't force playback 
+                    self.logger.debug("play_voice(key=%s, action=%s) - playing RIGHT NOW (next queue check in %f)" % (key,action,length))
                     mixer.Channel(CH_VOICE).play(self.sounds[key]['sound_list'][0]) 
-            
+                    self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
+
             if(self.ducking_enabled):
                 self.__music_ducking(True)
 
-            length = self.sounds[key]['sound_list'][0].get_length()
-            length = length + 0.2
-            self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
             return length
         else:
             self.logger.error("Voice sound with key '%s' not found" % key)
