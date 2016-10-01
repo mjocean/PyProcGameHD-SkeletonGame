@@ -370,7 +370,7 @@ class Trough(Mode):
 
     def ball_in_shooterlane_for_autoplunge(self, sw):
         if(self.num_to_autoplunge > 0 and self.plunge_coilname is not None):
-            self.num_to_autoplunge = max(self.num_to_auto_plunge-1, 0)
+            self.num_to_autoplunge = max(self.num_to_autoplunge-1, 0)
             self.logger.info("Autoplunging ball; num left to autoplunge is %d" % self.num_to_autoplunge)
             self.game.coils[self.plunge_coilname].pulse()
         return SwitchContinue
