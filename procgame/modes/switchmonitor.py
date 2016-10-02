@@ -14,10 +14,15 @@ class SwitchMonitor(Mode):
 
     # Enter service mode when the enter button is pushed.
     def sw_enter_active(self, sw):
+        self.game.log("starting service mode")
         if not self.game.service_mode in self.game.modes:
             self.game.start_service_mode()
             return SwitchStop
         return SwitchContinue
+
+    def sw_startButton_active_for_2s(self, sw):
+        if(self.game.ball > 1):
+            self.game.reset()
 
     def sw_startButton_active(self, sw):
         for m in self.game.modes:

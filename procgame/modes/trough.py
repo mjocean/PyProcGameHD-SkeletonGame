@@ -135,7 +135,7 @@ class Trough(Mode):
         """ Method to call when a ball has been successfully launched into the shooter lane """
         self.launched_callback = None
 
-        #self.debug()
+        # self.debug()
 
     def outhole_handler(self, sw):
         """ a method to auto pulse the outhole coil when the outhole switch is closed for a sufficiently
@@ -151,8 +151,8 @@ class Trough(Mode):
         return SwitchContinue
 
     def debug(self):
-        self.game.set_status(str(self.num_balls_in_play) + "," + str(self.num_balls_locked))
-        self.delay(name='launch', event_type=None, delay=1.0, \
+        self.game.set_status(str(self.num_balls()) + ":" + str(self.num_balls_in_play) + "," + str(self.num_balls_locked))
+        self.delay(name='debug', event_type=None, delay=1.0, \
                        handler=self.debug)
 
     def enable_ball_save(self, enable=True):
@@ -309,6 +309,7 @@ class Trough(Mode):
         self.num_balls_to_launch += num
         if stealth:
             self.num_balls_to_stealth_launch += num
+            self.num_to_autoplunge += num
         if not self.launch_in_progress:
             self.launch_in_progress = True
             
@@ -343,6 +344,12 @@ class Trough(Mode):
             # that the ball has been FED (not the same as placed into shooter lane)
             if self.launch_callback and self.num_balls_to_launch==1:
                 self.launch_callback() # call the callback for this launch
+
+
+    def num_balls_requested(self):
+        """ returns the number of balls that will be eventually "live", counted as the number of live
+            balls currently plus the number of pending ejects """
+        return self.num_balls + self.num_balls_to_launch
 
     def ball_in_shooterlane(self, sw):
         if(self.launch_in_progress):

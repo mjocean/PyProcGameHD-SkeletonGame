@@ -52,6 +52,11 @@ class BonusMode(AdvancedMode):
   def update_lamps(self):
     pass
 
+  """ called when the machine is reset, before we dump the mode from the queue """
+  def reset(self):
+    self.cancel_delayed(name='next_bonus_display')
+    self.layer = None
+
   def getBonusFrame(self, bonusName, bonusCount):
     lyrTop = HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*1/3, self.game.fonts['med'], justify="center", vert_justify=None, opaque=False, width=self.game.dmd.width, height=40, line_color=None, line_width=0, interior_color=(255, 255, 255), fill_color=None)
     lyrBottom = HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*2/3, self.game.fonts['med'], justify="center", vert_justify=None, opaque=False, width=self.game.dmd.width, height=40, line_color=None, line_width=0, interior_color=(255, 255, 255), fill_color=None)
@@ -88,7 +93,7 @@ class BonusMode(AdvancedMode):
     self.bonus_list = self.game.current_player().getBonusList()
 
     self.game.displayText('End of Ball',opaque=True)
-    self.delay(delay=2, handler=self.next_bonus_display)
+    self.delay(name='next_bonus_display', delay=2, handler=self.next_bonus_display)
     return 2 + 2*len(self.bonus_list)
 
   def evt_tilt_ball_ending(self):

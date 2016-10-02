@@ -90,6 +90,12 @@ class DMDHelper(Mode):
             gl.opaque = opaque
             return gl
 
+    """ called when the machine is reset, before we dump the mode from the queue """
+    def reset(self):
+        self.layer = None
+        self.cancel_delayed(name=self.timer_name)
+
+
     def showMessage(self, msg, background_layer=None, font_style=None, opaque=False, duration=2.0, font_key=None, flashing=False):
         self.layer = self.genMsgFrame(msg, background_layer=background_layer, font_style=font_style, opaque=opaque, font_key=font_key, flashing=flashing)
         self.message = msg

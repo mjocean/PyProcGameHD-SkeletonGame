@@ -199,6 +199,9 @@ class SkeletonGame(BasicGame):
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
+            if(self.use_stock_servicemode):
+                self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])        
+
             if(self.use_stock_tiltmode):
                 # find a tilt switch 
                 tilt_sw_name = self.find_item_name('tilt',self.switches)
@@ -563,11 +566,16 @@ class SkeletonGame(BasicGame):
     def reset(self):
         self.logger.info("Skel: RESET()")
 
-        super(SkeletonGame,self).reset()
-        
+        self.dmdHelper.reset()
+        if(hasattr(self,'bonus_mode')):
+            self.bonus_mode.reset()
+
         # clear the notification list
-        # TODO: is this _really_ necessary?
-        self.notify_list = None
+        self.notify_list = []
+        self.event_complete_fn = None
+        self.switchmonitor.cancel_delayed(name='notifyNextMode')
+
+        super(SkeletonGame,self).reset()
 
         self.ball_search_tries = 0
 
@@ -590,8 +598,21 @@ class SkeletonGame(BasicGame):
             self.modes.add(m())
 
         self.modes.add(self.trough)
-        self.modes.add(self.ball_save)
 
+        # Only once the ball is fed to the shooter lane is it possible for the ball
+        # drain to actually end a ball
+        self.trough.drain_callback = None
+        self.trough.launch_callback = None
+        self.trough.launched_callback = self.__install_drain_logic
+
+        # Link ball_save to trough
+        self.trough.ball_save_callback = self.ball_save.launch_callback
+        self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
+        self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
+        # trough fixes
+
+        self.modes.add(self.ball_save)
+       
         if(self.use_stock_scoredisplay is not False):
             self.score_display.reset()
             self.modes.add(self.score_display)
@@ -599,17 +620,16 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.ball_search)
         if(self.use_ballsearch_mode):
             self.ball_search.disable()
-
+        
         # initialize the mode variables; the general form is:
         # self.varName = fileName.classModeName(game=self)
         # Note this creates the mode and causes the Mode's constructor
         # function --aka __init__()  to be run
-        
+
         if(self.use_osc_input):
             self.modes.modes.append(self.osc)
 
-        if(self.use_stock_servicemode):
-            self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])        
+
         self.modes.add(self.dmdHelper)
         self.modes.add(self.switchmonitor)
 
@@ -698,6 +718,7 @@ class SkeletonGame(BasicGame):
 
         for category in self.highscore_categories:
             category.load_from_game(self)
+        
 
     def save_settings(self, filename=None):
         if(filename is None):
@@ -991,6 +1012,7 @@ class SkeletonGame(BasicGame):
             stop music, stop lampshows, disable flippers
             then add the service mode.
         """
+        self.modes.modes = [m for m in self.modes.modes if isinstance(m,AdvancedMode) and m.mode_type==AdvancedMode.System]
         for m in self.modes:
             self.modes.remove(m)
 

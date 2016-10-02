@@ -88,7 +88,7 @@ class HD_InitialEntryMode(Mode):
 	"""Method taking two parameters: `mode` and `inits`."""
 	
 	char_back =  '<'
-	char_done =  '>'
+	char_done =  '='
 	
 	init_font = None
 	font = None

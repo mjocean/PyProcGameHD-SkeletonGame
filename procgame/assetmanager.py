@@ -184,7 +184,7 @@ class AssetManager(object):
             self.lengths[key] = tmp.frames[-1]
             if(len(tmp.frames)==1):
                 holdLastFrame = True
-                self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+                self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
         if(streaming_load):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
