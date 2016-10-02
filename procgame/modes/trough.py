@@ -283,7 +283,7 @@ class Trough(Mode):
         self.num_to_autoplunge += num
 
         # now launch a ball into the lane
-        self.launch_balls(num, stealth=True)
+        self.launch_balls(num) 
 
 
     # Either initiate a new launch or add another ball to the count of balls
