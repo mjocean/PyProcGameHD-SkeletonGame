@@ -248,7 +248,12 @@ class SkeletonGame(BasicGame):
                         break
                 if(trough_coil_name is None):
                     raise ValueError, "machine YAML must define a coil named 'Trough' or that starts with"
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None,plunge_coilname=plunge_coilname)
+
+            if(hasattr(self,'autoplunge_settle_time')):
+                autoplunge_settle_time = self.autoplunge_settle_time
+            else:
+                autoplunge_settle_time = 0.3
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None,plunge_coilname=plunge_coilname, autoplunge_settle_time=autoplunge_settle_time)
 
             # Only once the ball is fed to the shooter lane is it possible for the ball
             # drain to actually end a ball
@@ -416,7 +421,7 @@ class SkeletonGame(BasicGame):
         
         self.logger.debug("ball saver enabled balls=[%d], time left=[%d]" % (num_balls_to_save,time))
         self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves, tick_rate)
-        self.ball_save.callback = callback=self.__ball_saved
+        self.ball_save.callback = self.__ball_saved
 
     def __ball_saved(self):
         self.notifyModes('evt_ball_saved', args=None, event_complete_fn=None)
@@ -718,7 +723,7 @@ class SkeletonGame(BasicGame):
 
         for category in self.highscore_categories:
             category.load_from_game(self)
-        
+
 
     def save_settings(self, filename=None):
         if(filename is None):
