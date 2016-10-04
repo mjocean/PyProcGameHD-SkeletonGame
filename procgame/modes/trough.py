@@ -350,7 +350,13 @@ class Trough(Mode):
     def num_balls_requested(self):
         """ returns the number of balls that will be eventually "live", counted as the number of live
             balls currently plus the number of pending ejects """
-        return self.num_balls() + self.num_balls_to_launch
+        num_installed_balls = self.game.num_balls_total
+        curr_trough_count = self.num_balls()
+        balls_not_in_trough = (num_installed_balls - curr_trough_count)
+
+        self.logger.info("num_balls_requested: trough has %d of %d, of which %d are in physical locks [an additional %d balls are pending launch]" % (curr_trough_count, num_installed_balls, self.num_balls_locked, self.num_balls_to_launch))
+
+        return (balls_not_in_trough - self.num_balls_locked) + self.num_balls_to_launch 
 
     def ball_in_shooterlane(self, sw):
         if(self.launch_in_progress):
