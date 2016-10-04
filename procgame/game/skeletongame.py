@@ -639,7 +639,10 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.switchmonitor)
 
         if(self.use_stock_attractmode):
-            self.attract_mode = Attract(game=self)
+            start_lamp = self.find_item_name('start_button', self.lamps)
+            if(start_lamp is not None):
+                start_lamp = self.lamps[start_lamp]
+            self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
         
     def start_attract_mode(self):
         self.attract_mode.reset()

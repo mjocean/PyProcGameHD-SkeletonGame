@@ -8,7 +8,7 @@ from procgame.yaml_helper import value_for_key
 
 class Attract(Mode):
     """A mode that runs whenever the attract show is in progress."""
-    def __init__(self, game, yaml_file='config/attract.yaml'):
+    def __init__(self, game, yaml_file='config/attract.yaml', start_button_lamp= None):
         super(Attract, self).__init__(game=game, priority=9)
 
 
@@ -16,6 +16,7 @@ class Attract(Mode):
         self.show = 0
         self.sound_keys = []
         self.sound_num = 0
+        self.start_button_lamp = start_button_lamp
 
         sl = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
 
@@ -64,6 +65,9 @@ class Attract(Mode):
     def reset(self):
         self.game.sound.fadeout_music()
         self.show = 0
+        if(self.start_button_lamp is not None):
+            self.start_button_lamp.disable()
+
         if(self.layer is not None):
             self.layer.reset()
         pass
@@ -116,6 +120,8 @@ class Attract(Mode):
 
     def mode_started(self):
         self.reset()
+        if(self.start_button_lamp is not None):
+            self.start_button_lamp.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
         pass
 
     def mode_stopped(self):

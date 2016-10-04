@@ -308,7 +308,7 @@ class AssetManager(object):
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
             self.updateProgressBar("Audio Voices", fname)
-            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume) #, is_voice=True)
+            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume, is_voice=True)
             self.numLoaded += 1
 
 

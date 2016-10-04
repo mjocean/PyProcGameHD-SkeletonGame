@@ -471,10 +471,10 @@ class GameController(object):
             main_coil = self.coils[flipper+'Main']
             if self.coils.has_key(flipper+'Hold'): 
                 style = 'wpc'
-                self.logger.info("%sabling WPC style flipper" % "En" if enable else "Dis")
+                self.logger.info("%sabling WPC style flipper" % ("En" if enable else "Dis"))
                 hold_coil = self.coils[flipper+'Hold']
             else: 
-                self.logger.info("%sabling Stern style flipper" % "En" if enable else "Dis")
+                self.logger.info("%sabling Stern style flipper" % ("En" if enable else "Dis"))
                 style = 'stern'
             switch_num = self.switches[flipper].number
 
