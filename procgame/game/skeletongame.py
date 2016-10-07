@@ -187,6 +187,7 @@ class SkeletonGame(BasicGame):
             self.use_stock_servicemode = config.value_for_key_path('default_modes.service_mode', True)
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
             self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
+            self.use_multiline_score_entry = config.value_for_key_path('default_modes.multiline_highscore_entry', False)
 
             self.dmdHelper = DMDHelper(game=self)
             self.modes.add(self.dmdHelper)
@@ -571,7 +572,11 @@ class SkeletonGame(BasicGame):
     def reset(self):
         self.logger.info("Skel: RESET()")
 
-        # turn off the flippers
+        # reset mid-game can leave Lamps, coils or flippers on.  Turn them OFF
+        # as modes might use delay() to disable them, but those won't run now
+        self.disableAllLamps()
+        self.disableAllCoils()
+
         self.enable_flippers(False)
         self.enable_alphanumeric_flippers(False)
 
@@ -989,7 +994,7 @@ class SkeletonGame(BasicGame):
             self.modes.remove(m())
         pass
 
-        seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2)
+        seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2, multiline=self.use_multiline_score_entry)
         seq_manager.finished_handler = self.high_score_entry_completed
         seq_manager.logic = highscore.CategoryLogic(game=self, categories=self.highscore_categories)
         self.modes.add(seq_manager)
@@ -1042,6 +1047,18 @@ class SkeletonGame(BasicGame):
         self.save_settings()
         self.load_settings_and_stats()
         self.reset()
+
+    def disableAllCoils(self):
+        """ turn off all coils
+            needed after a reset while the game is in progress, we don't want
+            to leave coils energized that might have been disabled by now cancelled
+            delays 
+        # NOTE: If this behavior is undesirable in your machine, define your own reset method
+            and re-engergize any coils you need to OR define your own disableAllCoils that
+            leaves some on
+        """        
+        for coil in self.coils:
+            coil.disable()
 
     def disableAllLamps(self):
         # turn off all the lamps

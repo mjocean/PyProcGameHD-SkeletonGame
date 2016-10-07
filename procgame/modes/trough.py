@@ -347,6 +347,12 @@ class Trough(Mode):
                 self.launch_callback() # call the callback for this launch
 
 
+    def num_balls_out(self):
+        """ returns the number of balls that are currently not in the trough.   
+            NOT including balls pending launch, but does include locked balls """
+        curr_trough_count = self.num_balls()
+        return (self.game.num_balls_total - curr_trough_count)
+
     def num_balls_requested(self):
         """ returns the number of balls that will be eventually "live", counted as the number of live
             balls currently plus the number of pending ejects """
