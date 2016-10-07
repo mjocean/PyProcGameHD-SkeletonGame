@@ -35,10 +35,11 @@ class BallSave(Mode):
         self.disable()
 
     def launch_callback(self):
-        """Disables the ball save logic when multiple saves are not allowed.  This is typically linked to a Trough object so the trough can notify this logic when a ball is being saved.  If 'self.callback' is externally defined, that method will be called from here."""        
+        """Disables the ball save logic when multiple saves are not allowed.  This is typically linked to a Trough object so the trough can notify this logic when a ball is being saved.  If 'self.callback' is externally defined, that method will be called from here."""
         # call the callback prior to multiple saves check
         # otherwise not allowing multiple saves will stop
         # the callback even if this is the first save!
+        self.logger.debug("[a ball has been saved]")
         if self.callback:
             self.callback()
         if not self.allow_multiple_saves:
@@ -117,6 +118,7 @@ class BallSave(Mode):
 
     def timer_countdown(self):
         self.timer -= self.tick_rate
+        self.update_lamps()
         if (self.timer > 0):
             self.delay(name='ball_save_timer', event_type=None, delay=self.tick_rate, handler=self.timer_countdown)
             self.logger.debug("ball saver time left = %d" % self.timer)
@@ -125,10 +127,11 @@ class BallSave(Mode):
         else:
             self.logger.debug("ball saver disabled - timed out")
             self.disable()
+            if(self.lamp is not None):
+                self.lamp.disable()
             if(self.timer_expired_callback is not None):
                 self.timer_expired_callback()
 
-        self.update_lamps()
 
     def is_active(self):
         return self.timer > 0

@@ -571,6 +571,10 @@ class SkeletonGame(BasicGame):
     def reset(self):
         self.logger.info("Skel: RESET()")
 
+        # turn off the flippers
+        self.enable_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+
         self.dmdHelper.reset()
         if(hasattr(self,'bonus_mode')):
             self.bonus_mode.reset()
