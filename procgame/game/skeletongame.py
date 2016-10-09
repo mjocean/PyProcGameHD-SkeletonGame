@@ -210,7 +210,9 @@ class SkeletonGame(BasicGame):
                 self.tilt_mode = Tilt(game=self, priority=98, font_big=self.fonts['tilt-font-big'], 
                     font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
-            shoot_again = self.find_item_name('shoot_again', self.lamps)
+            shoot_again = self.lamps.item_named_or_tagged('shoot_again')
+            if(shoot_again is None):
+                print "NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP "
             shooter_lane_sw_name = self.find_item_name('shooter',self.switches)
             self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch=shooter_lane_sw_name)
 
@@ -648,9 +650,10 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.switchmonitor)
 
         if(self.use_stock_attractmode):
-            start_lamp = self.find_item_name('start_button', self.lamps)
-            if(start_lamp is not None):
-                start_lamp = self.lamps[start_lamp]
+            start_lamp = self.lamps.item_named_or_tagged('start_button')
+            # start_lamp = self.find_item_name('start_button', self.lamps)
+            # if(start_lamp is not None):
+            #     start_lamp = self.lamps[start_lamp]
             self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
         
     def start_attract_mode(self):
