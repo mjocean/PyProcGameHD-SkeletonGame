@@ -211,8 +211,6 @@ class SkeletonGame(BasicGame):
                     font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
             shoot_again = self.lamps.item_named_or_tagged('shoot_again')
-            if(shoot_again is None):
-                print "NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP NO LAMP "
             shooter_lane_sw_name = self.find_item_name('shooter',self.switches)
             self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch=shooter_lane_sw_name)
 
@@ -509,7 +507,7 @@ class SkeletonGame(BasicGame):
             if(d[1] == True): # flag to stop event propegation and jump to the event 
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
                 self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler, self.event))
-            if(d[0] > 0):
+            if(d[0] >= 0):
                 self.curr_delayed_by_mode = next_handler
                 self.switchmonitor.delay(name='notifyNextMode',
                    event_type=None, 
