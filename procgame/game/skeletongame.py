@@ -497,25 +497,37 @@ class SkeletonGame(BasicGame):
         # else:
         #     d = evt_handler(self.args)
 
-        if(d is not None and (type(d) is int or type(d) is float) and d > 0):
-            self.curr_delayed_by_mode = next_handler
-            self.switchmonitor.delay(name='notifyNextMode',
-               event_type=None, 
-               delay=d, 
-               handler=self.notifyNextMode)            
+        if(d is not None and (type(d) is int or type(d) is float)):
+            if(d == 0):
+                self.notifyNextMode()
+            else:
+                self.curr_delayed_by_mode = next_handler
+                if(d > 0):
+                    self.switchmonitor.delay(name='notifyNextMode',
+                       event_type=None, 
+                       delay=d, 
+                       handler=self.notifyNextMode)
+                # else, handler will need to handle the event itself (self.force_event_next())
         elif(type(d) is tuple):
             if(d[1] == True): # flag to stop event propegation and jump to the event 
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
                 self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler, self.event))
-            if(d[0] >= 0):
+            if(d[0] > 0):
                 self.curr_delayed_by_mode = next_handler
                 self.switchmonitor.delay(name='notifyNextMode',
                    event_type=None, 
                    delay=d[0], 
-                   handler=self.notifyNextMode)            
-            else: # no delay specified
-                self.notifyNextMode() # note: next call will either fire event or notify next mode accordingly
+                   handler=self.notifyNextMode)
+            elif(d[0]==0):
+                # no delay specified
+                self.notifyNextMode()
+            else: 
+                # time reported is less than zero (e.g., -1) --user is saying they do not
+                # want to return a bound on how long they need to handle the event, so
+                # the mode is responsible for indicating the completion of handling (self.force_event_next())
+                self.curr_delayed_by_mode = next_handler
         else:
+            # returning None from an event handler (or not returning at all) means no delay will be given
             self.notifyNextMode()
         
     def notifyNextModeNow(self, caller_mode):
@@ -825,7 +837,12 @@ class SkeletonGame(BasicGame):
             self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
         elif self.trough.num_balls_in_play == 1:
             """ TODO: Ensure we are only seeing this event during multiball """
-            self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
+
+            # ensure this isn't a situation of a fast-drain when more balls are pending launch
+            if(self.trough.self.num_balls_to_launch >= 1):
+                self.logger.warning("one ball in play, but more balls are pending launch (supressing evt_single_ball_play)")
+            else:
+                self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
 
     def your_search_is_over(self):
         """ all balls have been accounted for --if you were blocking a game start, stop that. """
