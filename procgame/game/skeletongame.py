@@ -839,7 +839,7 @@ class SkeletonGame(BasicGame):
             """ TODO: Ensure we are only seeing this event during multiball """
 
             # ensure this isn't a situation of a fast-drain when more balls are pending launch
-            if(self.trough.self.num_balls_to_launch >= 1):
+            if(self.trough.num_balls_to_launch >= 1):
                 self.logger.warning("one ball in play, but more balls are pending launch (supressing evt_single_ball_play)")
             else:
                 self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
