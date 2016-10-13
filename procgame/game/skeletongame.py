@@ -188,6 +188,7 @@ class SkeletonGame(BasicGame):
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
             self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
             self.use_multiline_score_entry = config.value_for_key_path('default_modes.multiline_highscore_entry', False)
+            self.ballsearch_time = config.value_for_key_path('default_modes.ball_search_delay', 30)
 
             self.dmdHelper = DMDHelper(game=self)
             self.modes.add(self.dmdHelper)
@@ -295,7 +296,7 @@ class SkeletonGame(BasicGame):
 
             # create it anyway; if the switches are empty it will nerf itself.                
             self.ball_search = BallSearch(self, priority=100, \
-                                 countdown_time=10, coils=self.ballsearch_coils, \
+                                 countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
                                  reset_switches=self.ballsearch_resetSwitches, \
                                  stop_switches=self.ballsearch_stopSwitches, \
                                  special_handler_modes=[])
