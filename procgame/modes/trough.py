@@ -42,8 +42,9 @@ class Trough(Mode):
         'plunge_coilname': Optional - Name of a coil to be fired to autoplunge a ball if launch_and_autoplunge_balls() is called.
     """
     def __init__(self, game, position_switchnames, eject_switchname, eject_coilname, \
-                     early_save_switchnames, shooter_lane_switchname, drain_callback=None, 
-                     shooter_lane_inactivity_time=2.0, plunge_coilname=None, autoplunge_settle_time=0.3):
+                     early_save_switchnames, shooter_lane_switchname, drain_callback=None,  
+                     shooter_lane_inactivity_time=2.0, plunge_coilname=None, autoplunge_settle_time=0.3, \
+                     trough_settle_time=0.5):
         super(Trough, self).__init__(game, 90)
         self.logger = logging.getLogger('trough')
 
@@ -55,6 +56,7 @@ class Trough(Mode):
         self.inactive_shooter_time = shooter_lane_inactivity_time
         self.plunge_coilname = plunge_coilname
         self.num_to_autoplunge = 0
+        self.settle_time = trough_settle_time
 
         # if there is an outhole, add an auto-kickover
         outhole_sw_name = None
@@ -176,7 +178,7 @@ class Trough(Mode):
     # the delay will call the real handler (check_switches).
     def position_switch_handler(self, sw):
         self.cancel_delayed('check_switches')
-        self.delay(name='check_switches', event_type=None, delay=0.50, handler=self.check_switches)
+        self.delay(name='check_switches', event_type=None, delay=self.settle_time, handler=self.check_switches)
 
     def check_switches(self):
         if self.num_balls_in_play > 0:

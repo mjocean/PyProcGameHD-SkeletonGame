@@ -255,7 +255,15 @@ class SkeletonGame(BasicGame):
                 autoplunge_settle_time = self.autoplunge_settle_time
             else:
                 autoplunge_settle_time = 0.3
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, early_save_switchnames, shooter_lane_sw_name, drain_callback=None,plunge_coilname=plunge_coilname, autoplunge_settle_time=autoplunge_settle_time)
+
+            if(hasattr(self,'trough_settle_time')):
+                trough_settle_time = self.trough_settle_time
+            else:
+                trough_settle_time = 0.5
+
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, \
+                early_save_switchnames, shooter_lane_sw_name, drain_callback=None, plunge_coilname=plunge_coilname, \
+                autoplunge_settle_time=autoplunge_settle_time, trough_settle_time=trough_settle_time)
 
             # Only once the ball is fed to the shooter lane is it possible for the ball
             # drain to actually end a ball
