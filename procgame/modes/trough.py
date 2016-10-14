@@ -325,7 +325,7 @@ class Trough(Mode):
         # shooter lane. 
         # NOTE: a momentary check of the shooter lane may be insufficient
         #   probably best to adjust this to make sure the ball is really "away"
-        if self.game.switches[self.shooter_lane_switchname].is_active() and \
+        if self.game.switches[self.shooter_lane_switchname].is_active() or \
            self.game.switches[self.shooter_lane_switchname].time_since_change() < self.inactive_shooter_time:
             # Wait 1 second before trying again.
             self.logger.info("Cannot feed ball as shooter lane isn't ready [pending=%d (stealth=%d)] --retry in 1s" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
