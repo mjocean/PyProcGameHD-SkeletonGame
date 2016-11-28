@@ -22,7 +22,7 @@ from . import Player
 from .advancedmode import AdvancedMode
 from ..dmd import HDDisplayController, font_named, sdl2_DisplayManager
 from ..dmd.layers import SolidLayer, GroupedLayer
-from ..modes import ScoreDisplay
+from ..modes import ScoreDisplay, ScoreDisplayHD
 from ..modes import Trough, ballsave, BallSearch
 from ..modes import osc
 from ..modes import DMDHelper, SwitchMonitor
@@ -51,12 +51,9 @@ import locale
 import random
 import re
 import weakref
+# from weakref import WeakValueDictionary
 
 from game import config_named
-
-# set up a few more things before we get started 
-# the logger's configuration and format
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 try:
     # Mac/Linux version
@@ -81,7 +78,7 @@ def run_proc_game(game_class):
 
     try:
         game = game_class()
-        game.run_loop() 
+        game.run_loop(.0001) 
     except Exception, e:
         # back up the exception
         exc_info = sys.exc_info()        
@@ -94,17 +91,6 @@ def run_proc_game(game_class):
         if(exc_info is not None):
             raise exc_info[0], exc_info[1], exc_info[2]
             print "---------"
-
-
-class GameEventHandler(object):
-    def __init__(self, name, mode, handler, param=None):
-        self.name = name
-        self.handler = handler
-        self.param = param
-        self.mode = weakref.ref(mode) # use a weak reference
-
-    def __str__(self):
-        return '<name=%s handler=%s mode=%s>' % (self.name, self.handler, self.mode())
 
 
 class SkeletonGame(BasicGame):
@@ -129,7 +115,12 @@ class SkeletonGame(BasicGame):
             if not machine_type:
                 raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
 
+            # try:
             super(SkeletonGame, self).__init__(machine_type)
+            # except IOError, e:
+            #     self.log("Error connecting to P-ROC -- running virtual mode")
+            #     config.values['pinproc_class'] = 'procgame.fakepinproc.FakePinPROC'
+            #     super(SkeletonGame, self).__init__(machine_type)
 
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
             self.dmd_height = config.value_for_key_path('dmd_dots_h', 240) 
@@ -153,22 +144,31 @@ class SkeletonGame(BasicGame):
             
             self.hdfont_path = config.value_for_key_path('hdfont_dir', curr_file_path + "/assets/fonts/")
 
+            # known_modes are all AdvancedModes that have been created; they are stored by type
+            # what is stored is a weakref to each, so we don't mess up reference counts/garbage collection
             self.known_modes = {}
             self.known_modes[AdvancedMode.System] = []
             self.known_modes[AdvancedMode.Ball] = []
             self.known_modes[AdvancedMode.Game] = []
             self.known_modes[AdvancedMode.Manual] = []
             
-            self.event_handlers = dict()
+            # event hanlders are lists of AdvancedModes (again, weakref) that care about these specific 
+            # events (i.e., these classes define functions to handle these specific events)
+            self.event_handlers = {}
             # the evt_ methods:
-            self.known_events = ['tilt', 'shoot_again', 'single_ball_play', 'ball_ending', 'ball_starting', 'game_ending', 'game_starting', 'tilt_ball_ending', 'player_added']
+            self.known_events = [ 'evt_tilt', 'evt_shoot_again', 'evt_single_ball_play', \
+                                    'evt_ball_ending', 'evt_ball_starting', 'evt_ball_saved', \
+                                    'evt_game_ending', 'evt_game_starting', 'evt_tilt_ball_ending', \
+                                    'evt_player_added']
+
             for e in self.known_events:
-                self.event_handlers[e] = list()
+                self.event_handlers[e] = []
 
             self.game_tilted = False # indicates if any kind of tilt has occured; tilt, slam_tilt
             
             # create a sound controller (self.game.sound from within modes)
             self.sound = sound.SoundController(self)
+            self.modes.add(self.sound)
 
             self.settings = []
 
@@ -177,15 +177,6 @@ class SkeletonGame(BasicGame):
 
             # call load_assets function to load fonts, sounds, etc.
             self.load_assets()
-
-            # t1 = SolidLayer(self.dmd_width-16, self.dmd_height/2-16, (128,128,128,192))
-            # t1.set_target_position(4,4)
-            # t1.opaque=False
-            t2 = SolidLayer(int(self.dmd_width*.8), int(self.dmd_height*.5), (255,196,0,255))
-            # self.animations['status_bg'] = GroupedLayer(self.dmd_width-8, self.dmd_height/2-8,[t2,t1])
-            # self.animations['status_bg'].set_target_position(4,self.dmd_height/4+4)
-            self.animations['status_bg'] = GroupedLayer(int(self.dmd_width*.8), int(self.dmd_height*.5),[t2]) #,t1
-            self.animations['status_bg'].set_target_position(int(self.dmd_width*.1),int(self.dmd_height*.25))
 
             self.dmd = HDDisplayController(self)
 
@@ -196,33 +187,33 @@ class SkeletonGame(BasicGame):
             self.use_stock_servicemode = config.value_for_key_path('default_modes.service_mode', True)
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
             self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
+            self.use_multiline_score_entry = config.value_for_key_path('default_modes.multiline_highscore_entry', False)
+            self.ballsearch_time = config.value_for_key_path('default_modes.ball_search_delay', 30)
 
             self.dmdHelper = DMDHelper(game=self)
             self.modes.add(self.dmdHelper)
 
-            if(self.use_stock_scoredisplay):
+            if(self.use_stock_scoredisplay is True):
                 self.score_display = ScoreDisplay(self,0)
+            elif(self.use_stock_scoredisplay=='HD'):
+                self.score_display = ScoreDisplayHD(self, 0)        
+
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
+            if(self.use_stock_servicemode):
+                self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])        
+
             if(self.use_stock_tiltmode):
+                # find a tilt switch 
+                tilt_sw_name = self.find_item_name('tilt',self.switches)
+                slamtilt_sw_name = self.find_item_name('slamTilt',self.switches)
                 self.tilt_mode = Tilt(game=self, priority=98, font_big=self.fonts['tilt-font-big'], 
-                    font_small=self.fonts['tilt-font-small'], tilt_sw='tilt', slam_tilt_sw='slamTilt')
+                    font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
-            if 'shootAgain' in self.lamps:
-                shoot_again = self.lamps.shootAgain
-            else: 
-                sa = self.lamps.items_tagged('shoot_again')
-                if(type(sa) is list and len(sa)==0):
-                    logging.getLogger('BallSave').warning("No shoot again lamp could be found.  Either name a lamp ShootAgain or tag one 'shoot_again'")
-                    shoot_again = None
-                elif(type(sa) is list):
-                    shoot_again = sa[0]
-                    logging.getLogger('BallSave').warning("Multiple lamps have been tagged 'shoot_again' -- only the first will be used.")
-                else:
-                    shoot_again = sa
-
-            self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch='shooter')
+            shoot_again = self.lamps.item_named_or_tagged('shoot_again')
+            shooter_lane_sw_name = self.find_item_name('shooter',self.switches)
+            self.ball_save = ballsave.BallSave(self, lamp=shoot_again, delayed_start_switch=shooter_lane_sw_name)
 
             # Note - Game specific item:
             trough_switchnames = self.switches.items_tagged('trough')
@@ -239,7 +230,10 @@ class SkeletonGame(BasicGame):
                 logging.getLogger('Trough').error("No switches have been tagged 'trough' and no switch names start with 'trough'")
                 raise ValueError("Machine YAML must contain switches either tagged 'trough' or with names that start with 'trough'")
 
-            # early_save_switchnames = ['outlaneR', 'outlaneL']
+            early_save_switchnames = [save_sw.name for save_sw in self.switches.items_tagged('early_save')]
+
+            # Added auto-config for auto plunger
+            plunge_coilname = self.find_item_name('autoPlunger', self.coils)
 
             # Note - Game specific item:
             # Here, trough6 is used for the 'eject_switchname'.  This must
@@ -256,13 +250,31 @@ class SkeletonGame(BasicGame):
                         break
                 if(trough_coil_name is None):
                     raise ValueError, "machine YAML must define a coil named 'Trough' or that starts with"
-            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, [], 'shooter', self.__ball_drained_callback)
-        
+
+            if(hasattr(self,'autoplunge_settle_time')):
+                autoplunge_settle_time = self.autoplunge_settle_time
+            else:
+                autoplunge_settle_time = 0.3
+
+            if(hasattr(self,'trough_settle_time')):
+                trough_settle_time = self.trough_settle_time
+            else:
+                trough_settle_time = 0.5
+
+            self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, \
+                early_save_switchnames, shooter_lane_sw_name, drain_callback=None, plunge_coilname=plunge_coilname, \
+                autoplunge_settle_time=autoplunge_settle_time, trough_settle_time=trough_settle_time)
+
+            # Only once the ball is fed to the shooter lane is it possible for the ball
+            # drain to actually end a ball
+            self.trough.drain_callback = None
+            self.trough.launch_callback = None
+            self.trough.launched_callback = self.__install_drain_logic
+
             # Link ball_save to trough
             self.trough.ball_save_callback = self.ball_save.launch_callback
             self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
             self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
-
 
             self.game_start_pending = False
             bs_stopSwitches = list()
@@ -287,13 +299,12 @@ class SkeletonGame(BasicGame):
 
             if(self.use_ballsearch_mode):
                 if(len(bs_stopSwitches) == 0 and len(bs_resetSwitches) == 0):
-                    self.log("Could not use Ball search mode as there were no ballsearch tags (reset/stop) on any game switches in the yaml. ")
-                    self.log(" -- will default to using your games: do_ball_search() method...")
+                    self.logger.error("Could not use Ball search mode as there were no ballsearch tags (reset/stop) on any game switches in the yaml.\n -- will default to using your games: do_ball_search() method...")
                     self.use_ballsearch_mode = False
 
             # create it anyway; if the switches are empty it will nerf itself.                
             self.ball_search = BallSearch(self, priority=100, \
-                                 countdown_time=10, coils=self.ballsearch_coils, \
+                                 countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
                                  reset_switches=self.ballsearch_resetSwitches, \
                                  stop_switches=self.ballsearch_stopSwitches, \
                                  special_handler_modes=[])
@@ -325,17 +336,37 @@ class SkeletonGame(BasicGame):
                 self.osc.OSC_shutdown()
             raise
 
+    def __install_drain_logic(self):
+        """ do not install the "ball drained" logic until we know we have
+            successfully fed the ball into the shooter lane """
+        self.logger.debug("drain logic installed to trough")
+        self.trough.drain_callback = self.__ball_drained_callback
+        self.trough.launch_callback = None
+        self.trough.launched_callback = None
+
+    def cleanup(self):
+        """ stub incase subclass doesn't provide an implementation """
+        pass
+
     def end_run_loop(self):
         cleanup()
+        if(hasattr(self,'cleanup')):
+            self.cleanup()
         super(SkeletonGame,self).end_run_loop()        
 
+    def find_item_name(self, identifier, group):
+        """ returns the name of a switch either named or tagged with the given tag """
+        tmp = group.item_named_or_tagged(identifier)
+        if(tmp is None):
+            return tmp
+        return tmp.name
 
     def clear_status(self):
         self.dmdHelper.layer = None
 
     def set_status(self, msg, duration=2.0):
         """ a helper used to display a message on the DMD --low-tech version of displayText """
-        self.displayText(msg, font_key='default_msg', background_layer='status_bg', flashing=8, duration=duration)
+        self.displayText(msg, font_key=self.status_font_name, background_layer='status_bg', font_style=self.status_font_style, flashing=8, duration=duration)
 
     def displayText(self, msg, background_layer=None, font_key=None, font_style=None, opaque=False, duration=2.0, flashing=False):
         """ a helper to show a specified message on the display for duration seconds.  Calling 
@@ -385,91 +416,138 @@ class SkeletonGame(BasicGame):
         return self.dmdHelper.genMsgFrame(msg, background_layer, font_style, font_key, opaque)
 
     def ball_saver_enable(self, num_balls_to_save=1, time=5, now=True, allow_multiple_saves=False, callback=None):
-        """ use this to turn on the ball_saver! """
-        self.ball_save.callback = callback
-        self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves)
+        import warnings
+        message = "'ball_saver_enable' has been phased out. Replace with a call to 'enable_ball_saver()' and handle the 'evt_ball_saved' event for notification."
+        warnings.simplefilter("error")
+        warnings.warn(message, DeprecationWarning, stacklevel=2)
+        # raise NameError, message
 
-    def ball_saver_disable(self):
-        """ use this to end the ball saver, early! """
+    def enable_ball_saver(self, num_balls_to_save=1, time=None, now=True, allow_multiple_saves=False, tick_rate=1):
+        """ turns on the ball saver -- omit time to use the setting from the service menu
+            --note, if this happens 'too early' in your game, just enable the saver again at 
+            a later point to extend the timer """
+        if(time is None):
+            time = self.user_settings['Gameplay (Feature)']['Ball Save Timer']
+        
+        self.logger.debug("ball saver enabled balls=[%d], time left=[%d]" % (num_balls_to_save,time))
+        self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves, tick_rate)
+        self.ball_save.callback = self.__ball_saved
+
+    def __ball_saved(self):
+        self.notifyModes('evt_ball_saved', args=None, event_complete_fn=None)
+
+    def disable_ball_saver(self):
+        """ use this to end the ball saver early """
+        self.logger.debug("ball saver disabled")
         self.ball_save.disable()
 
     def get_highscore_data(self):
         return highscore.get_highscore_data(self.highscore_categories)
 
     def notifyOfNewMode(self,new_mode):
-        if(new_mode in self.known_modes[new_mode.mode_type]):
-            self.log("Skel: Ignoring already known mode '%s'" % new_mode)    
-            return
-        self.known_modes[new_mode.mode_type].append(new_mode)
-        self.log("Skel: Known advanced modes added '%s'" % new_mode)
+        """ let the skeletongame instance know about the new mode.  Use weakref to 
+            record information about the new mode so we don't accidentally keep it 
+            around longer than needed.  learning of the new mode happens whenever 
+            an advancedMode is created, and allows skeletongame to handle auto-add/remove
+            of a mode based on the specified mode_type.
 
-        # Format: evt_name(self):
-        handler_func_re = re.compile('evt_(?P<name>[a-zA-Z0-9_]+)?')
-        for item in dir(new_mode):
-            m = handler_func_re.match(item)
-            if m == None:
-                continue
-            handlerfn = getattr(new_mode, item)
-            evt_name = m.group('name')
-            self.add_evt_handler(new_mode, evt_name, handler=handlerfn)
+            NOTE: if a second instance of the same mode type is created, this raises an error.
+            Do not re create modes in reset(), just reset() the mode itself
+        """
+        if(weakref.ref(new_mode) in self.known_modes[new_mode.mode_type]):
+            self.logger.warning("Skel: A second instance of an already known mode has been created '%s'" % new_mode)
+            raise ValueError, "This cannot happen. Someone notified us of the same mode instance twice!"
+
+        for m in self.known_modes[new_mode.mode_type]:
+            if type(m())==type(new_mode):
+                raise ValueError, "Your code attempted to create a second instance of the Mode '%s' --this is likely an error." % type(new_mode)
+
+        self.known_modes[new_mode.mode_type].append(weakref.ref(new_mode))
+        self.logger.debug("Skel: Known advanced modes added '%s'" % new_mode)
+
+        # import sys
+        # for thing in self.known_modes[new_mode.mode_type]:
+        #     self.logger.debug("skel: mode='%s' ref_ct=%d'" % (thing, sys.getrefcount(thing)))
+
+        # # Format: evt_name(self):
+        # handler_func_re = re.compile('evt_(?P<name>[a-zA-Z0-9_]+)?')
+        # for item in dir(new_mode):
+        #     m = handler_func_re.match(item)
+        #     if m == None:
+        #         continue
+        #     handlerfn = getattr(new_mode, item)
+        #     evt_name = m.group('name')
+        #     self.add_evt_handler(new_mode, evt_name, handler=handlerfn)
+
+    def add_evt_handler(self, mode, evt_name):
+        if(evt_name not in self.event_handlers):
+            raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (mode, evt_name)
+
+        self.event_handlers[evt_name].append(weakref.ref(mode))
 
     def notifyNextMode(self):
+        self.curr_delayed_by_mode = None
         if(len(self.notify_list)==0):
-            self.curr_delayed_by_mode = None
             if(self.event_complete_fn is not None):
-                self.log("Skel: completing event '%s' by calling '%s'" % (self.event, self.event_complete_fn))
+                self.logger.debug("Skel: completing event '%s' by calling '%s'" % (self.event, self.event_complete_fn))
                 self.event_complete_fn()
             else:
-                self.log("Skel: completing event '%s'." % (self.event))
+                self.logger.debug("Skel: completing event '%s'." % (self.event))
             return
 
         # otherwise there are more modes awaiting notification
         next_handler = self.notify_list.pop()
 
-        self.log("Skel: calling mode '%s' event handler for event '%s'" % (next_handler.mode(), self.event))
+        self.logger.debug("Skel: calling mode '%s' event handler for event '%s'" % (next_handler, self.event))
 
-        if(self.args is None):
-            d = next_handler.handler()
-        else:
-            d = next_handler.handler(self.args)
+        d = next_handler.handle_game_event(self.event,params=self.args)
+        # if(self.args is None):
+        #     d = evt_handler()
+        # else:
+        #     d = evt_handler(self.args)
 
-        if(d is not None and (type(d) is int or type(d) is float) and d > 0):
-            self.curr_delayed_by_mode = next_handler.mode()
-            self.switchmonitor.delay(name='notifyNextMode',
-               event_type=None, 
-               delay=d, 
-               handler=self.notifyNextMode)            
+        if(d is not None and (type(d) is int or type(d) is float)):
+            if(d == 0):
+                self.notifyNextMode()
+            else:
+                self.curr_delayed_by_mode = next_handler
+                if(d > 0):
+                    self.switchmonitor.delay(name='notifyNextMode',
+                       event_type=None, 
+                       delay=d, 
+                       handler=self.notifyNextMode)
+                # else, handler will need to handle the event itself (self.force_event_next())
         elif(type(d) is tuple):
             if(d[1] == True): # flag to stop event propegation and jump to the event 
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
-                self.log("Skel: Mode '%s' indivates event '%s' is now complete.  Blocking further propegation" % (next_handler.mode(), self.event))
+                self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler, self.event))
             if(d[0] > 0):
-                self.curr_delayed_by_mode = next_handler.mode()
+                self.curr_delayed_by_mode = next_handler
                 self.switchmonitor.delay(name='notifyNextMode',
                    event_type=None, 
                    delay=d[0], 
-                   handler=self.notifyNextMode)            
-            else: # no delay specified
-                self.notifyNextMode() # note: next call will either fire event or notify next mode accordingly
+                   handler=self.notifyNextMode)
+            elif(d[0]==0):
+                # no delay specified
+                self.notifyNextMode()
+            else: 
+                # time reported is less than zero (e.g., -1) --user is saying they do not
+                # want to return a bound on how long they need to handle the event, so
+                # the mode is responsible for indicating the completion of handling (self.force_event_next())
+                self.curr_delayed_by_mode = next_handler
         else:
+            # returning None from an event handler (or not returning at all) means no delay will be given
             self.notifyNextMode()
-
-
-    def add_evt_handler(self, mode, evt_name, handler):
-        if(evt_name not in self.event_handlers):
-            raise ValueError, "Mode: %s defined a function named '%s' which is not known to the Event System" % (mode, evt_name)
-        ge = GameEventHandler(evt_name, mode, handler)
-        self.event_handlers[evt_name].append(ge)
         
     def notifyNextModeNow(self, caller_mode):
         if(caller_mode == self.curr_delayed_by_mode):
             # okay to notify next
-            self.log("Skel: notifyNextModeNow called by %s..." % (caller_mode))
+            self.logger.info("Skel: notifyNextModeNow called by %s..." % (caller_mode))
             self.switchmonitor.cancel_delayed(name='notifyNextMode')
             self.notifyNextMode()
         else:
             # not okay, wrong caller!!
-            self.log("Skel: notifyNextModeNow called by %s, but currently blocked by %s!?" % (caller_mode, self.curr_delayed_by_mode))
+            self.logger.critical("Skel: notifyNextModeNow called by %s, but this mode is not blocking this event! (%s is)!?" % (caller_mode, self.curr_delayed_by_mode))
 
     def notifyModes(self, event, args=None, event_complete_fn=None, only_active_modes=True):
         """ this method will notify all AdvencedMode derived modes of the given event.  Modes
@@ -487,34 +565,53 @@ class SkeletonGame(BasicGame):
             evt_player_added.
         """
         delay = 0
-        self.notify_list = list()
+        self.notify_list = []
         self.event_complete_fn = event_complete_fn
         self.args = args
-        if(event.startswith('evt_')):
-            self.event = event[4:]
+        # if(event.startswith('evt_')):
+        #     self.event = event[4:]
+        self.event = event
 
-        self.log("Skel: preparing to notify modes of event %s." % event)
+        self.logger.info("Skel: preparing to notify modes of event %s." % event)
 
         if(only_active_modes):
-            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None and h.mode() in self.modes]
+            handlers = [h() for h in self.event_handlers[self.event] if h() is not None and h() in self.modes]
         else:
-            handlers = [h for h in self.event_handlers[self.event] if h.mode() is not None]
+            handlers = [h() for h in self.event_handlers[self.event] if h() is not None]
 
         for h in handlers:
-            self.log("Skel: event handler queuing handler in mode [%s]" % (h.mode()))
+            self.logger.debug("Skel: event '%s' queuing handler found in mode [%s]" % (event, h))
             self.notify_list.append(h)
 
         # note this sort is in reverse priority order because we pop 
         # off the back!
-        self.notify_list.sort(lambda x, y: x.mode().priority - y.mode().priority)
+        self.notify_list.sort(lambda x, y: x.priority - y.priority)
 
         self.notifyNextMode()
 
     # called when you want to fully reset the game
     def reset(self):
-        self.log("Skel: RESET()")
+        self.logger.info("Skel: RESET()")
+
+        # reset mid-game can leave Lamps, coils or flippers on.  Turn them OFF
+        # as modes might use delay() to disable them, but those won't run now
+        self.disableAllLamps()
+        self.disableAllCoils()
+
+        self.enable_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+
+        self.dmdHelper.reset()
+        if(hasattr(self,'bonus_mode')):
+            self.bonus_mode.reset()
+
+        # clear the notification list
+        self.notify_list = []
+        self.event_complete_fn = None
+        self.switchmonitor.cancel_delayed(name='notifyNextMode')
 
         super(SkeletonGame,self).reset()
+
         self.ball_search_tries = 0
 
         self.game_start_pending = False
@@ -524,41 +621,59 @@ class SkeletonGame(BasicGame):
 
         # try to set the game up to be in a clean state from the outset:
         if(self.trough.num_balls() < self.num_balls_total):
-            self.log("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
+            self.logger.info("Skel: RESET: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
             if(self.use_ballsearch_mode):
                 self.ball_search.perform_search(5, silent=True)
             else:
                 self.do_ball_search(silent=True)
 
+        self.modes.add(self.sound)
         # handle modes that need to be alerted of the game reset!
         for m in self.known_modes[AdvancedMode.System]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.modes.add(self.trough)
+
+        # Only once the ball is fed to the shooter lane is it possible for the ball
+        # drain to actually end a ball
+        self.trough.drain_callback = None
+        self.trough.launch_callback = None
+        self.trough.launched_callback = self.__install_drain_logic
+
+        # Link ball_save to trough
+        self.trough.ball_save_callback = self.ball_save.launch_callback
+        self.trough.num_balls_to_save = self.ball_save.get_num_balls_to_save
+        self.ball_save.trough_enable_ball_save = self.trough.enable_ball_save
+        # trough fixes
+
         self.modes.add(self.ball_save)
-        if(self.use_stock_scoredisplay):
+       
+        if(self.use_stock_scoredisplay is not False):
             self.score_display.reset()
             self.modes.add(self.score_display)
 
         self.modes.add(self.ball_search)
         if(self.use_ballsearch_mode):
             self.ball_search.disable()
-
+        
         # initialize the mode variables; the general form is:
         # self.varName = fileName.classModeName(game=self)
         # Note this creates the mode and causes the Mode's constructor
         # function --aka __init__()  to be run
-        
+
         if(self.use_osc_input):
             self.modes.modes.append(self.osc)
 
-        if(self.use_stock_servicemode):
-            self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])        
+
         self.modes.add(self.dmdHelper)
         self.modes.add(self.switchmonitor)
 
         if(self.use_stock_attractmode):
-            self.attract_mode = Attract(game=self)
+            start_lamp = self.lamps.item_named_or_tagged('start_button')
+            # start_lamp = self.find_item_name('start_button', self.lamps)
+            # if(start_lamp is not None):
+            #     start_lamp = self.lamps[start_lamp]
+            self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
         
     def start_attract_mode(self):
         self.attract_mode.reset()
@@ -567,17 +682,29 @@ class SkeletonGame(BasicGame):
 
     def enable_alphanumeric_flippers(self, enable):
         """ overrides the defaults in game.py so that the flipper-relay is checked from the
-            machine.yaml.  If not present, the default value of '79' is used """
-        # 79 corresponds to the circuit on the power/driver board.  It will be 79 for all WPCAlphanumeric machines.
-        self.log("AN Flipper enable in SkelGame.py called")
+            machine.yaml.  Looking for either a coil named 'flipperEnable' or a coil tagged: 'flipper_enable'
 
+            If not present, the default value of '79' can be used for WPCAlphanumeric, but is not used for safety.
+        """
+
+        # 79 corresponds to the circuit on the power/driver board.  It will be 79 for all WPCAlphanumeric machines.
+        self.logger.debug("AN Flipper enable in SkelGame.py called")
+
+        flipperEnableCoil = None
         if('flipperEnable' in self.coils):
-            if enable:
-                self.coils.flipperEnable.pulse(0)
-            else:
-                self.coils.flipperEnable.disable()
+            flipperEnableCoil = self.coils.flipperEnable
         else:
-            self.log("WARNING: No flipperEnable entry in PRCoils section of machine yaml")
+            feList = self.coils.items_tagged('flipper_enable')
+            if(len(feList)>0):
+                flipperEnableCoil = feList[0]
+
+        if(flipperEnableCoil is not None):
+            if enable:
+                flipperEnableCoil.pulse(0)
+            else:
+                flipperEnableCoil.disable()
+        else:
+            self.logger.warning("No flipperEnable entry in PRCoils section of machine yaml")
 
 
     def process_config(self):
@@ -607,14 +734,17 @@ class SkeletonGame(BasicGame):
     def load_settings_and_stats(self):
         self.load_game_data('game_default_data.yaml','game_user_data.yaml')
 
-        self.load_settings('game_default_settings.yaml','game_user_settings.yaml')
+        if(self.load_settings('game_default_settings.yaml','game_user_settings.yaml')):
+            # settings changed as a result of reconciling with the default template! re-save
+            self.logger.warning('settings changed.  Re-Saving!')
+            self.save_settings()
 
         self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
         # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
 
         game_volume = self.user_settings['Sound']['Initial volume']
         v = game_volume/10.0
-        self.log("VOLUME SET TO: %f" % v)
+        self.logger.info("VOLUME SET TO: %f" % v)
         self.sound.set_volume(v)
 
         ## high score stuff:
@@ -628,6 +758,7 @@ class SkeletonGame(BasicGame):
         for category in self.highscore_categories:
             category.load_from_game(self)
 
+
     def save_settings(self, filename=None):
         if(filename is None):
             filename = 'game_user_settings.yaml'
@@ -640,7 +771,7 @@ class SkeletonGame(BasicGame):
         super(SkeletonGame, self).load_game_data(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
 
     def load_settings(self, file_default, file_game):
-        super(SkeletonGame, self).load_settings(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
+        return super(SkeletonGame, self).load_settings(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
 
     def load_assets(self):
         """ function to clean up code/make things easier to read; 
@@ -656,17 +787,17 @@ class SkeletonGame(BasicGame):
         """ this is auto-called when the ball is actually starting 
             (so happens 3 or more times a game) """
 
-        self.log("Skel: BALL STARTING")
+        self.logger.info("Skel: BALL STARTING")
 
         for m in self.known_modes[AdvancedMode.Ball]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.notifyModes('evt_ball_starting', args=None, event_complete_fn=self.actually_start_ball)
 
     def shoot_again(self):
         """ this intentionally does NOT call the super class method because
             we want to block 'ball_starting' from being called immediately """
-        self.log("Skel: SHOOT AGAIN")
+        self.logger.info("Skel: SHOOT AGAIN")
         self.notifyModes('evt_shoot_again', args=None, event_complete_fn=self.ball_starting, only_active_modes=False)
 
     def actually_start_ball(self):
@@ -682,6 +813,9 @@ class SkeletonGame(BasicGame):
             self.ball_search.enable()
 
     def __ball_drained_callback(self):
+        """ this is the "drain logic" that is called by the trough if a 
+            ball drains --either from a multiball ball ending or from
+            the trough becoming full """
         if self.trough.num_balls_in_play == 0:
             shoot_again = False
             last_ball = False
@@ -702,11 +836,22 @@ class SkeletonGame(BasicGame):
             # can't save here as file might still be open on game end...
             # self.save_game_data('game_user_data.yaml')
 
+            # Remove ball drained logic until the ball is fed into the shooter lane again
+            self.trough.drain_callback = None
+            self.trough.launch_callback = None
+            self.trough.launched_callback = self.__install_drain_logic
+
             if(self.use_ballsearch_mode):
                 self.ball_search.disable()
             self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
         elif self.trough.num_balls_in_play == 1:
-            self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
+            """ TODO: Ensure we are only seeing this event during multiball """
+
+            # ensure this isn't a situation of a fast-drain when more balls are pending launch
+            if(self.trough.num_balls_to_launch >= 1):
+                self.logger.warning("one ball in play, but more balls are pending launch (supressing evt_single_ball_play)")
+            else:
+                self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
 
     def your_search_is_over(self):
         """ all balls have been accounted for --if you were blocking a game start, stop that. """
@@ -760,55 +905,61 @@ class SkeletonGame(BasicGame):
     def ball_ended(self):
         """ Subclassed by implementor to react to the ball being completely over
             automatically invoked by end_ball(). At this point the ball is over """
-        self.log("Skel: BALL ENDED")
+        self.logger.info("Skel: BALL ENDED")
 
         # turn off the flippers
         self.enable_flippers(False)
-        # self.enable_alphanumeric_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+
         if(self.use_ballsearch_mode):
             self.ball_search.disable() # possibly redundant if ball ends normally, but not redundant when slam tilted
 
         super(SkeletonGame, self).ball_ended()
         for m in self.known_modes[AdvancedMode.Ball]:
-            self.modes.remove(m)
+            self.modes.remove(m())
 
     def reset_search(self):
         if(self.game_start_pending):
+            self.clear_status()
+            self.game_start_pending = False
             if(self.trough.num_balls() >= self.num_balls_total):
-                self.game_start_pending = False
                 self.game_started()        
             else: # insufficient balls to start
-                # wait 3s before trying again
-                if(self.use_ballsearch_mode):
-                    self.ball_search.perform_search(3,  completion_handler=self.reset_search)
-                    # self.ball_search.delay(name='ballsearch_start_delay',
-                    #    event_type=None, 
-                    #    delay=3, 
-                    #    handler=self.game_started)            
-                else:
-                    self.do_ball_search(silent=False)
-                    self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
+                # don't try again, just shut down the status indicator
+
+                # # wait 3s before trying again
+                # if(self.use_ballsearch_mode):
+                #     self.ball_search.perform_search(3,  completion_handler=self.reset_search)
+                #     # self.ball_search.delay(name='ballsearch_start_delay',
+                #     #    event_type=None, 
+                #     #    delay=3, 
+                #     #    handler=self.game_started)            
+                # else:
+                #     self.do_ball_search(silent=False)
+                #     self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
+                pass
         else:
             # game started on it's own.  Continue living
             pass
 
     def game_started(self):
         """ this happens after start_game but before start_ball/ball_starting"""
-        self.log("Skel:GAME STARTED")
+        self.logger.info("Skel:Game START Requested...(check trough first)")
 
         # check trough and potentially do a ball search first
-        if(self.game_start_pending):
-            self.log("Skel: game_started: PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
+        if(self.game_start_pending and (self.trough.num_balls() < self.num_balls_total)):
+            self.logger.info("Skel: Game START : PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
             self.set_status("Balls STILL Missing: PLEASE WAIT!!", 3.0)
             return
 
         if(self.trough.num_balls() < self.num_balls_total):
             self.game_start_pending=True
-            self.log("Skel: game_started: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
+            self.logger.info("Skel: game_started: trough isn't full [%d of %d] -- requesting search" % (self.trough.num_balls(), self.num_balls_total))
             if(self.use_ballsearch_mode):
                 self.ball_search.perform_search(3,  completion_handler=self.reset_search)
-                self.log("Skel: game_started: TROUGH STATE BLOCKING GAME START!  Will AUTOMATICALLY Retry again in 5s if not resolved")
+                self.logger.debug("Skel: game_started: Standard ball search initiated")
             else:
+                self.logger.debug("Skel: game_started: Programmer custom ball search initiated")
                 self.do_ball_search(silent=False)
                 self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
             return
@@ -817,10 +968,15 @@ class SkeletonGame(BasicGame):
             if(self.use_ballsearch_mode):
                 self.ball_search.cancel_delayed(name='ballsearch_start_delay')
 
+        self.logger.info("Skel:Game START Proceeding")
+
+        # remove attract mode
+        self.modes.remove(self.attract_mode)
+
         super(SkeletonGame, self).game_started()
 
         for m in self.known_modes[AdvancedMode.Game]:
-            self.modes.add(m)
+            self.modes.add(m())
 
         self.ball_search_tries = 0
         self.game_data['Audits']['Games Started'] += 1
@@ -838,7 +994,7 @@ class SkeletonGame(BasicGame):
         """Called by the implementor to mark notify the game that the game has ended."""
         # Handle stats for last ball here
         self.ball = 0
-        self.log("Skel: 'GAME ENDED")
+        self.logger.info("Skel: 'GAME ENDED")
 
         # ball time is handled in ball drained callback
         
@@ -849,7 +1005,7 @@ class SkeletonGame(BasicGame):
             self.game_data['Audits']['Avg Game Time'] = self.calc_time_average_string( self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Game Time'], game_time)
             self.game_data['Audits']['Avg Score'] = self.calc_number_average(self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Score'], self.players[i].score)
 
-            self.log("Skel: 'player %d score %d" % (i, self.players[i].score))
+            self.logger.info("Skel: 'player %d score %d" % (i, self.players[i].score))
             
         self.save_game_data('game_user_data.yaml')
 
@@ -862,10 +1018,10 @@ class SkeletonGame(BasicGame):
 
         # remove Game-duration modes
         for m in self.known_modes[AdvancedMode.Game]:
-            self.modes.remove(m)
+            self.modes.remove(m())
         pass
 
-        seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2)
+        seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2, multiline=self.use_multiline_score_entry)
         seq_manager.finished_handler = self.high_score_entry_completed
         seq_manager.logic = highscore.CategoryLogic(game=self, categories=self.highscore_categories)
         self.modes.add(seq_manager)
@@ -896,17 +1052,40 @@ class SkeletonGame(BasicGame):
         self.dmd.update()       
 
     def start_service_mode(self):
-        self.disableAllLamps()
-
+        """ dump all existing modes that are running
+            stop music, stop lampshows, disable flippers
+            then add the service mode.
+        """
+        self.modes.modes = [m for m in self.modes.modes if isinstance(m,AdvancedMode) and m.mode_type==AdvancedMode.System]
         for m in self.modes:
             self.modes.remove(m)
 
+        self.lampctrl.stop_show()
+        self.disableAllLamps()
+        self.sound.stop_music()
+
+        # disable flippers
+        self.enable_flippers(False)
+        self.enable_alphanumeric_flippers(False)
+        
         self.modes.add(self.service_mode)
 
     def service_mode_ended(self):
         self.save_settings()
         self.load_settings_and_stats()
         self.reset()
+
+    def disableAllCoils(self):
+        """ turn off all coils
+            needed after a reset while the game is in progress, we don't want
+            to leave coils energized that might have been disabled by now cancelled
+            delays 
+        # NOTE: If this behavior is undesirable in your machine, define your own reset method
+            and re-engergize any coils you need to OR define your own disableAllCoils that
+            leaves some on
+        """        
+        for coil in self.coils:
+            coil.disable()
 
     def disableAllLamps(self):
         # turn off all the lamps

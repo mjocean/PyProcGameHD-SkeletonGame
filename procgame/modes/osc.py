@@ -97,7 +97,7 @@ class OSC_Mode(Mode):
         global OSC_INST
         OSC_INST = self
 
-    def mode_started(self):
+        # def mode_started(self): # <-- no longer tie OSC functionality to mode state
         receive_address = (self.serverIP, self.serverPort)  # create a tuple from the IP & UDP port
         self.server = OSC.OSCServer(receive_address)
         self.server.addDefaultHandlers()
@@ -140,8 +140,8 @@ class OSC_Mode(Mode):
         return vplamps
 
 
-    def mode_stopped(self):
-        self.OSC_shutdown()
+    # def mode_stopped(self):
+    #     self.OSC_shutdown()
         
     def OSC_shutdown(self):
         """Shuts down the OSC Server thread. If you don't do this python will hang when you exit the game."""

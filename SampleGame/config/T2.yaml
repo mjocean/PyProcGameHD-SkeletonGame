@@ -272,6 +272,7 @@ PRLamps:
         number: L15
     shootAgain:
         number: L16
+        tags: shoot_again
     mouth:
         number: L17
     kickback:

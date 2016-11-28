@@ -18,6 +18,10 @@ class BallSave(Mode):
         self.mode_begin = 0
         self.allow_multiple_saves = False
         self.timer = 0
+        self.tick_rate = 1
+        self.timer_expired_callback = None
+        self.timer_tick_callback = None
+
         if delayed_start_switch != 'None' and delayed_start_switch != 'none':
             self.add_switch_handler(name=delayed_start_switch, event_type='inactive', delay=1.0, handler=self.delayed_start_handler)
 
@@ -31,10 +35,11 @@ class BallSave(Mode):
         self.disable()
 
     def launch_callback(self):
-        """Disables the ball save logic when multiple saves are not allowed.  This is typically linked to a Trough object so the trough can notify this logic when a ball is being saved.  If 'self.callback' is externally defined, that method will be called from here."""        
+        """Disables the ball save logic when multiple saves are not allowed.  This is typically linked to a Trough object so the trough can notify this logic when a ball is being saved.  If 'self.callback' is externally defined, that method will be called from here."""
         # call the callback prior to multiple saves check
         # otherwise not allowing multiple saves will stop
         # the callback even if this is the first save!
+        self.logger.debug("[a ball has been saved]")
         if self.callback:
             self.callback()
         if not self.allow_multiple_saves:
@@ -74,15 +79,37 @@ class BallSave(Mode):
         # Note: this is commented out in ap's version too...  
         # self.callback = None
 
-    def start(self, num_balls_to_save=1, time=12, now=True, allow_multiple_saves=False):
-        """Activates the ball save logic."""
+    def start(self, num_balls_to_save=1, time=12, now=True, allow_multiple_saves=False, tick_rate=1):
+        """Activates the ball save logic.
+            *time* : amount of time (in seconds) until the ball saver expires
+            *now* : indicates the ballsaver should engage immediately 
+                (if false, the activation of the *delayed_start_switch* will cause the saver to begin in 1s)
+            *allow_multiple_saves* : if True the ballsaver will save continue to save balls until the timer expires
+                if False, the ballsaver will be disabled (time depleted) after saving the first ball
+            *tick_rate* : how frequently tick callbacks can occur.  A typical value is 1 (one per second),
+                though a value of 0.1 could be used to generate tick events ten times per second.
+
+            If you want tick or ball save expired events, set the .timer_tick_callback and .timer_expired_callback
+            members to be the names of functions you want to call prior to starting the timer.  Example:
+
+            class MyMode(..)
+                ...
+                def do_thing(self):
+                    ...do something...
+
+                def sw_shooter_inactive_for_250ms(self):
+                    self.game.ball_save.timer_expired_callback = self.do_thing
+                    self.game.enable_ball_saver()
+
+        """
+        self.tick_rate = tick_rate
         self.allow_multiple_saves = allow_multiple_saves
         self.num_balls_to_save = num_balls_to_save
         if time > self.timer: self.timer = time
         self.update_lamps()
         if now:
             self.cancel_delayed('ball_save_timer')
-            self.delay(name='ball_save_timer', event_type=None, delay=1, handler=self.timer_countdown)
+            self.delay(name='ball_save_timer', event_type=None, delay=self.tick_rate, handler=self.timer_countdown)
             if self.trough_enable_ball_save:
                 self.trough_enable_ball_save(True)
         else:
@@ -90,15 +117,21 @@ class BallSave(Mode):
             self.timer_hold = time
 
     def timer_countdown(self):
-        self.timer -= 1
-        if (self.timer >= 1):
-            self.delay(name='ball_save_timer', event_type=None, delay=1, handler=self.timer_countdown)
+        self.timer -= self.tick_rate
+        self.update_lamps()
+        if (self.timer > 0):
+            self.delay(name='ball_save_timer', event_type=None, delay=self.tick_rate, handler=self.timer_countdown)
             self.logger.debug("ball saver time left = %d" % self.timer)
+            if(self.timer_tick_callback is not None):
+                self.timer_tick_callback()
         else:
             self.logger.debug("ball saver disabled - timed out")
             self.disable()
+            if(self.lamp is not None):
+                self.lamp.disable()
+            if(self.timer_expired_callback is not None):
+                self.timer_expired_callback()
 
-        self.update_lamps()
 
     def is_active(self):
         return self.timer > 0

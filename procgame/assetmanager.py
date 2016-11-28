@@ -82,6 +82,8 @@ class AssetManager(object):
         self.logger = logging.getLogger('game.assets')
         self.game = game
         self.dmd_path = game.dmd_path
+        
+        
         # self.screen=game.desktop.screen
         # pygame.font.init()
         # p = pygame.font.match_font('Arial')
@@ -98,6 +100,7 @@ class AssetManager(object):
             self.loadConfig(game.curr_file_path,yaml_file)
 
         splash_file = self.value_for_key_path('UserInterface.splash_screen', None)
+        self.single_line = self.value_for_key_path('UserInterface.single_line', False)
         self.rect_color = self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255))
         self.inner_rect_color = self.value_for_key_path('UserInterface.progress_bar.fill',(255,84,84,255))
         self.bar_x = self.value_for_key_path('UserInterface.progress_bar.x_center', 0.5)
@@ -128,6 +131,7 @@ class AssetManager(object):
 
         self.load()
 
+
     def updateProgressBar(self, displayType,fname):
         if(self.splash_image is not None):
             sdl2_DisplayManager.inst().screen_blit(self.splash_image, expand_to_fill=True)
@@ -140,12 +144,17 @@ class AssetManager(object):
 
         sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True) 
 
-        s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
-        tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-        sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
-
-        tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-        sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
+        if (self.single_line):
+            s = "Loading %s: [%06d] of [%06d]: %s" % (displayType, self.numLoaded+1,self.total, fname)
+            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+        else:
+            s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
+            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+    
+            tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
 
 
     #   self.screen.blit(surf,(self.prog_bar_x,self.prog_bar_y + (1.1 * self.prog_bar_height)) )
@@ -184,7 +193,7 @@ class AssetManager(object):
             self.lengths[key] = tmp.frames[-1]
             if(len(tmp.frames)==1):
                 holdLastFrame = True
-                self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+                self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
         if(streaming_load):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
@@ -299,8 +308,9 @@ class AssetManager(object):
             k  = value_for_key(s,'key')
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
+            is_voice = value_for_key(s, 'voice', False)
             self.updateProgressBar("Audio SFX", fname)
-            self.game.sound.register_sound(k,self.game.sfx_path+fname, volume=volume)
+            self.game.sound.register_sound(k,self.game.sfx_path+fname, volume=volume, is_voice=is_voice)
             self.numLoaded += 1
 
         for s in voice:
@@ -308,7 +318,7 @@ class AssetManager(object):
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
             self.updateProgressBar("Audio Voices", fname)
-            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume) #, is_voice=True)
+            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume, is_voice=True)
             self.numLoaded += 1
 
 

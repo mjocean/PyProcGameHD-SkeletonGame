@@ -2,6 +2,7 @@ import math
 from procgame.game import Mode
 from procgame import dmd
 from .sequence import EntrySequenceManager
+from .hd_highscore import HD_InitialEntryMode_ML
 
 class HD_InitialEntryMode(Mode):
     """Mode that prompts the player for their initials.
@@ -196,9 +197,16 @@ class HD_InitialEntryMode(Mode):
         return True
 
 class HD_EntrySequenceManager(EntrySequenceManager):
+    def __init__(self, game, priority=None, multiline=False):
+        self.use_multiline = multiline
+        super(HD_EntrySequenceManager,self).__init__(game=game, priority=priority)
+
     def create_highscore_entry_mode(self, left_text, right_text, entered_handler):
         """Subclasses can override this to supply their own entry handler."""
-        return HD_InitialEntryMode(game=self.game, priority=self.priority+1, left_text=left_text, right_text=right_text, entered_handler=entered_handler)
+        if(self.use_multiline):
+            return HD_InitialEntryMode_ML(game=self.game, priority=self.priority+1, left_text=left_text, right_text=right_text, entered_handler=entered_handler)
+        else:
+            return HD_InitialEntryMode(game=self.game, priority=self.priority+1, left_text=left_text, right_text=right_text, entered_handler=entered_handler)
 
 
 def main():

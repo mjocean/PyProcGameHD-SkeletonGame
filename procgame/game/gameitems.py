@@ -47,6 +47,20 @@ class AttrCollection(object):
                 output.append(item)
         return output
 
+    def item_named_or_tagged(self, identifier):
+        """ returns the first item named *identifier*, or the first 
+            item tagged *identifier* """
+
+        if self.__items_by_name.has_key(identifier):
+            return self.__items_by_name[identifier]
+
+        l = self.items_tagged(identifier)
+        if(len(l)==0):
+            return None
+        elif(len(l)>1):
+            logging.getLogger('SG').warning("Multiple items are tagged '%s' -- only the first will be used." % tag)
+        return l[0]
+
 class GameItem(object):
     """Base class for :class:`Driver` and :class:`Switch`.  Contained in an instance of :class:`AttrCollection` within the :class:`GameController`."""
     game = None

@@ -12,7 +12,8 @@ class Tilted(AdvancedMode):
     """docstring for Tilted mode - consumes all switch events to block scoring """
     def __init__(self, game):
         super(Tilted, self).__init__(game, priority=99999, mode_type=AdvancedMode.Manual)
-        for sw in [x for x in self.game.switches if x.name not in self.game.trough.position_switchnames]:
+        always_seen_switches = self.game.switches.items_tagged('tilt_visible')
+        for sw in [x for x in self.game.switches if x.name not in self.game.trough.position_switchnames and x.name not in always_seen_switches]:
             self.add_switch_handler(name=sw.name, event_type='active', delay=None, handler=self.ignore_switch)
 
         for sw_name in self.game.trough.position_switchnames:   
@@ -44,6 +45,7 @@ class Tilt(AdvancedMode):
         self.text_layer = dmd.TextLayer(self.game.dmd_width/2, self.game.dmd_height/2, font_big, "center")
         self.tilt_sw = tilt_sw
         self.slam_tilt_sw = slam_tilt_sw
+        self.game.tilted_mode = None
 
         if tilt_sw:
             self.add_switch_handler(name=tilt_sw, event_type='inactive', delay=None, handler=self.tilt_handler)
@@ -57,6 +59,9 @@ class Tilt(AdvancedMode):
         self.layer = None
         self.tilted = False
         self.tilt_status = 0
+        if self.game.tilted_mode is None:
+            self.game.tilted_mode = Tilted(game=self.game)  
+
 
     def tilt_handler(self, sw):
         if self.times_warned == self.num_tilt_warnings:
@@ -108,7 +113,6 @@ class Tilt(AdvancedMode):
         self.tilted = True
         self.tilt_status = 1
 
-        self.game.tilted_mode = Tilted(game=self.game)  
         self.game.modes.add(self.game.tilted_mode)
         #play sound
         #play video
@@ -143,7 +147,7 @@ class Tilt(AdvancedMode):
             self.tilted = True
             self.tilt_status = 1
 
-            self.game.tilted_mode = Tilted(game=self.game)  
+            # self.game.tilted_mode = Tilted(game=self.game)  
             self.game.modes.add(self.game.tilted_mode)
             #play sound
             #play video
