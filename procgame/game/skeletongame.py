@@ -78,7 +78,7 @@ def run_proc_game(game_class):
 
     try:
         game = game_class()
-        game.run_loop() 
+        game.run_loop(.0001) 
     except Exception, e:
         # back up the exception
         exc_info = sys.exc_info()        
