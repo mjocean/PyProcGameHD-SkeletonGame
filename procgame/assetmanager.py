@@ -198,7 +198,7 @@ class AssetManager(object):
         if(streaming_load):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
         else:
-            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame) 
+            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque) 
 
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
