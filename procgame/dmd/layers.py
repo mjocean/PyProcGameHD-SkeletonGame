@@ -1067,16 +1067,25 @@ class HDTextLayer(TextLayer):
 
     # def __init__(self, x, y, font, justify="left", opaque=False, width=192, height=96, fill_color=None):
 
-    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None):
+    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None, fontstyle=None):
         super(HDTextLayer, self).__init__(x,y,font,justify,opaque,width,height,fill_color)
         # self.x = x
         # self.y = y
         # self.width = width
         # self.height = height
-        self.fill_color = fill_color
-        self.interior_color = interior_color
-        self.line_color = line_color
-        self.line_width = line_width
+        if fontstyle != None:
+            
+            self.line_color=fontstyle.line_color
+            self.line_width=fontstyle.line_width
+            self.interior_color=fontstyle.interior_color
+            self.fill_color=fontstyle.fill_color
+            self.style = fontstyle
+        else:
+            self.interior_color = interior_color
+            self.line_color = line_color
+            self.fill_color = fill_color
+            self.line_width = line_width
+        
         self.Vjustify = vert_justify
         # self.font = font
         # self.started_at = None
