@@ -5,7 +5,7 @@ import sqlite3
 import bz2
 import StringIO
 import time
-import Image
+from PIL import Image
 from procgame.dmd import Frame
 from procgame.dmd import VgaDMD
 from procgame import config
