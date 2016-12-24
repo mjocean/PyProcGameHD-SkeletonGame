@@ -4,7 +4,8 @@ from random import randrange
 import hdfont
 try:
     import cv2
-    import cv2.cv as cv
+    import cv2 as cv
+    from movie import capPropId, getColorProp
     OpenCV_avail = True
     from movie import Movie
 except ImportError:
@@ -277,7 +278,7 @@ class MovieLayer(Layer):
         """Resets the animation back to the first frame."""
         self.frame_pointer = 0
         # and reset the video capture position to 0
-        self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
+        self.movie.vc.set(capPropId("POS_FRAMES"),0)
     
     def add_frame_listener(self, frame_index, listener):
         """Registers a method (``listener``) to be called when a specific 
@@ -315,7 +316,7 @@ class MovieLayer(Layer):
         if (self.frame_pointer >= self.movie.frame_count) and self.frame_time_counter == 0:
             if self.repeat:
                 self.frame_pointer = 0
-                self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
+                self.movie.vc.set(capPropId("POS_FRAMES"),0)
             elif self.hold:
                 self.frame_time_counter = self.frame_time
                 return self.frame
@@ -329,8 +330,8 @@ class MovieLayer(Layer):
             self.frame_time_counter = self.frame_time
 
         if rval is not None:
-            video_frame = cv2.cvtColor(video_frame,cv2.cv.CV_BGR2RGB)
-            the_frame = cv.fromarray(video_frame)
+            video_frame = cv2.cvtColor(video_frame,getColorProp())
+            the_frame = video_frame #tODO: OpenCV3 fix cv.fromarray(video_frame)
             # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
             surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.movie.width, height=self.movie.height, mode='RGB', composite_op = None)
 
@@ -1067,16 +1068,25 @@ class HDTextLayer(TextLayer):
 
     # def __init__(self, x, y, font, justify="left", opaque=False, width=192, height=96, fill_color=None):
 
-    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None):
+    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None, fontstyle=None):
         super(HDTextLayer, self).__init__(x,y,font,justify,opaque,width,height,fill_color)
         # self.x = x
         # self.y = y
         # self.width = width
         # self.height = height
-        self.fill_color = fill_color
-        self.interior_color = interior_color
-        self.line_color = line_color
-        self.line_width = line_width
+        if fontstyle != None:
+            
+            self.line_color=fontstyle.line_color
+            self.line_width=fontstyle.line_width
+            self.interior_color=fontstyle.interior_color
+            self.fill_color=fontstyle.fill_color
+            self.style = fontstyle
+        else:
+            self.interior_color = interior_color
+            self.line_color = line_color
+            self.fill_color = fill_color
+            self.line_width = line_width
+        
         self.Vjustify = vert_justify
         # self.font = font
         # self.started_at = None
