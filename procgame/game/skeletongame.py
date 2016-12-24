@@ -78,7 +78,7 @@ def run_proc_game(game_class):
 
     try:
         game = game_class()
-        game.run_loop() 
+        game.run_loop(.0001) 
     except Exception, e:
         # back up the exception
         exc_info = sys.exc_info()        
@@ -1109,10 +1109,10 @@ class SkeletonGame(BasicGame):
             self.p = self.current_player()
             self.p.adjState(key, delta)
 
-    def getPlayerState(self, key):
+    def getPlayerState(self, key, default = None):
         if (self.ball != 0):
             self.p = self.current_player()
-            return self.p.getState(key)
+            return self.p.getState(key, default)
 
     def bonus(self, name, quantity=1):
         if (self.ball != 0):
@@ -1166,8 +1166,9 @@ class AdvPlayer(Player):
         v = v + delta
         self.state_tracking[key] = v
 
-    def getState(self, key):
-        return self.state_tracking[key]
+    def getState(self, key, default = None):
+        return self.state_tracking.get(key,default)
+        
 
         
 class BonusRecord(object):

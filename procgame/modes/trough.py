@@ -165,9 +165,8 @@ class Trough(Mode):
         if self.ball_save_active:
             # Only do an early ball save if a ball is ready to be launched.
             # Otherwise, let the trough switches take care of it.
-            if self.game.switches[self.eject_switchname].is_active():
-                self.launch_balls(1, self.ball_save_callback, \
-                          stealth=True)
+            if self.num_balls() > 0:
+                self.launch_balls(1, self.ball_save_callback, stealth=True)
 
     def mode_stopped(self):
         self.cancel_delayed('check_switches')
