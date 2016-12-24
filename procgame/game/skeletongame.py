@@ -26,7 +26,7 @@ from ..modes import ScoreDisplay, ScoreDisplayHD
 from ..modes import Trough, ballsave, BallSearch
 from ..modes import osc
 from ..modes import DMDHelper, SwitchMonitor
-from ..modes import bonusmode, service, Attract, Tilt, Tilted
+from ..modes import bonusmode, service, Attract, TiltMonitorMode, Tilted
 
 from .. import sound
 from .. import config
@@ -208,7 +208,7 @@ class SkeletonGame(BasicGame):
                 # find a tilt switch 
                 tilt_sw_name = self.find_item_name('tilt',self.switches)
                 slamtilt_sw_name = self.find_item_name('slamTilt',self.switches)
-                self.tilt_mode = Tilt(game=self, priority=98, font_big=self.fonts['tilt-font-big'], 
+                self.tilt_mode = TiltMonitorMode(game=self, priority=99998, font_big=self.fonts['tilt-font-big'], 
                     font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
             shoot_again = self.lamps.item_named_or_tagged('shoot_again')

@@ -2,10 +2,12 @@
 # sounds: 'tilt warning' and 'tilt' 
 # fonts: tilt_small and tilt_big
 
+import logging
 import procgame
 from ..game import Mode
 from ..game.advancedmode import AdvancedMode
 from .. import dmd
+import time
 import os
 
 class Tilted(AdvancedMode):
@@ -36,10 +38,11 @@ class Tilted(AdvancedMode):
             self.game.log("tilted: %d balls back" % num_balls)                 
         return procgame.game.SwitchStop
 
-class Tilt(AdvancedMode):
+class TiltMonitorMode(AdvancedMode):
     """docstring for Tilt mode -- monitors tilt switches and sets game state accordingly"""
     def __init__(self, game, priority, font_big, font_small, tilt_sw=None, slam_tilt_sw=None):
-        super(Tilt, self).__init__(game, priority, mode_type=AdvancedMode.Ball)
+        super(TiltMonitorMode, self).__init__(game, priority, mode_type=AdvancedMode.Ball)
+        self.logger = logging.getLogger('TiltMonitorMode')
         self.font_big = font_big
         self.font_small = font_small
         self.text_layer = dmd.TextLayer(self.game.dmd_width/2, self.game.dmd_height/2, font_big, "center")
@@ -48,10 +51,11 @@ class Tilt(AdvancedMode):
         self.game.tilted_mode = None
 
         if tilt_sw:
-            self.add_switch_handler(name=tilt_sw, event_type='inactive', delay=None, handler=self.tilt_handler)
+            self.add_switch_handler(name=tilt_sw, event_type='active', delay=None, handler=self.tilt_handler)
         if slam_tilt_sw:
-            self.add_switch_handler(name=slam_tilt_sw, event_type='inactive', delay=None, handler=self.slam_tilt_handler)
+            self.add_switch_handler(name=slam_tilt_sw, event_type='active', delay=None, handler=self.slam_tilt_handler)
         self.num_tilt_warnings = 2
+        self.tilt_bob_settle_time = 2.0
         self.tilted = False
 
     def mode_started(self):
@@ -59,18 +63,31 @@ class Tilt(AdvancedMode):
         self.layer = None
         self.tilted = False
         self.tilt_status = 0
+        self.previous_warning_time = None
         if self.game.tilted_mode is None:
             self.game.tilted_mode = Tilted(game=self.game)  
 
 
     def tilt_handler(self, sw):
+        now = time.time()
+        self.logger.info('tilt bob switch active [%d]' % now)
+        if(self.previous_warning_time is not None) and ((now - self.previous_warning_time) < self.tilt_bob_settle_time):
+            self.logger.info('tilt bob still swinging from previous warning')
+            return
+        else:
+            self.previous_warning_time = now
+            self.logger.info('about to issue warning %d of %d' % (self.times_warned+1, self.num_tilt_warnings+1))
+
         if self.times_warned == self.num_tilt_warnings:
             if not self.tilted:
+                self.logger.info('TILTED')
                 self.game.sound.stop('tilt warning')
                 self.tilted = True
                 self.game.sound.play('tilt')
                 self.text_layer.set_text('TILT')
                 self.tilt_callback()
+            else:
+                self.logger.info('(ALREADY/STILL) TILTED')
         else:
             self.game.sound.stop('tilt warning')
             self.times_warned += 1
