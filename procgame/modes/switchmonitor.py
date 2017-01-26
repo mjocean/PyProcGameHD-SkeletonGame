@@ -36,11 +36,7 @@ class SwitchMonitor(Mode):
         else:
             # not in attract mode; tell SkelGame to add another player
             if self.game.ball == 1:
-                if len(self.game.players) < self.game.max_players:
-                    p = self.game.add_player()
-                    self.game.set_status(p.name + " added!")
-                else:
-                    self.game.set_status("Cannot add more than %d players." % self.game.max_players)
+                self.game.request_additional_player()
             elif self.game.ball > 1:
                 self.game.logger.info("switchmonitor: Start pressed after ball 1")
             else:
@@ -51,19 +47,13 @@ class SwitchMonitor(Mode):
 
     def sw_down_closed(self, sw):
         if not self.game.service_mode in self.game.modes:
-            volume = self.game.sound.volume_down()
-            self.game.set_status("Volume Down : %d" % int(volume))
-            self.game.user_settings['Sound']['Initial volume'] = int(volume)
-            self.game.save_settings()
+            self.game.volume_down()
             return SwitchStop
         return SwitchContinue
 
     def sw_up_closed(self, sw):
         if not self.game.service_mode in self.game.modes:
-            volume = self.game.sound.volume_up()
-            self.game.set_status("Volume Up  : %d" % int(volume))
-            self.game.user_settings['Sound']['Initial volume'] = int(volume)
-            self.game.save_settings()
+            self.game.volume_up()
             return SwitchStop
         return SwitchContinue
 

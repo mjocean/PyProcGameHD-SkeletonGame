@@ -22,7 +22,7 @@ class BallSave(Mode):
         self.timer_expired_callback = None
         self.timer_tick_callback = None
 
-        if delayed_start_switch != 'None' and delayed_start_switch != 'none':
+        if delayed_start_switch != None and delayed_start_switch != 'None' and delayed_start_switch != 'none':
             self.add_switch_handler(name=delayed_start_switch, event_type='inactive', delay=1.0, handler=self.delayed_start_handler)
 
         """ Optional method to be called when a ball is saved.  Should be defined externally."""

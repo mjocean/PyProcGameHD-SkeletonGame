@@ -95,7 +95,7 @@ class BallSearch(Mode):
 		if (completion_wait_time != 0):
 			self.logger.info("Initiated")
 			if(silent is False):
-				self.game.set_status("Balls Missing") # Replace with permanent message
+				self.game.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
 		self.completion_handler = completion_handler
 		delay = .150
 		for coil in self.coils:

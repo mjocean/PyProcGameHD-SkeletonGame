@@ -171,11 +171,18 @@ class OSC_Mode(Mode):
             switch_number = pinproc.decode(self.game.machine_type, switchname)
             #print("switch_number is lookedup -> %d" % switch_number)
 
-        # I'm kind of cheating by using desktop.key_events here, but I guess this is ok?
-        if data[0] == 1.0:  # close the switch
-            self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchClosedDebounced, 'value': switch_number})
-        elif data[0] == 0.0:  # open the switch
-            self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchOpenDebounced, 'value': switch_number})
+        if(self.game.switches[switchname].type == 'NC'):
+            # use desktop.key_events here, but I guess this is ok?
+            if data[0] == 1.0:  # normally closed, so this means open the switch
+                self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchOpenDebounced, 'value': switch_number})
+            elif data[0] == 0.0:  # close the switch
+                self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchClosedDebounced, 'value': switch_number})
+        else:
+            # use desktop.key_events here, but I guess this is ok?
+            if data[0] == 1.0:  # close the switch
+                self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchClosedDebounced, 'value': switch_number})
+            elif data[0] == 0.0:  # open the switch
+                self.game.desktop.key_events.append({'type': pinproc.EventTypeSwitchOpenDebounced, 'value': switch_number})
 
         # since we just got a message from a client, let's set up a connection to it
         if not self.do_we_have_a_client:
@@ -227,7 +234,20 @@ class OSC_Mode(Mode):
                 status = 1.0
             #print("/lamps/%s/%d" % (lamps.name,status))
             self.update_client_switch(lamps.name,status,"lamps")
-        
+            
+        for led in self.game.leds:
+            color = (255,255,255) # 0 is off
+            if hasattr(self.game.leds[led.name],'current_color'):
+                status = self.game.leds[led.name].current_color
+                # print led.name + str(status)
+                #if status != [0,0,0]:
+                    #print led.name + str(status)
+                    #status = 1
+                # else:
+                #     status = 1
+                #print led.name + str(status)
+                self.update_client_switch(led.name,status, "lamps")
+            
     def update_client_switch(self, switch_name, status, OSC_branch=1):
         """update the client switch states.
         

@@ -1,7 +1,7 @@
 ScoreLayout:       
     SinglePlayer:
         Score:
-            visible: False # don't make this invisible...
+            visible: True # don't make this invisible...
             font: score_1p
             font_style: 
                 interior_color: [255, 255, 128]

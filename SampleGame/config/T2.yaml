@@ -217,6 +217,7 @@ PRCoils:
         ballsearch: True
     plunger:
         number: C09
+        tags: autoPlunger # add this tag to support autoplunging on ball save
     lockTop:
         number: C10
         ballsearch: True

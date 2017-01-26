@@ -3,9 +3,10 @@ import time
 
 class AttrCollection(object):
     """A collection of :class:`procgame.game.GameItem` objects."""
-    def __init__(self):
+    def __init__(self, name):
         self.__items_by_name = {}
         self.__items_by_number = {}
+        self.name = name or self
     def __getattr__(self, attr):
         try:
             if type(attr) == str or type(attr) == unicode:
@@ -13,7 +14,10 @@ class AttrCollection(object):
             else:
                 return self.__items_by_number[attr]
         except KeyError, e:
-            raise KeyError, "Error looking up key %s: %s" % (attr, e)
+            if(attr is None):
+                raise KeyError, "Something has attempted to reference an item in the collection '%s' using a key with value 'None'" % self.name
+            raise KeyError, "The collection '%s' does not define an element named/numbered '%s' (exception=%s)" % (self.name, attr, e)
+
     def add(self, item, value):
         self.__items_by_name[item] = value
         if hasattr(value, 'number'):

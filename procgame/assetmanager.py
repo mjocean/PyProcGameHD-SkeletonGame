@@ -217,6 +217,22 @@ class AssetManager(object):
         effects = value_for_key(sounds,'Effects',{}) or list() 
         voice = value_for_key(sounds,'Voice',{}) or list()
         
+        paths = self.value_for_key_path(keypath='AssetListFiles', default={}) or list()
+        #if there was a list of files to load, then load those
+        for path in paths:
+            self.loaded_assets_files.append(path)
+            self.values = yaml.load(open(path, 'r'))
+            anims += self.value_for_key_path(keypath='Animations', default={}) or list()
+            fonts = self.value_for_key_path(keypath='Fonts') or list()
+            hfonts += value_for_key(fonts,'HDFonts',{}) 
+            rfonts += value_for_key(fonts,'DMDFonts',{}) or list()
+            fontstyles += value_for_key(fonts,'FontStyles',{}) or list()
+            lamps += self.value_for_key_path(keypath='LampShows', default={}) or list() 
+            sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
+            music += value_for_key(sounds,'Music',{}) or list()
+            effects += value_for_key(sounds,'Effects',{}) or list() 
+            voice += value_for_key(sounds,'Voice',{}) or list()
+
         # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
         self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
 

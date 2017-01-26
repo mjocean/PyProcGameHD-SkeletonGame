@@ -79,9 +79,9 @@ class Trough(Mode):
             if('outhole' in self.game.coils):
                 self.outhole_coil = self.game.coils['outhole']
             else:
-                sa = self.coils.items_tagged('outhole')
+                sa = self.game.coils.items_tagged('outhole')
                 if(type(sa) is list and len(sa)==0):
-                    self.logger.eror("Outhole switch found but no 'outhole' coil found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml for switch and coil!")
+                    raise ValueError, "Outhole switch found but no 'outhole' coil found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml for switch and coil!"
                 elif(type(sa) is list):
                     self.outhole_coil = sa[0]
                     self.logger.warning("Multiple coils have been tagged 'outhole' -- since that makes no sense, only the first will be used.")
@@ -137,7 +137,7 @@ class Trough(Mode):
         """ Method to call when a ball has been successfully launched into the shooter lane """
         self.launched_callback = None
 
-        # self.debug()
+        #self.debug()
 
     def outhole_handler(self, sw):
         """ a method to auto pulse the outhole coil when the outhole switch is closed for a sufficiently
@@ -153,7 +153,7 @@ class Trough(Mode):
         return SwitchContinue
 
     def debug(self):
-        self.game.set_status(str(self.num_balls()) + ":" + str(self.num_balls_in_play) + "," + str(self.num_balls_locked))
+        self.logger.debug("num balls: %d ; balls in play: %d, balls locked: %d" % (self.num_balls(), self.num_balls_in_play, self.num_balls_locked))
         self.delay(name='debug', event_type=None, delay=1.0, \
                        handler=self.debug)
 
@@ -366,6 +366,7 @@ class Trough(Mode):
         return (balls_not_in_trough - self.num_balls_locked) + self.num_balls_to_launch 
 
     def ball_in_shooterlane(self, sw):
+        # self.logger.info("Ball in shooter lane [launch in progress=%s]" % self.launch_in_progress)       
         if(self.launch_in_progress):
             self.num_balls_to_launch -= 1
 

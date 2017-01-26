@@ -1,9 +1,6 @@
 import procgame.game
 from procgame.game import AdvancedMode
-
-import pygame
-from pygame.locals import *
-from pygame.font import *
+import logging
 
 class BaseGameMode(procgame.game.AdvancedMode):
     """
@@ -80,7 +77,7 @@ class BaseGameMode(procgame.game.AdvancedMode):
         self.game.sound.fadeout_music()
         self.game.sound.play_music('base-music-bgm')
 
-    def shooter_inactive_for_250ms(self):
+    def sw_shooter_inactive_for_250ms(self, sw):
         # ball saver syntax has changed.  We no longer need to supply a callback
         # method instead, evt_ball_saved() will be called if a ball is saved.
         # to enable it, use this 

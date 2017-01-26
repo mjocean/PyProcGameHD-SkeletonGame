@@ -159,7 +159,8 @@ class SkeletonGame(BasicGame):
             self.known_events = [ 'evt_tilt', 'evt_shoot_again', 'evt_single_ball_play', \
                                     'evt_ball_ending', 'evt_ball_starting', 'evt_ball_saved', \
                                     'evt_game_ending', 'evt_game_starting', 'evt_tilt_ball_ending', \
-                                    'evt_player_added']
+                                    'evt_player_added', 'evt_balls_missing', 'evt_balls_found',
+                                    'evt_volume_up', 'evt_volume_down']
 
             for e in self.known_events:
                 self.event_handlers[e] = []
@@ -261,6 +262,8 @@ class SkeletonGame(BasicGame):
             else:
                 trough_settle_time = 0.5
 
+            if(shooter_lane_sw_name is None):
+                raise ValueError, "machine YAML must define a switch named 'shooter' or tagged 'shooter'"
             self.trough = Trough(self,trough_switchnames, trough_switchnames[-1], trough_coil_name, \
                 early_save_switchnames, shooter_lane_sw_name, drain_callback=None, plunge_coilname=plunge_coilname, \
                 autoplunge_settle_time=autoplunge_settle_time, trough_settle_time=trough_settle_time)
@@ -859,14 +862,33 @@ class SkeletonGame(BasicGame):
             if(self.use_ballsearch_mode):
                 self.ball_search.full_stop()
             self.game_start_pending = False
-            self.clear_status()
-            self.game_started()
+            self.notifyModes('evt_balls_found', args=None, event_complete_fn=None)    
+            # self.game_started()
+
+    def volume_down(self):
+        """ decrease volume and store the new setting """
+        volume = self.sound.volume_down()
+        self.notifyModes('evt_volume_down', args=int(volume), event_complete_fn=None)
+        self.user_settings['Sound']['Initial volume'] = int(volume)
+        self.save_settings()
+
+    def volume_up(self):
+        """ increase volume and store the new setting """
+        volume = self.sound.volume_up()
+        self.notifyModes('evt_volume_up', args=int(volume), event_complete_fn=None)
+        self.user_settings['Sound']['Initial volume'] = int(volume)
+        self.save_settings()
+
+    def request_additional_player(self):
+        """ attempt to add an additional player, but honor the max_players setting """
+        if len(self.players) < self.max_players:
+            p = self.add_player()
+        else:
+            self.logger.info("Cannot add more than %d players." % self.max_players)
 
     def add_player(self):
+        """ add another player (even if there are too many); fires evt_player_added to notify modes that care """
         player = super(SkeletonGame, self).add_player()
-        # you shouldn't need this...
-        # if(hasattr(self, 'evt_player_added')):
-        #     self.evt_player_added(player)
         self.notifyModes('evt_player_added', args=(player), event_complete_fn=None, only_active_modes=False)
         return player
 
@@ -920,10 +942,13 @@ class SkeletonGame(BasicGame):
 
     def reset_search(self):
         if(self.game_start_pending):
-            self.clear_status()
+            # self.clear_status()
             self.game_start_pending = False
             if(self.trough.num_balls() >= self.num_balls_total):
-                self.game_started()        
+                # we could start now...
+                # but don't!
+                # self.game_started()
+                pass
             else: # insufficient balls to start
                 # don't try again, just shut down the status indicator
 
@@ -949,7 +974,8 @@ class SkeletonGame(BasicGame):
         # check trough and potentially do a ball search first
         if(self.game_start_pending and (self.trough.num_balls() < self.num_balls_total)):
             self.logger.info("Skel: Game START : PLEASE WAIT!! -- TROUGH STATE is still BLOCKING GAME START!")
-            self.set_status("Balls STILL Missing: PLEASE WAIT!!", 3.0)
+            # self.set_status("Balls STILL Missing: PLEASE WAIT!!", 3.0)
+            self.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
             return
 
         if(self.trough.num_balls() < self.num_balls_total):
@@ -1126,7 +1152,8 @@ class SkeletonGame(BasicGame):
     def do_ball_search(self, silent=False):
         self.ball_search_tries += 1
         if(not silent):
-            self.set_status("Balls Missing: PLEASE WAIT!!", 3.0)
+            # self.set_status("Balls Missing: PLEASE WAIT!!", 3.0)
+            self.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
 
 class AdvPlayer(Player):
     """Represents a player in the game.

@@ -40,13 +40,13 @@ class GameController(object):
     modes = None
     """An instance of :class:`ModeQueue`, which manages the presently active modes."""
     
-    coils = AttrCollection()
+    coils = AttrCollection("drivers")
     """An :class:`AttrCollection` of :class:`Driver` objects.  Populated by :meth:`load_config`."""
-    lamps = AttrCollection()
+    lamps = AttrCollection("lamps")
     """An :class:`AttrCollection` of :class:`Driver` objects.  Populated by :meth:`load_config`."""
-    switches = AttrCollection()
+    switches = AttrCollection("switches")
     """An :class:`AttrCollection` of :class:`Switch` objects.  Populated by :meth:`load_config`."""
-    leds = AttrCollection()
+    leds = AttrCollection("leds")
     """An :class:`AttrCollection` of :class:`LED` objects.  Populated by :meth:`load_config`."""
     
     ball = 0

@@ -12,7 +12,7 @@ class FakePinPROC(object):
     
     frames_per_second = 30
 
-    drivers = gameitems.AttrCollection()
+    drivers = gameitems.AttrCollection("drivers")
 
     switch_events = []
     switch_rules = [{'notifyHost':False, 'drivers':[]}] * 1024
