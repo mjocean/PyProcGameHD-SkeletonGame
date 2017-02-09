@@ -256,6 +256,8 @@ class Trough(Mode):
         else: # there are no balls in play...
             if(self.is_full() and self.game.game_start_pending):
                 self.game.your_search_is_over()
+            elif(self.game.game_tilted):
+                self.drain_callback()
 
     # Count the number of balls in the trough by counting active trough switches.
     def num_balls(self):

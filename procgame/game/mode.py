@@ -124,11 +124,14 @@ class Mode(object):
         try:
             sw = self.game.switches[name]
         except KeyError:
-            self.game.logger.error("WARNING: add_switch_handler(): Switch %s unknown. Please check your machine configuration file." % (name))
+            self.game.logger.error("add_switch_handler(): Switch %s unknown. Please check your machine configuration file." % (name))
             return
-        d = {'name':name, 'type':et, 'delay':delay, 'handler':handler, 'param':sw}
-        if d not in self.__accepted_switches:
-            self.__accepted_switches.append(Mode.AcceptedSwitch(name=name, event_type=et, delay=delay, handler=handler, param=sw))
+        
+        asw = Mode.AcceptedSwitch(name=name, event_type=et, delay=delay, handler=handler, param=sw)
+        if asw not in self.__accepted_switches:
+            self.__accepted_switches.append(asw)
+        else:
+            self.game.logger.error("framework suppressed redundant switch handler: [name=%s, event_type=%s, delay=%s, handler=%s, param=%s]" % (name, et, delay, handler, sw))
     
     def status_str(self):
         return self.__class__.__name__
@@ -321,6 +324,18 @@ class Mode(object):
             self.delay = delay
             self.handler = handler
             self.param = param
+        def __eq__(self, other):
+            if(other.name != self.name):
+                return False
+            if(other.event_type != self.event_type):
+                return False
+            if(other.handler != self.handler):
+                return False
+            if(other.param != self.param):
+                return False
+            if(other.delay != self.delay):
+                return False                
+            return True
         def __str__(self):
             return '<name=%s event_type=%s delay=%s>' % (self.name, self.event_type, self.delay)
     

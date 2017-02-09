@@ -160,7 +160,8 @@ class SkeletonGame(BasicGame):
                                     'evt_ball_ending', 'evt_ball_starting', 'evt_ball_saved', \
                                     'evt_game_ending', 'evt_game_starting', 'evt_tilt_ball_ending', \
                                     'evt_player_added', 'evt_balls_missing', 'evt_balls_found',
-                                    'evt_volume_up', 'evt_volume_down']
+                                    'evt_volume_up', 'evt_volume_down', 'evt_tilt_warning', \
+                                    'evt_game_ended', 'evt_initial_entry']
 
             for e in self.known_events:
                 self.event_handlers[e] = []
@@ -209,8 +210,8 @@ class SkeletonGame(BasicGame):
                 # find a tilt switch 
                 tilt_sw_name = self.find_item_name('tilt',self.switches)
                 slamtilt_sw_name = self.find_item_name('slamTilt',self.switches)
-                self.tilt_mode = TiltMonitorMode(game=self, priority=99998, font_big=self.fonts['tilt-font-big'], 
-                    font_small=self.fonts['tilt-font-small'], tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
+                self.tilt_mode = TiltMonitorMode(game=self, priority=99998, 
+                    tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
             shoot_again = self.lamps.item_named_or_tagged('shoot_again')
             shooter_lane_sw_name = self.find_item_name('shooter',self.switches)
@@ -413,7 +414,6 @@ class SkeletonGame(BasicGame):
 
             opaque indicates whether or not the contents below this message will be visible when shown
 
-            duration is the maximum number of seconds that this message will be visible on the screen
         """
 
         return self.dmdHelper.genMsgFrame(msg, background_layer, font_style, font_key, opaque)
@@ -429,6 +429,10 @@ class SkeletonGame(BasicGame):
         """ turns on the ball saver -- omit time to use the setting from the service menu
             --note, if this happens 'too early' in your game, just enable the saver again at 
             a later point to extend the timer """
+        if(self.game_tilted):
+            self.logger.debug("ball saver enable() request DENIED -- game is tilted")
+            return
+
         if(time is None):
             time = self.user_settings['Gameplay (Feature)']['Ball Save Timer']
         
@@ -846,13 +850,19 @@ class SkeletonGame(BasicGame):
 
             if(self.use_ballsearch_mode):
                 self.ball_search.disable()
-            self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
+            
+            if(self.game_tilted):
+                self.tilted_ball_end()
+            else:
+                self.notifyModes('evt_ball_ending', args=(shoot_again,last_ball), event_complete_fn=self.end_ball)
         elif self.trough.num_balls_in_play == 1:
             """ TODO: Ensure we are only seeing this event during multiball """
 
             # ensure this isn't a situation of a fast-drain when more balls are pending launch
             if(self.trough.num_balls_to_launch >= 1):
                 self.logger.warning("one ball in play, but more balls are pending launch (supressing evt_single_ball_play)")
+            elif(self.game_tilted):
+                self.logger.info("one ball in play, but game is tilted (supressing evt_single_ball_play)")
             else:
                 self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
 
@@ -895,7 +905,7 @@ class SkeletonGame(BasicGame):
     def slam_tilted(self):
         self.b_slam_tilted = True
         self.game_tilted = True
-        self.tilted()
+        self.notifyModes('evt_tilt', args=True, event_complete_fn=None)
 
     def slam_tilt_complete(self):
         self.b_slam_tilted = False
@@ -904,13 +914,26 @@ class SkeletonGame(BasicGame):
         self.end_game()
         self.reset()
 
+    def tilt_warning(self, times_warned):
+        """ called by the 'TiltMonitor' mode to indicate a tilt warning
+        """
+        self.notifyModes('evt_tilt_warning', args=times_warned, event_complete_fn=None)
+
     def tilted(self):
         """ called by the 'Tilted' mode to indicate the machine has been tilted;
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
         self.b_slam_tilted = False
         self.game_tilted = True
-        self.notifyModes('evt_tilt', args=None, event_complete_fn=None)
+        
+        if(self.trough.drain_callback == None):
+            self.logger.debug("machine tilted before drain logic installed; install it now!")
+            self.trough.num_balls_to_launch = 0
+            self.trough.drain_callback = self.__ball_drained_callback
+            # TODO: check if the trough is full in a few seconds
+
+
+        self.notifyModes('evt_tilt', args=False, event_complete_fn=None)
 
     def tilted_ball_end(self):
         """ called by the 'Tilted' mode to indicate the machine has been 
@@ -919,6 +942,8 @@ class SkeletonGame(BasicGame):
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
         self.game_tilted = False
+        self.tilt_mode.tilt_reset()
+        self.modes.remove(self.tilted_mode)
         if(not self.b_slam_tilted):
             self.notifyModes('evt_tilt_ball_ending', args=None, event_complete_fn=self.end_ball)
         else:
@@ -1050,13 +1075,16 @@ class SkeletonGame(BasicGame):
         seq_manager = highscore.HD_EntrySequenceManager(game=self, priority=2, multiline=self.use_multiline_score_entry)
         seq_manager.finished_handler = self.high_score_entry_completed
         seq_manager.logic = highscore.CategoryLogic(game=self, categories=self.highscore_categories)
+        seq_manager.ready_handler = self.__pre_high_score_entry
         self.modes.add(seq_manager)
 
+    def __pre_high_score_entry(self, seq_manager, category):
+        self.notifyModes('evt_initial_entry', args=category, event_complete_fn=seq_manager.prompt)
 
     def high_score_entry_completed(self, mode):
         self.save_game_data('game_user_data.yaml')
         self.modes.remove(mode)
-        self.reset()        
+        self.notifyModes('evt_game_ended', args=None, event_complete_fn=self.reset)
 
     def calc_time_average_string(self, prev_total, prev_x, new_value):
         prev_time_list = prev_x.split(':')

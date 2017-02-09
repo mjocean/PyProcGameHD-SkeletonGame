@@ -20,3 +20,19 @@ class MachineMonitorMode(procgame.game.AdvancedMode):
 
     def evt_balls_missing(self):
         self.game.displayText("Balls Missing, Please Wait", opaque=True)
+
+    def evt_tilt(self, slam_tilt):
+        self.game.sound.fadeout_music()
+        self.game.sound.stop('tilt warning')
+
+        if(slam_tilt):
+            self.game.sound.play('slam_tilt')
+            self.game.displayText('SLAM TILT',3)
+        else:
+            self.game.sound.play('tilt')
+            self.game.displayText('TILT!!',3)
+
+    def evt_tilt_warning(self, times):
+        self.game.sound.stop('tilt warning')
+        self.game.sound.play('tilt warning')
+        self.game.displayText('Warning!!',3)
