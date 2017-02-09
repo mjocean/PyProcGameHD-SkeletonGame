@@ -27,12 +27,19 @@ class MachineMonitorMode(procgame.game.AdvancedMode):
 
         if(slam_tilt):
             self.game.sound.play('slam_tilt')
-            self.game.displayText('SLAM TILT',3)
+            self.game.tilted_mode.layer = self.game.generateLayer('SLAM TILT')
         else:
             self.game.sound.play('tilt')
-            self.game.displayText('TILT!!',3)
+            self.game.tilted_mode.layer = self.game.generateLayer('TILT!!')
 
     def evt_tilt_warning(self, times):
         self.game.sound.stop('tilt warning')
         self.game.sound.play('tilt warning')
-        self.game.displayText('Warning!!',3)
+        self.game.displayText('Warning!!')
+
+    def evt_initial_entry(self, category):
+        self.game.displayText("Congrats on %s" % category, duration=2)
+        return 2
+
+    def evt_game_ended(self):
+        pass
