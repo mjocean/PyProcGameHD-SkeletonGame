@@ -100,17 +100,25 @@ class Driver(GameItem):
         GameItem.__init__(self, game, name, number)
         self.logger = logging.getLogger('game.driver')
 
-    def set_color(self, arg):
-        self.logger.debug('set_color failed for Driver %s - is NOT wsRGB', self.name)
+    def set_color(self, arg, time=0):
+        if(self.name in self.game.lamps):      
+            if(arg[0]>128 or arg[1]>128 or arg[2]>128):
+                self.logger.debug('set_color enable %s %s for NON wsRGB' % (self.name, str(arg)))
+                self.enable()
+            else:
+                self.logger.debug('set_color disable %s for NON wsRGB' % self.name)
+                self.disable()
+        else:
+            self.logger.debug('set_color failed for Driver %s - is NOT wsRGB' % self.name)
         pass
 
     def restore_default_color(self):
-        self.logger.debug('restore_color failed for Driver %s - is NOT wsRGB', self.name)
+        self.logger.debug('restore_color failed for Driver %s - is NOT wsRGB' % self.name)
         pass
         
     def disable(self):
         """Disables (turns off) this driver."""
-        self.logger.debug('Driver %s - disable', self.name)
+        self.logger.debug('Driver %s - disable' % self.name)
         self.game.proc.driver_disable(self.number)
         self.last_time_changed = time.time()
     def pulse(self, milliseconds=None):
