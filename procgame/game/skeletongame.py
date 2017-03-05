@@ -78,10 +78,10 @@ def run_proc_game(game_class):
 
     try:
         game = game_class()
-        game.run_loop(.0001) 
+        game.run_loop(.0001)
     except Exception, e:
         # back up the exception
-        exc_info = sys.exc_info()        
+        exc_info = sys.exc_info()
     finally:
         if(game is not None):
             game.end_run_loop()
@@ -110,7 +110,7 @@ class SkeletonGame(BasicGame):
                     raise ValueError, 'Yaml file "%s" could not be loaded and machineType not passed as arg to SkeletonGame() init.' % (machineYamlFile)
 
                 machineType = self.config['PRGame']['machineType']
-            
+
             machine_type = pinproc.normalize_machine_type(machineType)
             if not machine_type:
                 raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
@@ -123,8 +123,8 @@ class SkeletonGame(BasicGame):
             #     super(SkeletonGame, self).__init__(machine_type)
 
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
-            self.dmd_height = config.value_for_key_path('dmd_dots_h', 240) 
-            self.dmd_fps = config.value_for_key_path('dmd_framerate', 30) 
+            self.dmd_height = config.value_for_key_path('dmd_dots_h', 240)
+            self.dmd_fps = config.value_for_key_path('dmd_framerate', 30)
 
             # load the machine config yaml
             self.load_config(machineYamlFile)
@@ -137,11 +137,11 @@ class SkeletonGame(BasicGame):
             self.lampshow_path = config.value_for_key_path('lampshow_path', curr_file_path + "/assets/lampshows/")
             self.dmd_path = config.value_for_key_path('dmd_path', curr_file_path + "/assets/dmd/")
             self.sound_path = config.value_for_key_path('sound_path', curr_file_path + "/assets/sound/")
-            
+
             self.voice_path = self.sound_path + config.value_for_key_path('voice_dir', "voice/")
             self.sfx_path = self.sound_path + config.value_for_key_path('sfx_dir', "sfx/")
             self.music_path = self.sound_path + config.value_for_key_path('music_dir', "music/")
-            
+
             self.hdfont_path = config.value_for_key_path('hdfont_dir', curr_file_path + "/assets/fonts/")
 
             # known_modes are all AdvancedModes that have been created; they are stored by type
@@ -151,8 +151,8 @@ class SkeletonGame(BasicGame):
             self.known_modes[AdvancedMode.Ball] = []
             self.known_modes[AdvancedMode.Game] = []
             self.known_modes[AdvancedMode.Manual] = []
-            
-            # event hanlders are lists of AdvancedModes (again, weakref) that care about these specific 
+
+            # event hanlders are lists of AdvancedModes (again, weakref) that care about these specific
             # events (i.e., these classes define functions to handle these specific events)
             self.event_handlers = {}
             # the evt_ methods:
@@ -167,7 +167,7 @@ class SkeletonGame(BasicGame):
                 self.event_handlers[e] = []
 
             self.game_tilted = False # indicates if any kind of tilt has occured; tilt, slam_tilt
-            
+
             # create a sound controller (self.game.sound from within modes)
             self.sound = sound.SoundController(self)
             self.modes.add(self.sound)
@@ -198,19 +198,19 @@ class SkeletonGame(BasicGame):
             if(self.use_stock_scoredisplay is True):
                 self.score_display = ScoreDisplay(self,0)
             elif(self.use_stock_scoredisplay=='HD'):
-                self.score_display = ScoreDisplayHD(self, 0)        
+                self.score_display = ScoreDisplayHD(self, 0)
 
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
             if(self.use_stock_servicemode):
-                self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])        
+                self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])
 
             if(self.use_stock_tiltmode):
-                # find a tilt switch 
+                # find a tilt switch
                 tilt_sw_name = self.find_item_name('tilt',self.switches)
                 slamtilt_sw_name = self.find_item_name('slamTilt',self.switches)
-                self.tilt_mode = TiltMonitorMode(game=self, priority=99998, 
+                self.tilt_mode = TiltMonitorMode(game=self, priority=99998,
                     tilt_sw=tilt_sw_name, slam_tilt_sw=slamtilt_sw_name)
 
             shoot_again = self.lamps.item_named_or_tagged('shoot_again')
@@ -219,11 +219,11 @@ class SkeletonGame(BasicGame):
 
             # Note - Game specific item:
             trough_switchnames = self.switches.items_tagged('trough')
-            # This range should include the number of trough switches for 
+            # This range should include the number of trough switches for
             # the specific game being run.  In range(1,x), x = last number + 1.
 
             if(len(trough_switchnames)==0):
-                logging.getLogger('Trough').warning("No switches have been tagged 'trough'.  Switches with names that start Trough will be used.")                
+                logging.getLogger('Trough').warning("No switches have been tagged 'trough'.  Switches with names that start Trough will be used.")
                 trough_switchnames = [t.name for t in self.switches if t.name.startswith("trough") ]
             else:
                 trough_switchnames = [t.name for t in trough_switchnames]
@@ -288,7 +288,7 @@ class SkeletonGame(BasicGame):
             # add ball search options as per config.yaml
             bs_stopSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'stop' or 'stop' in sw.ballsearch))]
             bs_resetSwitches = [sw for sw in self.switches if (hasattr(sw,'ballsearch') and (sw.ballsearch == 'reset' or 'reset' in sw.ballsearch))]
-            
+
             self.ballsearch_resetSwitches = dict()
             for sw in bs_resetSwitches:
                 v = 'closed' if sw.type == 'NC' or sw.type == 'nc' else 'open'
@@ -306,7 +306,7 @@ class SkeletonGame(BasicGame):
                     self.logger.error("Could not use Ball search mode as there were no ballsearch tags (reset/stop) on any game switches in the yaml.\n -- will default to using your games: do_ball_search() method...")
                     self.use_ballsearch_mode = False
 
-            # create it anyway; if the switches are empty it will nerf itself.                
+            # create it anyway; if the switches are empty it will nerf itself.
             self.ball_search = BallSearch(self, priority=100, \
                                  countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
                                  reset_switches=self.ballsearch_resetSwitches, \
@@ -317,7 +317,7 @@ class SkeletonGame(BasicGame):
                 try:
                     self.osc_closed_switches
                     # or getattr(self, 'big_object')
-                except AttributeError:                
+                except AttributeError:
                     self.osc_closed_switches = []
                 self.osc = osc.OSC_Mode(game=self, priority=1, closed_switches=self.osc_closed_switches)
                 self.modes.add(self.osc)
@@ -356,7 +356,7 @@ class SkeletonGame(BasicGame):
         cleanup()
         if(hasattr(self,'cleanup')):
             self.cleanup()
-        super(SkeletonGame,self).end_run_loop()        
+        super(SkeletonGame,self).end_run_loop()
 
     def find_item_name(self, identifier, group):
         """ returns the name of a switch either named or tagged with the given tag """
@@ -373,7 +373,7 @@ class SkeletonGame(BasicGame):
         self.displayText(msg, font_key=self.status_font_name, background_layer='status_bg', font_style=self.status_font_style, flashing=8, duration=duration)
 
     def displayText(self, msg, background_layer=None, font_key=None, font_style=None, opaque=False, duration=2.0, flashing=False):
-        """ a helper to show a specified message on the display for duration seconds.  Calling 
+        """ a helper to show a specified message on the display for duration seconds.  Calling
             showMessage twice in rapid successioin will result in replacing the first message with
             the contents of the second.
 
@@ -395,7 +395,7 @@ class SkeletonGame(BasicGame):
             duration is the maximum number of seconds that this message will be visible on the screen
         """
         self.dmdHelper.showMessage(msg, background_layer, font_style, opaque, duration, font_key=font_key, flashing=flashing)
-    
+
     def generateLayer(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False):
         """ a helper to generate a frame containing a specified message on top of an image/animation
 
@@ -427,7 +427,7 @@ class SkeletonGame(BasicGame):
 
     def enable_ball_saver(self, num_balls_to_save=1, time=None, now=True, allow_multiple_saves=False, tick_rate=1):
         """ turns on the ball saver -- omit time to use the setting from the service menu
-            --note, if this happens 'too early' in your game, just enable the saver again at 
+            --note, if this happens 'too early' in your game, just enable the saver again at
             a later point to extend the timer """
         if(self.game_tilted):
             self.logger.debug("ball saver enable() request DENIED -- game is tilted")
@@ -435,7 +435,7 @@ class SkeletonGame(BasicGame):
 
         if(time is None):
             time = self.user_settings['Gameplay (Feature)']['Ball Save Timer']
-        
+
         self.logger.debug("ball saver enabled balls=[%d], time left=[%d]" % (num_balls_to_save,time))
         self.ball_save.start(num_balls_to_save, time, now, allow_multiple_saves, tick_rate)
         self.ball_save.callback = self.__ball_saved
@@ -452,9 +452,9 @@ class SkeletonGame(BasicGame):
         return highscore.get_highscore_data(self.highscore_categories)
 
     def notifyOfNewMode(self,new_mode):
-        """ let the skeletongame instance know about the new mode.  Use weakref to 
-            record information about the new mode so we don't accidentally keep it 
-            around longer than needed.  learning of the new mode happens whenever 
+        """ let the skeletongame instance know about the new mode.  Use weakref to
+            record information about the new mode so we don't accidentally keep it
+            around longer than needed.  learning of the new mode happens whenever
             an advancedMode is created, and allows skeletongame to handle auto-add/remove
             of a mode based on the specified mode_type.
 
@@ -520,24 +520,24 @@ class SkeletonGame(BasicGame):
                 self.curr_delayed_by_mode = next_handler
                 if(d > 0):
                     self.switchmonitor.delay(name='notifyNextMode',
-                       event_type=None, 
-                       delay=d, 
+                       event_type=None,
+                       delay=d,
                        handler=self.notifyNextMode)
                 # else, handler will need to handle the event itself (self.force_event_next())
         elif(type(d) is tuple):
-            if(d[1] == True): # flag to stop event propegation and jump to the event 
+            if(d[1] == True): # flag to stop event propegation and jump to the event
                 self.notify_list = list() # zero out the list so the next 'notifyNext' call will just call the final event handler
                 self.logger.info("Skel: Mode '%s' indicates event '%s' is now complete.  Blocking further propegation" % (next_handler, self.event))
             if(d[0] > 0):
                 self.curr_delayed_by_mode = next_handler
                 self.switchmonitor.delay(name='notifyNextMode',
-                   event_type=None, 
-                   delay=d[0], 
+                   event_type=None,
+                   delay=d[0],
                    handler=self.notifyNextMode)
             elif(d[0]==0):
                 # no delay specified
                 self.notifyNextMode()
-            else: 
+            else:
                 # time reported is less than zero (e.g., -1) --user is saying they do not
                 # want to return a bound on how long they need to handle the event, so
                 # the mode is responsible for indicating the completion of handling (self.force_event_next())
@@ -545,7 +545,7 @@ class SkeletonGame(BasicGame):
         else:
             # returning None from an event handler (or not returning at all) means no delay will be given
             self.notifyNextMode()
-        
+
     def notifyNextModeNow(self, caller_mode):
         if(caller_mode == self.curr_delayed_by_mode):
             # okay to notify next
@@ -558,10 +558,10 @@ class SkeletonGame(BasicGame):
 
     def notifyModes(self, event, args=None, event_complete_fn=None, only_active_modes=True):
         """ this method will notify all AdvencedMode derived modes of the given event.  Modes
-            will be notified in priority order and notifications happen over time -- that is, 
+            will be notified in priority order and notifications happen over time -- that is,
             the next mode will be notified after the previous mode has completed dealing with this
-            notification.  To facilitate this, modes that handle the event (by defining a 
-            method of the same name as the event) should respond to notifications by returning a 
+            notification.  To facilitate this, modes that handle the event (by defining a
+            method of the same name as the event) should respond to notifications by returning a
             number of seconds required to complete the handling of this event.  Should a method
             complete handling of the event earlier than originally anticipated (e.g., a user
             skips an animation sequence), that mode should call the AdvancedMode method:
@@ -590,7 +590,7 @@ class SkeletonGame(BasicGame):
             self.logger.debug("Skel: event '%s' queuing handler found in mode [%s]" % (event, h))
             self.notify_list.append(h)
 
-        # note this sort is in reverse priority order because we pop 
+        # note this sort is in reverse priority order because we pop
         # off the back!
         self.notify_list.sort(lambda x, y: x.priority - y.priority)
 
@@ -654,7 +654,7 @@ class SkeletonGame(BasicGame):
         # trough fixes
 
         self.modes.add(self.ball_save)
-       
+
         if(self.use_stock_scoredisplay is not False):
             self.score_display.reset()
             self.modes.add(self.score_display)
@@ -662,7 +662,7 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.ball_search)
         if(self.use_ballsearch_mode):
             self.ball_search.disable()
-        
+
         # initialize the mode variables; the general form is:
         # self.varName = fileName.classModeName(game=self)
         # Note this creates the mode and causes the Mode's constructor
@@ -681,7 +681,7 @@ class SkeletonGame(BasicGame):
             # if(start_lamp is not None):
             #     start_lamp = self.lamps[start_lamp]
             self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
-        
+
     def start_attract_mode(self):
         self.attract_mode.reset()
         self.modes.add(self.attract_mode) # plays the attract mode and kicks off the game
@@ -717,7 +717,7 @@ class SkeletonGame(BasicGame):
     def process_config(self):
         """Called by :meth:`load_config` and :meth:`load_config_stream` to process the values in :attr:`config`."""
         super(SkeletonGame,self).process_config()
-        
+
         # if ('arduino' in self.config['PRGame'] and self.config['PRGame']['arduino'] != False) :
         #     comport = self.config['PRGame']['arduino']
         #     self.arduino_client = ArduinoClient(comport, baud_rate=14400,timeout=1)
@@ -781,7 +781,7 @@ class SkeletonGame(BasicGame):
         return super(SkeletonGame, self).load_settings(os.path.join('config/' + file_default),os.path.join('config/' + file_game))
 
     def load_assets(self):
-        """ function to clean up code/make things easier to read; 
+        """ function to clean up code/make things easier to read;
             this handles reading/loading of all assets (sounds, dmd images,
             dmd fonts, lightshows) from the file system
         """
@@ -789,9 +789,9 @@ class SkeletonGame(BasicGame):
         self.animations = self.asset_mgr.animations
         self.fontstyles = self.asset_mgr.fontstyles
         self.fonts = self.asset_mgr.fonts
-        
+
     def ball_starting(self):
-        """ this is auto-called when the ball is actually starting 
+        """ this is auto-called when the ball is actually starting
             (so happens 3 or more times a game) """
 
         self.logger.info("Skel: BALL STARTING")
@@ -820,7 +820,7 @@ class SkeletonGame(BasicGame):
             self.ball_search.enable()
 
     def __ball_drained_callback(self):
-        """ this is the "drain logic" that is called by the trough if a 
+        """ this is the "drain logic" that is called by the trough if a
             ball drains --either from a multiball ball ending or from
             the trough becoming full """
         if self.trough.num_balls_in_play == 0:
@@ -850,7 +850,7 @@ class SkeletonGame(BasicGame):
 
             if(self.use_ballsearch_mode):
                 self.ball_search.disable()
-            
+
             if(self.game_tilted):
                 self.tilted_ball_end()
             else:
@@ -872,7 +872,7 @@ class SkeletonGame(BasicGame):
             if(self.use_ballsearch_mode):
                 self.ball_search.full_stop()
             self.game_start_pending = False
-            self.notifyModes('evt_balls_found', args=None, event_complete_fn=None)    
+            self.notifyModes('evt_balls_found', args=None, event_complete_fn=None)
             # self.game_started()
 
     def volume_down(self):
@@ -925,7 +925,7 @@ class SkeletonGame(BasicGame):
         """
         self.b_slam_tilted = False
         self.game_tilted = True
-        
+
         if(self.trough.drain_callback == None):
             self.logger.debug("machine tilted before drain logic installed; install it now!")
             self.trough.num_balls_to_launch = 0
@@ -936,8 +936,8 @@ class SkeletonGame(BasicGame):
         self.notifyModes('evt_tilt', args=False, event_complete_fn=None)
 
     def tilted_ball_end(self):
-        """ called by the 'Tilted' mode to indicate the machine has been 
-            tilted and all balls are back in the trough -- in essence, this 
+        """ called by the 'Tilted' mode to indicate the machine has been
+            tilted and all balls are back in the trough -- in essence, this
             signals a evt_tilt_ball_ending, which is a variant of evt_ball_ending;
             because evt_ball_ending isn't fired, bonus mode will not be tallied
         """
@@ -981,9 +981,9 @@ class SkeletonGame(BasicGame):
                 # if(self.use_ballsearch_mode):
                 #     self.ball_search.perform_search(3,  completion_handler=self.reset_search)
                 #     # self.ball_search.delay(name='ballsearch_start_delay',
-                #     #    event_type=None, 
-                #     #    delay=3, 
-                #     #    handler=self.game_started)            
+                #     #    event_type=None,
+                #     #    delay=3,
+                #     #    handler=self.game_started)
                 # else:
                 #     self.do_ball_search(silent=False)
                 #     self.ball_search.delay(name='ballsearch_start_delay', event_type=None, delay=3.0, handler=self.reset_search)
@@ -1048,7 +1048,7 @@ class SkeletonGame(BasicGame):
         self.logger.info("Skel: 'GAME ENDED")
 
         # ball time is handled in ball drained callback
-        
+
         # Also handle game stats.
         for i in range(0,len(self.players)):
             game_time = self.get_game_time(i)
@@ -1057,7 +1057,7 @@ class SkeletonGame(BasicGame):
             self.game_data['Audits']['Avg Score'] = self.calc_number_average(self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Score'], self.players[i].score)
 
             self.logger.info("Skel: 'player %d score %d" % (i, self.players[i].score))
-            
+
         self.save_game_data('game_user_data.yaml')
 
         # show any animations you want in ball_ending
@@ -1103,7 +1103,7 @@ class SkeletonGame(BasicGame):
         return int(avg_game_time)
 
     def dmd_event(self):
-        self.dmd.update()       
+        self.dmd.update()
 
     def start_service_mode(self):
         """ dump all existing modes that are running
@@ -1121,7 +1121,7 @@ class SkeletonGame(BasicGame):
         # disable flippers
         self.enable_flippers(False)
         self.enable_alphanumeric_flippers(False)
-        
+
         self.modes.add(self.service_mode)
 
     def service_mode_ended(self):
@@ -1133,11 +1133,11 @@ class SkeletonGame(BasicGame):
         """ turn off all coils
             needed after a reset while the game is in progress, we don't want
             to leave coils energized that might have been disabled by now cancelled
-            delays 
+            delays
         # NOTE: If this behavior is undesirable in your machine, define your own reset method
             and re-engergize any coils you need to OR define your own disableAllCoils that
             leaves some on
-        """        
+        """
         for coil in self.coils:
             coil.disable()
 
@@ -1186,7 +1186,7 @@ class SkeletonGame(BasicGame):
 class AdvPlayer(Player):
     """Represents a player in the game.
     The game maintains a collection of players in :attr:`GameController.players`."""
-    
+
     # parent class tracks: score, name, extra_balls, and game_time
     # this class adds:
 
@@ -1223,12 +1223,12 @@ class AdvPlayer(Player):
 
     def getState(self, key, default = None):
         return self.state_tracking.get(key,default)
-        
 
-        
+
+
 class BonusRecord(object):
-    """ represents a list of the bonuses awarded to the player, as well as 
-        all possible bonuses, their display order (in ball_end animation) 
+    """ represents a list of the bonuses awarded to the player, as well as
+        all possible bonuses, their display order (in ball_end animation)
         and the bonus types (award: once, many, max); this is used by the
         ball_end animation Mode: BonusTally to show the player their bonus """
 
@@ -1239,16 +1239,16 @@ class BonusRecord(object):
 
     earned_list = []
     """ list of key/val pairs (dict) mapping bonus name to the current number awarded for this player
-        values should be 0 (not awarded!?), 1 (once only), 2, ..., N 
+        values should be 0 (not awarded!?), 1 (once only), 2, ..., N
         """
     def award(self, name, quantity=1):
         master = find_in_list(name, self.master_list)
         if(master is None):
             logging.getLogger('Bonus').warning("trying to award bonus ['%s'] which is not defined in master list" % name)
-            master = {  'name':name, 
-                        'points': 1000, 
-                        'min':0, 
-                        'max':float('inf'), 
+            master = {  'name':name,
+                        'points': 1000,
+                        'min':0,
+                        'max':float('inf'),
                         'order':len(self.master_list)}
             self.master_list.append(master)
         prev_award = find_in_list(name, self.earned_list)
@@ -1257,7 +1257,7 @@ class BonusRecord(object):
             self.earned_list.append(prev_award)
 
         if(prev_award['count'] < master['max']):
-            prev_award['count'] = prev_award['count'] + 1
+            prev_award['count'] = prev_award['count'] + quantity
         else:
             logging.getLogger('Bonus').info("Bonus ['%s'] at max!" % name)
 
