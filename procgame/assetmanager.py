@@ -33,6 +33,7 @@ class AssetManager(object):
     game = None
 
     loaded_map = {}
+    loaded_assets_files = []
     animations = DictWithDefault(default_miss_key='missing')
     lengths = DictWithDefault(default_miss_key='missing')
     fonts = DictWithDefault(default_miss_key='default')
