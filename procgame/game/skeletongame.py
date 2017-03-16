@@ -83,10 +83,11 @@ def run_proc_game(game_class):
         # back up the exception
         exc_info = sys.exc_info()
     finally:
-        if(game is not None):
-            game.end_run_loop()
-        else:
-            cleanup()
+        # don't need to call end_run_loop; game.py does this
+        # if(game is not None):
+        #     game.end_run_loop()
+        # else:
+        cleanup()
 
         if(exc_info is not None):
             raise exc_info[0], exc_info[1], exc_info[2]
@@ -355,6 +356,7 @@ class SkeletonGame(BasicGame):
     def end_run_loop(self):
         cleanup()
         if(hasattr(self,'cleanup')):
+            self.logger.info("calling cleanup")
             self.cleanup()
         super(SkeletonGame,self).end_run_loop()
 
