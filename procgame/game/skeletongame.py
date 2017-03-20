@@ -83,11 +83,11 @@ def run_proc_game(game_class):
         # back up the exception
         exc_info = sys.exc_info()
     finally:
-        # don't need to call end_run_loop; game.py does this
-        # if(game is not None):
-        #     game.end_run_loop()
-        # else:
-        cleanup()
+        # if the game crashes, end_run_loop might not be called
+        if(game is not None):
+            game.end_run_loop()
+        else:
+            cleanup()
 
         if(exc_info is not None):
             raise exc_info[0], exc_info[1], exc_info[2]
@@ -100,6 +100,7 @@ class SkeletonGame(BasicGame):
     """
     def __init__(self, machineYamlFile, curr_file_path, machineType=None):
         try:
+            self.cleaned_up = False
             random.seed()
             pygame.mixer.pre_init(44100,-16,2,512)
 
@@ -354,11 +355,16 @@ class SkeletonGame(BasicGame):
         pass
 
     def end_run_loop(self):
-        cleanup()
-        if(hasattr(self,'cleanup')):
-            self.logger.info("calling cleanup")
-            self.cleanup()
-        super(SkeletonGame,self).end_run_loop()
+        if(not self.cleaned_up): # if the game hasn't crashed, this might be called twice
+            cleanup()
+            if(hasattr(self,'cleanup')):
+                self.logger.info("calling cleanup")
+                self.cleanup()
+            super(SkeletonGame,self).end_run_loop()
+            self.cleaned_up = True
+        else:
+            pass
+            # self.logger.info("suppressing second call to cleanup")
 
     def find_item_name(self, identifier, group):
         """ returns the name of a switch either named or tagged with the given tag """
