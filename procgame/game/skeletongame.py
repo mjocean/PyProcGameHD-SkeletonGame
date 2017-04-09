@@ -51,6 +51,9 @@ import locale
 import random
 import re
 import weakref
+import yaml
+from procgame.yaml_helper import value_for_key
+
 # from weakref import WeakValueDictionary
 
 from game import config_named
@@ -365,6 +368,11 @@ class SkeletonGame(BasicGame):
         else:
             pass
             # self.logger.info("suppressing second call to cleanup")
+
+    def define_bonuses(self, file_name):
+        """ given a yaml file that defines bonus records will init the list of known 
+            bonuses and their respective values """
+        BonusRecord.parse_from_file(file_name)
 
     def find_item_name(self, identifier, group):
         """ returns the name of a switch either named or tagged with the given tag """
@@ -957,6 +965,31 @@ class SkeletonGame(BasicGame):
         else:
             self.notifyModes('evt_tilt_ball_ending', args=None, event_complete_fn=self.slam_tilt_complete)
 
+
+    def end_ball(self):
+        """ overides game.py version to prevent ball/game time
+            increasing (we count it here, to get more accurate data)
+            note that super is intentionally not called.
+        
+            this method should only be called following appropriate
+            event notification --read: don't call this from your game code
+            unless you really know what you are doing
+        """
+        self.ball_ended()
+        if self.current_player().extra_balls > 0:
+            self.current_player().extra_balls -= 1
+            self.shoot_again()
+            return
+        if self.current_player_index + 1 == len(self.players):
+            self.ball += 1
+            self.current_player_index = 0
+        else:
+            self.current_player_index += 1
+        if self.ball > self.balls_per_game:
+            self.end_game()
+        else:
+            self.start_ball() # Consider: Do we want to call this here, or should it be called by the game? (for bonus sequence)
+ 
     def ball_ended(self):
         """ Subclassed by implementor to react to the ball being completely over
             automatically invoked by end_ball(). At this point the ball is over """
@@ -1176,10 +1209,11 @@ class SkeletonGame(BasicGame):
             self.p = self.current_player()
             return self.p.getState(key, default)
 
-    def bonus(self, name, quantity=1):
+    def bonus(self, name, quantity=1, value=None):
+        """ value is not required if the bonus has been predefined """
         if (self.ball != 0):
             self.p = self.current_player()
-            self.p.awardBonus(name,quantity)
+            self.p.awardBonus(name,quantity, value)
 
     def run_loop(self, min_seconds_per_cycle=None):
         #sdl2_DisplayManager.inst().show_window(True)
@@ -1212,8 +1246,13 @@ class AdvPlayer(Player):
 
         self.state_tracking = {}
 
-    def awardBonus(self, name, quantity=1):
-        self.bonuses.award(name,quantity)
+    def awardBonus(self, name, quantity=1, point_value=None):
+        """ adds an entry for `quantity` more bonuses named `name`
+            assuming the bonus has been defined, the point_value per each
+            is considered.  If the bonus has not previously defined, this
+            also defines the value (which should be awarded at end_of_ball)
+        """        
+        self.bonuses.award(name,quantity, point_value)
 
     def getBonusList(self):
         t = self.bonuses.earned_list
@@ -1233,7 +1272,6 @@ class AdvPlayer(Player):
         return self.state_tracking.get(key,default)
 
 
-
 class BonusRecord(object):
     """ represents a list of the bonuses awarded to the player, as well as
         all possible bonuses, their display order (in ball_end animation)
@@ -1249,22 +1287,47 @@ class BonusRecord(object):
     """ list of key/val pairs (dict) mapping bonus name to the current number awarded for this player
         values should be 0 (not awarded!?), 1 (once only), 2, ..., N
         """
-    def award(self, name, quantity=1):
+    def __init__(self):
+        self.bonus_held = False
+        self.earned_list = []
+        
+    @classmethod
+    def define_bonus(cls, name, point_value, max_per_ball=float('inf'), max_per_game=float('inf')):
+        """ defines a point value for a specific named bonus """
+        master = find_in_list(name, cls.master_list)
+        if(master is not None):
+            logging.getLogger('Bonus').warning("trying to redefine existing bonus named ['%s']" % name)
+        else:
+            logging.getLogger('Bonus').info("defining bonus ['%s']" % name)
+            master = {  'name':name,
+                        'points': point_value,
+                        'max_ball': max_per_ball,
+                        'max_game': max_per_game,
+                        'order':len(cls.master_list)}
+            cls.master_list.append(master)
+            logging.getLogger('Bonus').info("master list ['%s']" % cls.master_list)
+
+    def award(self, name, quantity=1, point_value=None):
+        """ adds an entry for `quantity` more bonuses named `name`
+            assuming the bonus has been defined, the point_value per each
+            is considered.  If the bonus has not previously defined, this
+            also defines the value (which should be awarded at end_of_ball)
+        """
         master = find_in_list(name, self.master_list)
         if(master is None):
             logging.getLogger('Bonus').warning("trying to award bonus ['%s'] which is not defined in master list" % name)
             master = {  'name':name,
-                        'points': 1000,
-                        'min':0,
-                        'max':float('inf'),
+                        'points': 1000 if point_value is None else point_value,
+                        'max_ball':float('inf'),
+                        'max_game':float('inf'),
                         'order':len(self.master_list)}
             self.master_list.append(master)
         prev_award = find_in_list(name, self.earned_list)
         if(prev_award is None):
-            prev_award = {'name':name, 'count':0}
+            prev_award = {'name':name, 'count':0, 'points':master['points']}
             self.earned_list.append(prev_award)
 
-        if(prev_award['count'] < master['max']):
+        if(prev_award['count'] < master['max_ball'] and prev_award['count'] < master['max_game']):
             prev_award['count'] = prev_award['count'] + quantity
         else:
             logging.getLogger('Bonus').info("Bonus ['%s'] at max!" % name)
@@ -1274,10 +1337,26 @@ class BonusRecord(object):
         print("%s" % self.master_list)
         print("==================")
 
-    def parse_from_file(self):
+    @classmethod
+    def parse_from_file(cls, bonus_def_file):
         # read a yaml fie and load all the bonuses
-        pass
+        try:
+            values = yaml.load(open(bonus_def_file, 'r'))
+        except yaml.scanner.ScannerError, e:
+            raise
+        except Exception, e:
+            values = dict()
 
+        if "BonusDefs" in values:
+            bdefs = values["BonusDefs"]
+            for bonus_record_dict in bdefs:
+                n = bonus_record_dict.keys()[0]
+                bonus_record = value_for_key(bonus_record_dict,n) 
+                p = value_for_key(bonus_record,'points')
+                mpb = value_for_key(bonus_record,'max_per_ball', float('inf'))
+                mpg = value_for_key(bonus_record,'max_per_game', float('inf'))
+                cls.define_bonus(n, p, mpb, mpg)
+        pass
 
 def find_in_list(name, list):
     found_item = next((tmpItem for tmpItem in list if tmpItem["name"] == name), None)

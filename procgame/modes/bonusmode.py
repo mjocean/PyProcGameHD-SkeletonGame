@@ -57,7 +57,7 @@ class BonusMode(AdvancedMode):
     self.cancel_delayed(name='next_bonus_display')
     self.layer = None
 
-  def getBonusFrame(self, bonusName, bonusCount):
+  def getBonusFrame(self, bonusName, bonusCount, bonusValue):
     lyrTop = HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*1/3, self.game.fonts['med'], justify="center", vert_justify=None, opaque=False, width=self.game.dmd.width, height=40, line_color=None, line_width=0, interior_color=(255, 255, 255), fill_color=None)
     lyrBottom = HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*2/3, self.game.fonts['med'], justify="center", vert_justify=None, opaque=False, width=self.game.dmd.width, height=40, line_color=None, line_width=0, interior_color=(255, 255, 255), fill_color=None)
     fs = HDFontStyle()
@@ -65,7 +65,8 @@ class BonusMode(AdvancedMode):
     fs.line_width=1
     fs.interior_color=(32,32,32)    
     lyrTop.set_text(bonusName,style=fs)
-    lyrBottom.set_text(str(bonusCount),style=fs)
+    bottomText = str(bonusValue) if bonusCount == 1 else "%dx @ %d" % (bonusCount, bonusValue) 
+    lyrBottom.set_text(bottomText,style=fs)
     gl = GroupedLayer(self.game.dmd.width, self.game.dmd.height, layers=[lyrBottom, lyrTop])
     gl.opaque=True
     return gl
@@ -74,12 +75,18 @@ class BonusMode(AdvancedMode):
     self.cancel_delayed(name='next_bonus_display')
     if(len(self.bonus_list)>0):
       this_bonus = self.bonus_list.pop()
-      self.layer = self.getBonusFrame(this_bonus['name'], this_bonus['count'])
+      self.layer = self.getBonusFrame(this_bonus['name'], this_bonus['count'], this_bonus['points'])
+      self.game.score(this_bonus['count'] * this_bonus['points'])
       self.delay(name='next_bonus_display', delay=2, handler=self.next_bonus_display)
     else:
       self.layer = None
+      self.add_remaining_points()
       self.force_event_next()
 
+  def add_remaining_points(self):
+    """ add in any bonuses that weren't tallied (from an early exit)"""
+    for this_bonus in self.bonus_list:
+      self.game.score(this_bonus['count'] * this_bonus['points'])
 
   def evt_ball_ending(self, (shoot_again, last_ball)):
     self.game.log("Bonus Mode awakened!!")

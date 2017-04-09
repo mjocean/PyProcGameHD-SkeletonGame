@@ -57,6 +57,8 @@ class T2Game(SkeletonGame):
                         self.lamps.target4,
                         self.lamps.target5]
 
+        self.define_bonuses('config/bonus_defs.yaml')
+
         # call reset (to reset the machine/modes/etc)
         self.reset()
 

@@ -61,6 +61,7 @@ class BaseGameMode(procgame.game.AdvancedMode):
         player.setState('leftTargets', [False, False, False, False, False])
         player.setState('kickbackEnabled', False)
         
+        
         """
         Notice that progress is stored in the player object, so check with:
             self.game.getPlayerState(key)
@@ -279,12 +280,14 @@ class BaseGameMode(procgame.game.AdvancedMode):
     def sw_standupMidL_active(self, sw): 
         self.game.setPlayerState('standupSwitchL',True)
         self.game.lamps.standupMidL.enable()
+        self.game.bonus("loop")
         self.checkAllSwitches()
         return procgame.game.SwitchContinue 
         
     def sw_standupMidC_active(self, sw):
         self.game.setPlayerState('standupSwitchC',True)
         self.game.lamps.standupMidC.enable()
+        self.game.bonus("reverb")
         self.checkAllSwitches()
         return procgame.game.SwitchContinue
         
@@ -310,6 +313,7 @@ class BaseGameMode(procgame.game.AdvancedMode):
                 self.game.setPlayerState('standupSwitchC', False)
                 self.game.setPlayerState('standupSwitchR', False)
         else:
+                self.game.score(10)
                 self.game.sound.play('target')
 
     """ An alternate way of handling a bank of related switches
