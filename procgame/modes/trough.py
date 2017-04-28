@@ -16,7 +16,7 @@ class Trough(Mode):
         Changes beyond the standard PyProcGame Trough:
             - supports autoplunge (see :meth:launch_and_autoplunge_balls()) if 'plunge_coilname' is provided to init()
             - tries to ensure a ball has successfully escaped the shooter lane before plunging another (see 'shooter_lane_inactivity_time')
-        
+
         Notes: launch_callback is set either by reaching into the trough object and setting it,
             OR by passing a callback as a parameter to :meth:launch_balls().  Note the only
             way to _clear_ that callback is by reaching into the trouch object and setting it to None.
@@ -36,13 +36,13 @@ class Trough(Mode):
         'eject_coilname': Name of coil used to put a ball into the shooter lane.
         'early_save_switchnames': List of switches that will initiate a ball save before the draining ball reaches the trough (ie. Outlanes).
         'shooter_lane_switchname': Name of the switch in the shooter lane.  This is checked before a new ball is ejected.
-        'drain_callback': Optional - Name of method to be called when a ball drains (and isn't saved).  
+        'drain_callback': Optional - Name of method to be called when a ball drains (and isn't saved).
         'shooter_lane_inactivity_time':Optiona: - The amount of time the shooter lane should turn inactive for
             to imply a ball has been successfully launched and is away (i.e., failed plunge takes less than this time)
         'plunge_coilname': Optional - Name of a coil to be fired to autoplunge a ball if launch_and_autoplunge_balls() is called.
     """
     def __init__(self, game, position_switchnames, eject_switchname, eject_coilname, \
-                     early_save_switchnames, shooter_lane_switchname, drain_callback=None,  
+                     early_save_switchnames, shooter_lane_switchname, drain_callback=None,
                      shooter_lane_inactivity_time=2.0, plunge_coilname=None, autoplunge_settle_time=0.3, \
                      trough_settle_time=0.5):
         super(Trough, self).__init__(game, 90)
@@ -61,8 +61,8 @@ class Trough(Mode):
         # if there is an outhole, add an auto-kickover
         outhole_sw_name = None
         if('outhole' in self.game.switches):
-            outhole_sw_name = 'outhole'            
-        else: 
+            outhole_sw_name = 'outhole'
+        else:
             sa = self.game.switches.items_tagged('outhole')
             if(type(sa) is list and len(sa)==0):
                 self.logger.info("No outhole switch found (name or tag).  If an outhole trough setup is preset, you should adjust names/tag in the machine yaml.")
@@ -115,7 +115,11 @@ class Trough(Mode):
         if(self.plunge_coilname is not None):
             self.add_switch_handler(name=shooter_lane_switchname, event_type='active', \
                     delay=autoplunge_settle_time, handler=self.ball_in_shooterlane_for_autoplunge)
-    
+
+        for sw in self.game.switches.items_tagged('troughJam'):
+            #This switch handler will trigger every time the jam opto is active for 2 seconds
+            self.add_switch_handler(name=sw.name, event_type='active', delay=2, handler=self.jamOptoHandler)
+
         # Reset variables
         self.num_balls_in_play = 0
         self.num_balls_locked = 0
@@ -146,11 +150,14 @@ class Trough(Mode):
             switch named outhole (or tag:outhole) and a coil named (or tagged) outhole.  Since the trough
             logic is based on the trough switches themselves, all this switch needs to do is move a ball
             into the trough for proper handling.  Since modern machines may not have an outhole trough setup,
-            it is not an error to not have an outhole switch/coil pair. 
+            it is not an error to not have an outhole switch/coil pair.
         """
         if(self.outhole_coil is not None):
             self.outhole_coil.pulse()
         return SwitchContinue
+
+    def jamOptoHandler(self, sw):
+        self.game.coils[self.eject_coilname].pulse(self.game.coils[self.eject_coilname].default_pulse_time - 5)
 
     def debug(self):
         self.logger.debug("num balls: %d ; balls in play: %d, balls locked: %d" % (self.num_balls(), self.num_balls_in_play, self.num_balls_locked))
@@ -181,7 +188,7 @@ class Trough(Mode):
 
     def check_switches(self):
         if self.num_balls_in_play > 0:
-            # Base future calculations on how many balls the machine 
+            # Base future calculations on how many balls the machine
             # thinks are currently installed.
             num_installed_balls = self.game.num_balls_total
             curr_trough_count = self.num_balls()
@@ -191,12 +198,12 @@ class Trough(Mode):
                     num_balls_to_save = self.num_balls_to_save()
                 else:
                     num_balls_to_save = 0
-                
-                # Calculate how many balls shouldn't be in the 
+
+                # Calculate how many balls shouldn't be in the
                 # trough assuming one just drained
                 num_balls_out = self.num_balls_locked + \
                     (num_balls_to_save - 1)
-                # Translate that to how many balls should be in 
+                # Translate that to how many balls should be in
                 # the trough if one is being saved.
                 expected_trough_count = num_installed_balls - \
                           num_balls_out
@@ -206,13 +213,13 @@ class Trough(Mode):
                     self.launch_balls(1, self.ball_save_callback, \
                               stealth=True)
                 else:
-                    # If there are too few balls in the trough.  
-                    # Ignore this one in an attempt to correct 
+                    # If there are too few balls in the trough.
+                    # Ignore this one in an attempt to correct
                     # the tracking.
                     self.logger.warning("expected to have more balls than current; not launching [curr trough count=%d - pending=%d] < [expected_trough_count=%d] --retry in 1s" % (curr_trough_count, self.num_balls_to_launch, expected_trough_count))
                     return 'ignore'
             else:
-                # Calculate how many balls should be in the trough 
+                # Calculate how many balls should be in the trough
                 # for various conditions.
                 num_trough_balls_if_ball_ending = \
                     num_installed_balls - self.num_balls_locked
@@ -223,7 +230,7 @@ class Trough(Mode):
                     (self.num_balls_in_play - 1)
 
 
-                # The ball should end if all of the balls 
+                # The ball should end if all of the balls
                 # are in the trough.
 
                 if curr_trough_count == num_installed_balls or \
@@ -232,7 +239,7 @@ class Trough(Mode):
                     if self.drain_callback:
                         self.drain_callback()
                 # Multiball is ending if all but 1 ball are in the trough.
-                # Shouldn't need this, but it fixes situations where 
+                # Shouldn't need this, but it fixes situations where
                 # num_balls_in_play tracking
                 # fails, and those situations are still occuring.
                 elif curr_trough_count == \
@@ -240,8 +247,8 @@ class Trough(Mode):
                     self.num_balls_in_play = 1
                     if self.drain_callback:
                         self.drain_callback()
-                # Otherwise, another ball from multiball is draining 
-                # if the trough gets one more than it would have if 
+                # Otherwise, another ball from multiball is draining
+                # if the trough gets one more than it would have if
                 # all num_balls_in_play are not in the trough.
                 elif curr_trough_count ==  \
                      num_trough_balls_if_multiball_drain:
@@ -275,8 +282,8 @@ class Trough(Mode):
         if(self.plunge_coilname is None):
             raise ValueError, "trough cannot autoplunge when no autoplunge coil is defined!"
 
-        if(self.launch_in_progress and self.num_to_autoplunge < 1): 
-            # this would only happen if the game was currently trying to launch a non-autoplunge 
+        if(self.launch_in_progress and self.num_to_autoplunge < 1):
+            # this would only happen if the game was currently trying to launch a non-autoplunge
             # ball before this autoplunge request -- could happen? (probably programmer errror).
             # Anyway, we don't want to autoplunge a ball that was already going to launched some
             # other way, so we try again in a bit to see if the other balls are done
@@ -287,7 +294,7 @@ class Trough(Mode):
         self.num_to_autoplunge += num
 
         # now launch a ball into the lane
-        self.launch_balls(num) 
+        self.launch_balls(num)
 
 
     # Either initiate a new launch or add another ball to the count of balls
@@ -296,8 +303,8 @@ class Trough(Mode):
     def launch_balls(self, num, callback=None, stealth=False):
         """Launches balls into play.
 
-            'num': Number of balls to be launched.  
-            If ball launches are still pending from a previous request, 
+            'num': Number of balls to be launched.
+            If ball launches are still pending from a previous request,
             this number will be added to the previously requested number.
 
             'callback': If specified, the callback will be called once
@@ -305,7 +312,7 @@ class Trough(Mode):
 
             'stealth': Set to true if the balls being launched should NOT
             be added to the number of balls in play.  For instance, if
-            a ball is being locked on the playfield, and a new ball is 
+            a ball is being locked on the playfield, and a new ball is
             being launched to keep only 1 active ball in play,
             stealth should be used.
         """
@@ -316,7 +323,7 @@ class Trough(Mode):
             self.num_to_autoplunge += num
         if not self.launch_in_progress:
             self.launch_in_progress = True
-            
+
             if callback: # set the launch callback if a new one has been specified
               self.launch_callback = callback
 
@@ -324,15 +331,15 @@ class Trough(Mode):
 
     # This is the part of the ball launch code that repeats for multiple launches.
     def common_launch_code(self):
-        # Only kick out another ball if the last ball is gone from the 
-        # shooter lane. 
+        # Only kick out another ball if the last ball is gone from the
+        # shooter lane.
         # NOTE: a momentary check of the shooter lane may be insufficient
         #   probably best to adjust this to make sure the ball is really "away"
         if self.game.switches[self.shooter_lane_switchname].is_active() or \
            self.game.switches[self.shooter_lane_switchname].time_since_change() < self.inactive_shooter_time:
             # Wait 1 second before trying again.
             self.logger.info("Cannot feed ball as shooter lane isn't ready [pending=%d (stealth=%d)] --retry in 1s" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
-            # stalling for shooter lane clearance            
+            # stalling for shooter lane clearance
             self.delay(name='launch', event_type=None, delay=1.0, \
                    handler=self.common_launch_code)
         elif(self.num_balls()<1):
@@ -340,7 +347,10 @@ class Trough(Mode):
             # we don't do anything else, because the trough handler will auto-call this when a ball drains
         else:
             # feed the shooter lane (via trough coil)
-            self.game.coils[self.eject_coilname].pulse() 
+            self.game.coils[self.eject_coilname].pulse()
+
+            #start ball eject error watch
+            self.delay(name='ejectErrorWatch', delay=4, handler=self.ball_eject_error)
 
             self.logger.debug("Feeding ball to shooter lane. [pending=%d|stealth=%d]" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
 
@@ -351,7 +361,7 @@ class Trough(Mode):
 
 
     def num_balls_out(self):
-        """ returns the number of balls that are currently not in the trough.   
+        """ returns the number of balls that are currently not in the trough.
             NOT including balls pending launch, but does include locked balls """
         curr_trough_count = self.num_balls()
         return (self.game.num_balls_total - curr_trough_count)
@@ -365,14 +375,17 @@ class Trough(Mode):
 
         self.logger.info("num_balls_requested: trough has %d of %d, of which %d are in physical locks [an additional %d balls are pending launch]" % (curr_trough_count, num_installed_balls, self.num_balls_locked, self.num_balls_to_launch))
 
-        return (balls_not_in_trough - self.num_balls_locked) + self.num_balls_to_launch 
+        return (balls_not_in_trough - self.num_balls_locked) + self.num_balls_to_launch
 
     def ball_in_shooterlane(self, sw):
-        # self.logger.info("Ball in shooter lane [launch in progress=%s]" % self.launch_in_progress)       
+        # self.logger.info("Ball in shooter lane [launch in progress=%s]" % self.launch_in_progress)
+        #Cancel ball eject error watch
+        self.cancel_delayed('ejectErrorWatch')
+
         if(self.launch_in_progress):
             self.num_balls_to_launch -= 1
 
-            # Only increment num_balls_in_play if there are no more 
+            # Only increment num_balls_in_play if there are no more
             # stealth launches to complete.
             if self.num_balls_to_stealth_launch > 0:
                 self.num_balls_to_stealth_launch -= 1
@@ -381,14 +394,14 @@ class Trough(Mode):
 
             self.logger.debug("Fed ball to shooter lane. [pending=%d|stealth=%d]" % (self.num_balls_to_launch, self.num_balls_to_stealth_launch))
 
-            # If more balls need to be launched, delay self.inactive_shooter_time second 
+            # If more balls need to be launched, delay self.inactive_shooter_time second
             if self.num_balls_to_launch > 0:
                 self.delay(name='launch', event_type=None, delay=self.inactive_shooter_time, \
                    handler=self.common_launch_code)
             else:
                 self.launch_in_progress = False
 
-                # fire this because we have successfully launched ALL the balls 
+                # fire this because we have successfully launched ALL the balls
                 if self.launched_callback:
                     self.launched_callback() # call the callback for this successful launch
 
@@ -399,3 +412,7 @@ class Trough(Mode):
             self.game.coils[self.plunge_coilname].pulse()
         return SwitchContinue
 
+    def ball_eject_error(self):
+        if self.launch_in_progress == True:
+            self.delay(name='ejectErrorWatch', delay=4, handler=self.ball_eject_error)
+            self.game.coils[self.eject_coilname].pulse()
