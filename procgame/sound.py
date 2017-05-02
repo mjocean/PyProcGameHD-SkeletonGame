@@ -1,8 +1,8 @@
-#    _____ ____  __  ___   ______     __________  _   ____________  ____  __    __    __________ 
+#    _____ ____  __  ___   ______     __________  _   ____________  ____  __    __    __________
 #   / ___// __ \/ / / / | / / __ \   / ____/ __ \/ | / /_  __/ __ \/ __ \/ /   / /   / ____/ __ \
 #   \__ \/ / / / / / /  |/ / / / /  / /   / / / /  |/ / / / / /_/ / / / / /   / /   / __/ / /_/ /
-#  ___/ / /_/ / /_/ / /|  / /_/ /  / /___/ /_/ / /|  / / / / _, _/ /_/ / /___/ /___/ /___/ _, _/ 
-# /____/\____/\____/_/ |_/_____/   \____/\____/_/ |_/ /_/ /_/ |_|\____/_____/_____/_____/_/ |_|  
+#  ___/ / /_/ / /_/ / /|  / /_/ /  / /___/ /_/ / /|  / / / / _, _/ /_/ / /___/ /___/ /___/ _, _/
+# /____/\____/\____/_/ |_/_____/   \____/\____/_/ |_/ /_/ /_/ |_|\____/_____/_____/_____/_/ |_|
 #
 # authors: Josh Kugler, Michael Ocean
 #
@@ -27,26 +27,26 @@ CH_MUSIC = 0      # standard streaming music audio - uses pygame music object (i
 # SOUND EFFECT CHANNEL
 CH_SFX = -1    # this channel means "any free sound channel" - contrast with VOICE
 
-# VOICE EFFECT CHANNEL 
+# VOICE EFFECT CHANNEL
 CH_VOICE = 1    # voice effects are queued and a special channel reserved for them
 
 # NON-STREAMING MUSIC CHANNELS
 CH_MUSIC_1 = 2    # alternate music track 1 - uses pygame sound object (full load)
-CH_MUSIC_2 = 3    # as above; note: these are useful if you want to pause music, start 
+CH_MUSIC_2 = 3    # as above; note: these are useful if you want to pause music, start
                   # another song playing (other channel) and later resume that first track
                     # NOTE: using these channels will cause your music to be treated like _sounds_
                     # and that means they will be fully loaded into memory instead of streamed
                     # from the disk.  Unlike sounds pre-loaded with the assetManager, so unless they
-                    # are registered as non-streaming, they will be loaded at playback time, 
+                    # are registered as non-streaming, they will be loaded at playback time,
                     # which will introduce a delay
 
 # this refers to all music channels which provides a default for
 CH_ALL_MUSIC_CHANNELS = -2 # pause_music, unpause_music, stop_music, fadeout_music
 
-# IF you add your own reserved channels, use numbers > 3 and < 8 
+# IF you add your own reserved channels, use numbers > 3 and < 8
 # (num channels == 8 unless you change mixer.set_num_channels(8))
-# example : CH_SPINNER = 4 # doing this would ensure that your spinner doesn't 
-#  eat all of your sound channels you would also need to add a 
+# example : CH_SPINNER = 4 # doing this would ensure that your spinner doesn't
+#  eat all of your sound channels you would also need to add a
 #  mixer.set_reserved(CH_SPINNER) in the __init__() below, and be sure that
 #  whenever you play() the spinner effect, you do so on this CH_SPINNER channel
 
@@ -55,7 +55,7 @@ CH_ALL_MUSIC_CHANNELS = -2 # pause_music, unpause_music, stop_music, fadeout_mus
 PLAY_QUEUED = 2         # ADD TO QUEUED CHANNEL (CH_VOICE)
 PLAY_FORCE = 3          # STOP ANY SOUNDS PLAYING AND PLAY THIS
 PLAY_NOTBUSY= 4         # only play or queue if nothing is currently playing
-    
+
 DUCKED_MUSIC_PERCENT = 0.5    # drops the music volume to this percentage when ducking for voice lines
 # it not enabled by default for asset_manager loadeds sounds
 # (because the way the pygame queue works, it has to be enabled for all voice calls or no voice calls).
@@ -64,9 +64,9 @@ DUCKED_MUSIC_PERCENT = 0.5    # drops the music volume to this percentage when d
 
 class SoundController(mode.Mode):  #made this a mode since I want to use delay feature for audio queuing
     """Wrapper for pygame sound."""
-    
+
     enabled = True
-    
+
 
     def __init__(self,game,priority=10):
         super(SoundController, self).__init__(game,priority)
@@ -75,15 +75,15 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=256)  #256 prev
             mixer.init()
             mixer.set_num_channels(8)
-            
+
             self.queue=deque() #for queing up quotes
-            
+
             mixer.set_reserved(CH_MUSIC_1)
             mixer.set_reserved(CH_MUSIC_2)
             mixer.set_reserved(CH_VOICE)
 
-            #mixer.Channel(CH_VOICE).set_endevent(pygame.locals.USEREVENT)  -- pygame event queue really needs display and cause a ton of issues, creating own 
-                            
+            #mixer.Channel(CH_VOICE).set_endevent(pygame.locals.USEREVENT)  -- pygame event queue really needs display and cause a ton of issues, creating own
+
         except Exception, e:
             self.logger.error("pygame mixer init failed; sound will be disabled: "+str(e))
             self.enabled = False
@@ -94,6 +94,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         self.music_ducking_effect = 1.0 # no adjustment
         self.current_music_track_volume = 1.0
         self.set_volume(0.5)  # service mode should set the volume when it loads the last settings
+        self.volume_list = [0.00, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
     def play_music(self, key, loops=0, start_time=0.0, channel=CH_MUSIC):
         """Start playing music at the given *key*."""
@@ -104,7 +105,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
                 # self.logger.info("Randomize Music")
                 random.shuffle(self.music[key])
 
-            if channel > 0 :                
+            if channel > 0 :
                 # playback music via regular "sound" mechanism
                 if(start_time > 0):
                     raise ValueError, "play_music does not support start_time>0 for non standard channels"
@@ -112,7 +113,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
                 vol = self.music[key][0]["volume"]
                 sound_file = self.music[key][0]["file"]
                 mixer.Channel(channel).set_volume(self.volume * self.music_ducking_effect)
-                
+
                 if(self.music[key][0]["sound_obj"] is not None):
                     new_sound = self.music[key][0]["sound_obj"]
                 else:
@@ -123,7 +124,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
                 self.logger.info("Music loaded, now telling to play")
                 mixer.Channel(channel).play(new_sound, loops)
-            else: 
+            else:
                 # playback on standard pyGame music object
                 # get the volume
                 self.current_music_track_volume = self.load_music(key)
@@ -137,12 +138,12 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
                 mixer.music.play(loops,start_time)
                 # self.logger.info("Play command issue, now unpause?")
                 mixer.music.unpause()
-                # self.logger.info("play music request complete")            
-            
-        
+                # self.logger.info("play music request complete")
+
+
         else:
             self.logger.info("KEY NOT FOUND" + str(key))
-                
+
 
     def stop_music(self, channel=CH_ALL_MUSIC_CHANNELS):
         """Stop the currently-playing music."""
@@ -161,7 +162,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
     def fadeout_music(self, time_ms = 450, channel=CH_ALL_MUSIC_CHANNELS):
         """ """
         if not self.enabled: return
-        
+
         if(channel==CH_ALL_MUSIC_CHANNELS):
             mixer.music.fadeout(time_ms)
             mixer.Channel(CH_MUSIC_1).fadeout(time_ms)
@@ -182,7 +183,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             vol = self.music[key][0]["volume"]
             return vol
         return (self.music[key][0]["volume"])
-        
+
     def register_sound(self, key, sound_file, channel=CH_SFX, volume=.4, is_voice=False):
         """ """
         self.logger.info("Registering sound - key: %s, file: %s", key, sound_file)
@@ -195,7 +196,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
             new_sound = mixer.Sound(str(sound_file))
             new_sound.set_volume(volume)
-            
+
             if key in self.sounds:
                 if not new_sound in self.sounds[key]['sound_list']:
                     self.sounds[key]['sound_list'].append(new_sound)
@@ -243,7 +244,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         #print "sound finished, the queue currently has :" + str(len(self.queue))
 
         # see if a voice call is already queued in PyGame
-        queued_sound = mixer.Channel(CH_VOICE).get_queue() 
+        queued_sound = mixer.Channel(CH_VOICE).get_queue()
         self.logger.info("cvf: checking if voice playback is complete (pyg queue: %s)" % queued_sound)
 
         if (queued_sound):
@@ -261,12 +262,12 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         if len(self.queue) > 0:
             request = self.queue.popleft()
             key = request['key']
-            
+
             if len(self.sounds[key]['sound_list']) > 0:
                 random.shuffle(self.sounds[key]['sound_list'])
-                
+
             # 'moving between queues sound: ' + key
-            
+
             mixer.Channel(CH_VOICE).queue(self.sounds[key]['sound_list'][0])
             length = self.sounds[key]['sound_list'][0].get_length()
             #length = ceil(length * 100) / 100.0
@@ -274,7 +275,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             #print 'set up a sound finished handler with a delay of :' + str(length)
             self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
             self.logger.info("cvf: Feeding an element from self.q into pygame audio queue (len(q)=%d)- check again in %f" % (len(self.queue),length))
-            return 
+            return
 
         # otherwise?  Check if playback is just done!
         if(mixer.Channel(CH_VOICE).get_busy()):
@@ -289,9 +290,9 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             loops: number of _additional_ times it will play.  so 1 actually plays twice.  -1 is endless
             max_time: playback will stop after max_time millis
             fade_ms: playback fades in (from 0 volume) over fade_ms millis
-            channel: the channel to play back on.  Specifying CH_VOICE will automatically call play_voice and 
+            channel: the channel to play back on.  Specifying CH_VOICE will automatically call play_voice and
                 if other voice samples are currently playing, playback will be queued.
-                If channel==None, CH_SFX is assumed _unless_ the sound file's  
+                If channel==None, CH_SFX is assumed _unless_ the sound file's
                     .is_voice==True (was registered as a voice)
                 To force a voice to play as a sound effect, pass CH_SFX as the channel arg
         """
@@ -351,7 +352,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             if mixer.Channel(CH_VOICE).get_busy() or (mixer.Channel(CH_VOICE).get_queue() is not None):
                 self.logger.debug("play_voice(key=%s, action=%s) - Voice module already busy - returning" % (key,action))
                 return 0
-        
+
         if key in self.sounds:
             if action==PLAY_FORCE:  #we need to clear our queue and stop anything playing
                 # dump our queue
@@ -361,7 +362,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
                 mixer.Channel(CH_VOICE).stop()  # incase there was something in the pygame queue?
                 # cancel sound completed callback, since it's no longer relevant
                 self.cancel_delayed(name="voice_finished")
-                
+
             # Check if there is a queue
             if (mixer.Channel(CH_VOICE).get_queue() or len(self.queue)>0): # PLAY_FORCE will have cleared the queue:
                 # the delayed voice_finished for the currently playing track will
@@ -386,9 +387,9 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
                         self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
                 elif action == PLAY_FORCE or action == PLAY_NOTBUSY:
                     # use play instead of queue since we want it to play now
-                    # mixer.Channel(CH_VOICE).stop() # uncomment to use stop, if your driver won't force playback 
+                    # mixer.Channel(CH_VOICE).stop() # uncomment to use stop, if your driver won't force playback
                     self.logger.debug("play_voice(key=%s, action=%s) - playing RIGHT NOW (next queue check in %f)" % (key,action,length))
-                    mixer.Channel(CH_VOICE).play(self.sounds[key]['sound_list'][0]) 
+                    mixer.Channel(CH_VOICE).play(self.sounds[key]['sound_list'][0])
                     self.delay(delay=length, handler=self.check_voice_finished, name="voice_finished")
 
             if(self.ducking_enabled):
@@ -398,7 +399,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         else:
             self.logger.error("Voice sound with key '%s' not found" % key)
             return 0
-        
+
     def voice_queued(self, key):
         #returns true if this sound is curently in our queue, but not if it is playing
         #or if it is queued in the channel to play, which we need to add to this somehow
@@ -406,7 +407,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
             return True
         else:
             return False
-        
+
     def empty_queue(self, tag='all'):
         if tag == 'all':
             self.queue.clear()
@@ -420,7 +421,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         """ """
         if not self.enabled: return
         if key in self.sounds:
-            self.sounds[key]['sound_list'][0].stop()            
+            self.sounds[key]['sound_list'][0].stop()
             # TODO: HOW DOES THIS WORK WITH VOICE?
 
     def pause_music(self, channel=CH_ALL_MUSIC_CHANNELS):
@@ -476,13 +477,13 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
     def enable_music_ducking(self, enable):
         """ set this to true to turn ducking on, which drops the volume of
-            music tracks when voices are played.  Disable to disable 
+            music tracks when voices are played.  Disable to disable
         """
-        # if we are turning it off, make sure that we 
+        # if we are turning it off, make sure that we
         # stop ducking in case we were already doing so
         if(self.ducking_enabled and enable==False):
             self.__music_ducking(False)
-            
+
         self.ducking_enabled = enable
 
     def __music_ducking(self, enable):
@@ -502,16 +503,26 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
     def volume_up(self):
         """ """
         if not self.enabled: return
-        if (self.volume < 0.9):
-            self.set_volume(self.volume + 0.1)
-        return int(self.volume*10)
+        try:
+            volume_int = self.volume_list.index(self.volume)
+        except:
+            volume_int = 1
+        if volume_int < len(self.volume_list) - 1:
+            volume_int += 1
+            self.set_volume(self.volume_list[volume_int])
+        return int(volume_int)
 
     def volume_down(self):
         """ """
         if not self.enabled: return
-        if (self.volume > 0.1):
-            self.set_volume(self.volume - 0.1)
-        return int(self.volume*10)
+        try:
+            volume_int = self.volume_list.index(self.volume)
+        except:
+            volume_int = 1
+        if volume_int > 0:
+            volume_int -= 1
+            self.set_volume(self.volume_list[volume_int])
+        return int(volume_int)
 
     def set_volume(self, new_volume):
         """ """
@@ -522,7 +533,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
         # adjust current Music mixer and Music channel volume level based on current track at new volume
         mixer.music.set_volume (new_volume * self.music_ducking_effect * self.current_music_track_volume)
-        mixer.Channel(CH_MUSIC_1).set_volume (new_volume * self.music_ducking_effect) # for these, the sound file has 
+        mixer.Channel(CH_MUSIC_1).set_volume (new_volume * self.music_ducking_effect) # for these, the sound file has
         mixer.Channel(CH_MUSIC_2).set_volume (new_volume * self.music_ducking_effect) # self.current_music_track_volume
 
     def beep(self):
@@ -532,13 +543,13 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
 def testcase():
     """ run this testcase from the SampleGame folder (w/ sound asssets!), via:
-        $ python ../procgame/sound.py 
+        $ python ../procgame/sound.py
     """
     import procgame
 
-    curr_file_path = os.path.abspath("./") 
+    curr_file_path = os.path.abspath("./")
     print curr_file_path
-    
+
     dots_w = 224
     dots_h = 112
 
@@ -551,26 +562,26 @@ def testcase():
         #self.game.sound.play_music('base-music-bgm', channel=CH_MUSIC_2)
         self.game.sound.play_music('base-music-bgm', channel=CH_MUSIC_2)
 
-        # self.game.sound.play_voice('target_bank') 
-        # self.game.sound.play_voice('target_bank') 
-        # self.game.sound.play_voice('target_bank') 
-        # self.game.sound.play_voice('target_bank') 
+        # self.game.sound.play_voice('target_bank')
+        # self.game.sound.play_voice('target_bank')
+        # self.game.sound.play_voice('target_bank')
+        # self.game.sound.play_voice('target_bank')
         self.game.sound.play('ss_missV')
 
     def phase2(self):
         #self.game.sound.stop_music(channel=CH_MUSIC_2)
         # self.game.sound.pause_music()
-        # self.game.sound.play_voice('target_bank') 
-        # self.game.sound.play_voice('target_bank') 
+        # self.game.sound.play_voice('target_bank')
+        # self.game.sound.play_voice('target_bank')
         self.game.sound.play_voice('ss_successV')
         self.game.sound.play('ss_successV')
         self.game.sound.play('ss_missV')
-        # self.game.sound.play_voice('target_bank') 
+        # self.game.sound.play_voice('target_bank')
 
     def phase3(self):
         # self.game.sound.stop_music()
         self.game.sound.fadeout_music()
-    
+
     try:
         g.sound.enable_music_ducking(False)
         g.sound.delay(delay=1.0, handler=phase1, param=g.sound)

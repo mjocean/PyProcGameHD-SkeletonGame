@@ -19,7 +19,7 @@ Machine (Coils):
     default: 32
 Sound:
   'Initial volume':
-    options: [0,10]
+    options: [0,20]
     increments: 1
     default: 5
   'Music volume offset':
