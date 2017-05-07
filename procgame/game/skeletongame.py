@@ -370,7 +370,7 @@ class SkeletonGame(BasicGame):
             # self.logger.info("suppressing second call to cleanup")
 
     def define_bonuses(self, file_name):
-        """ given a yaml file that defines bonus records will init the list of known 
+        """ given a yaml file that defines bonus records will init the list of known
             bonuses and their respective values """
         BonusRecord.parse_from_file(file_name)
 
@@ -970,7 +970,7 @@ class SkeletonGame(BasicGame):
         """ overides game.py version to prevent ball/game time
             increasing (we count it here, to get more accurate data)
             note that super is intentionally not called.
-        
+
             this method should only be called following appropriate
             event notification --read: don't call this from your game code
             unless you really know what you are doing
@@ -989,7 +989,7 @@ class SkeletonGame(BasicGame):
             self.end_game()
         else:
             self.start_ball() # Consider: Do we want to call this here, or should it be called by the game? (for bonus sequence)
- 
+
     def ball_ended(self):
         """ Subclassed by implementor to react to the ball being completely over
             automatically invoked by end_ball(). At this point the ball is over """
@@ -1093,9 +1093,9 @@ class SkeletonGame(BasicGame):
         # Also handle game stats.
         for i in range(0,len(self.players)):
             game_time = self.get_game_time(i)
-            self.game_data['Audits']['Games Played'] += 1
             self.game_data['Audits']['Avg Game Time'] = self.calc_time_average_string( self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Game Time'], game_time)
             self.game_data['Audits']['Avg Score'] = self.calc_number_average(self.game_data['Audits']['Games Played'], self.game_data['Audits']['Avg Score'], self.players[i].score)
+            self.game_data['Audits']['Games Played'] += 1
 
             self.logger.info("Skel: 'player %d score %d" % (i, self.players[i].score))
 
@@ -1251,7 +1251,7 @@ class AdvPlayer(Player):
             assuming the bonus has been defined, the point_value per each
             is considered.  If the bonus has not previously defined, this
             also defines the value (which should be awarded at end_of_ball)
-        """        
+        """
         self.bonuses.award(name,quantity, point_value)
 
     def getBonusList(self):
@@ -1290,7 +1290,7 @@ class BonusRecord(object):
     def __init__(self):
         self.bonus_held = False
         self.earned_list = []
-        
+
     @classmethod
     def define_bonus(cls, name, point_value, max_per_ball=float('inf'), max_per_game=float('inf')):
         """ defines a point value for a specific named bonus """
@@ -1351,7 +1351,7 @@ class BonusRecord(object):
             bdefs = values["BonusDefs"]
             for bonus_record_dict in bdefs:
                 n = bonus_record_dict.keys()[0]
-                bonus_record = value_for_key(bonus_record_dict,n) 
+                bonus_record = value_for_key(bonus_record_dict,n)
                 p = value_for_key(bonus_record,'points')
                 mpb = value_for_key(bonus_record,'max_per_ball', float('inf'))
                 mpg = value_for_key(bonus_record,'max_per_game', float('inf'))
