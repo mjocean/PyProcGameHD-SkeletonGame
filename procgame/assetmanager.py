@@ -7,6 +7,7 @@ import os
 import sys
 import yaml
 import logging
+import timeit
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 from procgame.yaml_helper import value_for_key
 
@@ -175,7 +176,7 @@ class AssetManager(object):
         pygame.display.flip()
 
 
-    def loadIntoCache(self,key,frametime=2,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
+    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
         if(file==None):
             file=key + '.vga.dmd.zip'
         
@@ -197,7 +198,7 @@ class AssetManager(object):
                 self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
         if(streaming_load):
-            self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
+            self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file, transparency_op=composite_op)
         else:
             self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque) 
 
@@ -292,6 +293,7 @@ class AssetManager(object):
                                         line_color=lc )
                 self.fontstyles[k] = font_style
 
+            started = timeit.time.time()
             for anim in anims:
                 k  = value_for_key(anim,'key')
                 ft = value_for_key(anim,'frame_time',2)
@@ -304,8 +306,10 @@ class AssetManager(object):
                 y  = value_for_key(anim, 'y_loc', 0)
                 streaming_load  = value_for_key(anim, 'streamingMovie', False)
                 current = 'Animation: [%s]: %s' % (k, f)
+                # started = timeit.time.time()
                 self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load)
-
+            time_taken = timeit.time.time() - started
+            self.logger.info("loading visual asset took %.3f seconds" % time_taken)
         except:
             self.logger.error("===ASSET MANAGER - ASSET FAILURE===")
             self.logger.error(current)

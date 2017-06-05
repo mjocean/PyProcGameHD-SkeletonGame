@@ -118,7 +118,7 @@ class Trough(Mode):
 
         for sw in self.game.switches.items_tagged('troughJam'):
             #This switch handler will trigger every time the jam opto is active for 2 seconds
-            self.add_switch_handler(name=sw.name, event_type='active', delay=2, handler=self.jamOptoHandler)
+            self.add_switch_handler(name=sw.name, event_type='active', delay=2, handler=self.jam_opto_handler)
 
         # Reset variables
         self.num_balls_in_play = 0
@@ -156,7 +156,7 @@ class Trough(Mode):
             self.outhole_coil.pulse()
         return SwitchContinue
 
-    def jamOptoHandler(self, sw):
+    def jam_opto_handler(self, sw):
         self.game.coils[self.eject_coilname].pulse(self.game.coils[self.eject_coilname].default_pulse_time - 5)
 
     def debug(self):
@@ -187,7 +187,7 @@ class Trough(Mode):
         self.delay(name='check_switches', event_type=None, delay=self.settle_time, handler=self.check_switches)
 
     def check_switches(self):
-        if self.num_balls_in_play > 0:
+        if self.num_balls_in_play > 0 and not self.launch_in_progress:
             # Base future calculations on how many balls the machine
             # thinks are currently installed.
             num_installed_balls = self.game.num_balls_total
@@ -232,12 +232,23 @@ class Trough(Mode):
 
                 # The ball should end if all of the balls
                 # are in the trough.
-
                 if curr_trough_count == num_installed_balls or \
                    curr_trough_count == num_trough_balls_if_ball_ending:
-                    self.num_balls_in_play = 0
+                    self.num_balls_in_play -= 1
                     if self.drain_callback:
                         self.drain_callback()
+
+                    # it's possible that multiple balls have
+                    # drained since the last time we checked (due to
+                    # ball settiling delay); if so, the num balls in
+                    # play will not be zero yet (but we do want to 
+                    # fire the callback for every ball in the trough);
+                    # Use a delay to check the trough again in 2s
+                    # since the now settled balls won't raise a new
+                    # switch event.
+                    if(self.num_balls_in_play > 0):
+                        self.delay(delay=1, handler=self.check_switches)
+
                 # Multiball is ending if all but 1 ball are in the trough.
                 # Shouldn't need this, but it fixes situations where
                 # num_balls_in_play tracking
@@ -259,6 +270,14 @@ class Trough(Mode):
                     else:
                         self.num_balls_in_play -= 1
                     if self.drain_callback:
+                        self.drain_callback()
+                else:
+                    # a ball has drained _but_ this isn't the end of ball
+                    # or the last multiball.  by checking to make sure that
+                    # we expect additional balls are in play, we supress
+                    # messages from someone pulling balls out of the trough
+                    # or too many balls installed in the machine
+                    if(self.num_balls_in_play > 1):
                         self.drain_callback()
         else: # there are no balls in play...
             if(self.is_full() and self.game.game_start_pending):

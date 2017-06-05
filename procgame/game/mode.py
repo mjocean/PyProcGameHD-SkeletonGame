@@ -204,7 +204,14 @@ class Mode(object):
                 x.time += delay
                 return True
         return False
-    
+
+    def reset_delay_to(self,name,delay):
+        for x in self.__delayed:
+            if x.name == name:
+                x.time = time.time()+delay
+                return True
+        return False
+
     def is_delayed(self,name):
         for d in self.__delayed:
             if d.name == name:
@@ -418,10 +425,10 @@ class ModeQueue(object):
             if hasattr(mode, 'layer'):
                 layer = mode.layer
             if layer:
-                log_rows.append([str(mode.priority), type(mode).__name__, type(layer).__name__])
+                log_rows.append([str(mode.priority), type(mode).__name__, type(layer).__name__, "opaque=%s" % str(layer.opaque), "enabled=%s" % str(layer.enabled)])
             else:
                 log_rows.append([str(mode.priority), type(mode).__name__, '-'])
-        
+
         for line in tabularize(log_rows):
             self.logger.log(log_level, '  '+line)
 

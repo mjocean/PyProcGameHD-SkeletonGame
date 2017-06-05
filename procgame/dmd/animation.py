@@ -4,8 +4,12 @@ import yaml
 import sqlite3
 import bz2
 import StringIO
+# from cStringIO import StringIO
 import time
-from PIL import Image # change req'd on Debian/RPi2
+from PIL import Image 
+# simple work-around to support PIL or PILLOW
+if(not hasattr(Image.Image,"tobytes")):
+    Image.Image.tobytes = Image.Image.tostring
 import dmd 
 from dmd import Frame
 from sdl2_displaymanager import sdl2_DisplayManager
@@ -188,36 +192,39 @@ class Animation(object):
             logger.debug('Loaded "%s" from cache in %0.3fs', key_path, time.time()-t0)
         else:
             # Not in the cache, so we must load from disk:
-                
+            logger.info('Loading %s...', key_path) # Log for images...
             # Iterate over the provided paths:
             for path in paths:
                 if (os.path.isfile(path.rstrip('.zip'))):
                     #print("Using unzipped DMD for '" + path + "'")
                     path = path.rstrip('.zip')
-                with open(path, 'rb') as f:
-                    # Opening from disk.  It may be a DMD, or it may be another format.
-                    # We keep track of the DMD data representation so we can save it to
-                    # the cache.
-                    ext = path[-4:].lower()
-                    if ext =='.dmd':
-                        # Note: Right now we don't cache .dmd files.
+                # Opening from disk.  It may be a DMD, or it may be another format.
+                # We keep track of the DMD data representation so we can save it to
+                # the cache.
+                ext = path[-4:].lower()
+                if ext =='.dmd':
+                    # Note: Right now we don't cache .dmd files.
+                    with open(path, 'rb') as f:
                         self.populate_from_dmd_file(f, composite_op = composite_op)
-                    elif ext =='.zip':
-                        z = zipfile.ZipFile(path, "r")
-                        data = z.read(z.namelist()[0])    #Read in the first image data
-                        self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
-                    elif ext =='.mp4' or ext == '.avi':
-                        self.populate_from_mp4_file(path)
-                    else:
-                        logger.info('Loading %s...', path) # Log for images...
-                        global warned_cache_disabled
-                        if not animation_cache and not warned_cache_disabled and allow_cache:
-                            logger.warning('Loading image file with caching disabled; set dmd_cache_path in config to enable.')
-                            warned_cache_disabled = True
-                        
-                        # It is some other file format.  We will use PIL to open it
-                        # and then process it into a .dmd format.
-                        self.populate_from_image_file(path, f, composite_op = composite_op)
+                elif ext =='.zip':
+                    z = zipfile.ZipFile(path, "r")
+                    data = z.read(z.namelist()[0])    #Read in the first image data
+                    self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
+                elif ext =='.zng':
+                    self.populate_from_zng_file(path, composite_op = composite_op)
+                elif ext =='.mp4' or ext == '.avi':
+                    self.populate_from_mp4_file(path)
+                else:
+                    # logger.info('Loading %s...', path) # Log for images...
+                    global warned_cache_disabled
+                    if not animation_cache and not warned_cache_disabled and allow_cache:
+                        logger.warning('Loading image file with caching disabled; set dmd_cache_path in config to enable.')
+                        warned_cache_disabled = True
+                    
+                    # It is some other file format.  We will use PIL to open it
+                    # and then process it into a .dmd format.
+                    with open(path, 'rb') as f:
+                        self.populate_from_image_file_sdl2(path, f, composite_op = composite_op)
                     
             # Now use our normal save routine to get the DMD format data:
             # stringio = StringIO.StringIO()
@@ -289,6 +296,38 @@ class Animation(object):
         return frame
     convertImageToOldDMD = staticmethod(convertImageToOldDMD)
 
+    def populate_from_zng_file(self, zip_file, composite_op = None):
+        with open(zip_file, 'rb') as f:
+            fake_zip_file = StringIO.StringIO(f.read())
+            z = zipfile.ZipFile(fake_zip_file)
+            for n in z.namelist():
+                frame_data = z.read(n)
+                fake_file = StringIO.StringIO(frame_data)
+                # self.populate_from_image_file_sdl2(fake_file, None, None)
+                src = Image.open(fake_file)
+                (w, h) = src.size
+                (self.width, self.height) = (w, h)
+                if src.mode == "P":
+                    src.convert("RGB")
+                    src.mode = "RGB"
+                texture = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=src.tobytes(), width=w, height=h, mode=src.mode, composite_op = composite_op)
+
+                frame = Frame(w,h,texture)
+
+                self.frames.append(frame)
+
+            # data = z.read(z.namelist()[0])    #Read in the first image data
+            # self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
+
+
+
+    def populate_from_image_file_sdl2(self, path, f, composite_op = None):
+        # print("loading %s" % f)
+        tx = sdl2_DisplayManager.inst().load_texture(path, composite_op)
+        (self.width,self.height) = tx._size
+        frame = Frame(self.width,self.height,tx)
+        self.frames.append(frame)
+
     def populate_from_image_file(self, path, f, composite_op = None):
         if not Image:
             raise RuntimeError, 'Cannot open non-native image types without Python Imaging Library: %s' % (path)
@@ -309,18 +348,12 @@ class Animation(object):
             import animgif
             self.frames += animgif.gif_frames(src, composite_op = composite_op)
         else:
-            #frame = Animation.convertImage(src)
             (w,h) = src.size
 
             if src.mode == "P":
                 src.convert("RGB")
                 src.mode = "RGB"
-                
-            
-            # surf = HD_load_file(path)
-            surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=src.tostring(), width=w, height=h, mode=src.mode, composite_op = composite_op)
-
-            #print("ConvertImage made texture for this frame -- contents: " + str(surf))
+            surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=src.tobytes(), width=w, height=h, mode=src.mode, composite_op = composite_op)
 
             frame = Frame(w,h,surf)
 

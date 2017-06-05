@@ -526,8 +526,36 @@ class sdl2_DisplayManager(object):
         s = sdl2.ext.SoftwareSprite(tsurface, False)
         return s
 
-    def load_texture(self, fname):
+    def load_texture(self, fname, composite_op=None):
         tsurface = sdl2.ext.image.load_image(fname)
+        if not tsurface:
+            raise sdl2.ext.SDLError()
+
+        # support for blacksrc
+        if(composite_op is not None and composite_op!="None"):
+            if(composite_op == "blacksrc"):
+                trans_color = (0,0,0)
+            elif(composite_op == "greensrc"):
+                trans_color = (0,255,0)
+            elif(composite_op == "magentasrc"):
+                trans_color = (255,0,255)
+            else:
+                raise ValueError, "Composite_op '%s' not recognized/supported." % composite_op
+
+            trans_color = convert_to_color(trans_color)
+            sf = tsurface
+            fmt = sf.format.contents
+
+            # how do I figure out the mode ..?
+            if(sf.format.contents.BytesPerPixel==4):
+                trans_color = sdl2.pixels.SDL_MapRGBA(fmt, trans_color.r, trans_color.g, trans_color.b, trans_color.a)
+            else:
+                trans_color = sdl2.pixels.SDL_MapRGB(fmt, trans_color.r, trans_color.g, trans_color.b)
+
+            ret = sdl2.surface.SDL_SetColorKey( tsurface, sdl2.SDL_TRUE, trans_color );
+            if ret == -1:
+                raise sdl2.ext.SDLError()
+        # end support for blacksrc
 
         texture = sdl2.render.SDL_CreateTextureFromSurface(self.texture_renderer.renderer,
                                                       tsurface)
@@ -538,8 +566,6 @@ class sdl2_DisplayManager(object):
         sdl2.surface.SDL_FreeSurface(tsurface)
 
         return t
-
-
 
     def make_texture_from_imagebits(self, width, height, bits, mode="RGB", composite_op=None):
         """Creates a Sprite from a Python imaging Image's bits."""
@@ -577,10 +603,10 @@ class sdl2_DisplayManager(object):
         else:
             raise ValueError, "Format not supported"
 
-        imgsurface = sdl2.surface.SDL_CreateRGBSurfaceFrom(bits, width, height,
+        tsurface = sdl2.surface.SDL_CreateRGBSurfaceFrom(bits, width, height,
                                                       depth, pitch, rmask,
                                                       gmask, bmask, amask)
-        if not imgsurface:
+        if not tsurface:
             raise sdl2.ext.SDLError()
 
         if(composite_op is not None and composite_op!="None"):
@@ -593,27 +619,31 @@ class sdl2_DisplayManager(object):
             else:
                 raise ValueError, "Composite_op '%s' not recognized/supported." % composite_op
 
-            #trans_color = prepare_color(trans_color, imgsurface)
+            #trans_color = prepare_color(trans_color, tsurface)
             trans_color = convert_to_color(trans_color)
-            sf = imgsurface.contents
-            fmt = sf.format.contents
+            fmt = tsurface.contents.format.contents
 
             if(mode=="RGBA"):
                 trans_color = sdl2.pixels.SDL_MapRGBA(fmt, trans_color.r, trans_color.g, trans_color.b, trans_color.a)
             else:
                 trans_color = sdl2.pixels.SDL_MapRGB(fmt, trans_color.r, trans_color.g, trans_color.b)
 
-            ret = sdl2.surface.SDL_SetColorKey( imgsurface, sdl2.SDL_TRUE, trans_color );
+            ret = sdl2.surface.SDL_SetColorKey( tsurface, sdl2.SDL_TRUE, trans_color );
             if ret == -1:
                 raise sdl2.ext.SDLError()
 
-        imgsurface = imgsurface.contents
+        imgsurface = tsurface.contents
+        # josh changes, runs out of memory
+        # imgsurface = sdl2.SDL_ConvertSurfaceFormat(tsurface.contents, sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,0)
+        # del tsurface
+
         # the pixel buffer must not be freed for the lifetime of the surface
         imgsurface._pxbuf = bits
 
         tx = self.texture_from_surface(imgsurface)
 
         del imgsurface
+        del tsurface
         return tx
 
     def make_bits_from_texture(self, frame, width, height):

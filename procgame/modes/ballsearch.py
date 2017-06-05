@@ -116,9 +116,10 @@ class BallSearch(Mode):
 	def start_special_handler_modes(self):
 		d = 0
 		for special_handler_mode in self.special_handler_modes:
-			self.game.modes.add(special_handler_mode)
-			self.delay(name='remove_special_handler_mode', event_type=None, delay=d, handler=self.remove_special_handler_mode, param=special_handler_mode)
-			d+=3
+			if(special_handler_mode not in self.game.modes):
+				self.game.modes.add(special_handler_mode)
+				self.delay(name='remove_special_handler_mode', event_type=None, delay=d, handler=self.remove_special_handler_mode, param=special_handler_mode)
+				d+=3
 		if(self.completion_handler is not None):
 			self.delay(name='completion_handler', event_type=None, delay=d, handler=self.completion_handler)
 

@@ -19,7 +19,7 @@ class DMDHelper(Mode):
         super(DMDHelper, self).__init__(game=game, priority=12)
         self.logger = logging.getLogger('dmdhelper')
         self.timer_name = 'message_display_ended'
-        self.msgfont = self.game.fonts['med']
+        self.msgfont = self.game.fonts['default']
 
         self.game.status_font_name = 'status_font'
 
@@ -40,7 +40,10 @@ class DMDHelper(Mode):
     
     def genMsgFrame(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False, flashing=False):
         if(font_style is None):
-            font_style = dmd.HDFontStyle()
+            if 'default' in self.game.fontstyles:
+                font_style = self.game.fontstyles['default']
+            else:
+                font_style = dmd.HDFontStyle()
         elif(isinstance(font_style,basestring)):
             font_style = self.game.fontstyles[font_style]
         
@@ -269,14 +272,36 @@ class DMDHelper(Mode):
 
                 background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
-                lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-                lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
+                multiple_screens = value_for_key(v, 'multiple_screens', False)
 
-                for player in self.game.old_players:
-                    lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
-                    lyrTmp.append(lT, duration)
+                if(multiple_screens):
+                    lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+                    lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
 
-                duration = (last_score_count+1)*duration
+                    for player in self.game.old_players:
+                        lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
+                        lyrTmp.append(lT, duration)
+
+                    duration = (last_score_count+1)*duration
+                else:
+                    lyrTmp = dmd.GroupedLayer(self.game.dmd.width,self.game.dmd.height)
+                    lyrTmp.opaque = True
+
+                    if background != None:
+                        lyrTmp.layers += [self.game.animations[background]]
+                    spacing = self.game.dmd.height/7   #was 7 before steamwreck
+                    offset = spacing
+                    title = dmd.HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[fnt], 'center', fontstyle=font_style).set_text('FINAL RESULTS LAST GAME')
+                    title.opaque = False
+                    lyrTmp.layers += [title]
+                    #print 'now go get scores for each player in last game'
+                    for p in self.game.old_players:
+                        offset += spacing
+                        layer = dmd.HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[fnt], 'center', opaque = False)
+                        layer.style = font_style
+                        #print 'created the layer, now set text'
+                        layer.set_text("{0:<18}    {1:>18}".format(p.name, self.game.score_display.format_score(p.score)))
+                        lyrTmp.layers += [layer]
 
             elif('RandomText' in yamlStruct):
                 v = yamlStruct['RandomText']
@@ -385,6 +410,9 @@ class DMDHelper(Mode):
                 c = self.generateLayerFromYaml(value_for_key(v,'contents', exception_on_miss=True))
 
                 new_layer = dmd.PanningLayer(width=w, height=h, frame=c, origin=(origin_x, origin_y), translate=(scroll_x, scroll_y), numFramesDrawnBetweenMovementUpdate=frames_per_movement, bounce=bounce)
+                opaque = value_for_key(v,'opaque',None)
+                if opaque:
+                    new_layer.opaque = opaque
 
             elif('group_layer' in yaml_struct):
                 v = yaml_struct['group_layer']

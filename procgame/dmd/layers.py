@@ -2,6 +2,7 @@ from dmd import *
 from procgame import config
 from random import randrange
 import hdfont
+import logging
 try:
     import cv2
     import cv2 as cv
@@ -9,7 +10,6 @@ try:
     OpenCV_avail = True
     from movie import Movie
 except ImportError:
-    import logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     logging.error("OpenCV is not available on your system.  The MovieLayer (mp4) support is unavailable")
     OpenCV_avail = False
@@ -234,12 +234,18 @@ class MovieLayer(Layer):
     vc = None
     """ this is the video controller that is handling the interface to the video
     it handles the next frame stuff"""
+
+    composite_op = None
+    """ set via transparency_op argument,  value of blacksrc, magentasrc, etc. will cause those pixels to be translated
+        to transparent.  Performance may drop as a result of using this argument
+    """
     
     duration = None
 
-    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None):
+    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None, transparency_op=None):
         if(cv2 is None):
             raise ValueError, "MP4 is unavailable as OpenCV is not installed"
+        # self.logger = logging.getLogger('movie_layer')
 
         super(MovieLayer, self).__init__(opaque)
         self.hold = hold
@@ -248,7 +254,7 @@ class MovieLayer(Layer):
         if(movie is None and movie_file_path is None):
             raise ValueError, "MovieLayer requires either a movie_file_path argument -or- an instantiated movie object"
         elif(movie_file_path is not None):
-            movie = Movie().load(movie_file_path)
+            movie = Movie(movie_file_path)
 
         self.movie = movie
 
@@ -263,6 +269,8 @@ class MovieLayer(Layer):
         
         self.frame_listeners = []
         self.frame_pointer = 0
+
+        self.composite_op = transparency_op
         
         self.frame = Frame(self.movie.width, self.movie.height)
         self.fps = config.value_for_key_path('dmd_framerate', None) 
@@ -321,21 +329,29 @@ class MovieLayer(Layer):
                 self.frame_time_counter = self.frame_time
                 return self.frame
             else:
-                self.frame_time_counter = self.frame_time
+                self.frame_time_counter = 0
                 return None
-            
+        
+        video_frame = None
         if self.frame_time_counter == 0:
             rval, video_frame = self.movie.vc.read()
             self.frame_pointer += 1
             self.frame_time_counter = self.frame_time
 
-        if rval is not None:
-            video_frame = cv2.cvtColor(video_frame,getColorProp())
-            the_frame = video_frame #tODO: OpenCV3 fix cv.fromarray(video_frame)
-            # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
-            surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.movie.width, height=self.movie.height, mode='RGB', composite_op = None)
+            if rval is True and video_frame is not None:
+                # self.logger.info("pulling frame %d / %d" % (self.frame_pointer, self.movie.frame_count))
+                video_frame = cv2.cvtColor(video_frame,getColorProp())
+                the_frame = video_frame #tODO: OpenCV3 fix cv.fromarray(video_frame)
+                # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
+                surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.movie.width, height=self.movie.height, mode='RGB', composite_op = self.composite_op)
 
-            self.frame.pySurface = surf
+                self.frame.pySurface = surf
+            else:
+                # self.logger.info("ERROR OCCURED [%s] [%s]" % (rval, video_frame))
+                # end movie prematurely
+                self.movie.frame_count = self.frame_pointer - 1
+
+
 
         return self.frame
 

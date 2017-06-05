@@ -429,11 +429,25 @@ class GameController(object):
     def save_settings(self, filename):
         """Writes the game settings to *filename*.  See :meth:`load_settings`."""
         if os.path.exists(filename):
+            if os.path.exists(filename+'.bak'):
+                os.remove(filename+'.bak')
+            os.rename(filename, filename+'.bak')
+            
+        if os.path.exists(filename):
             os.remove(filename)
-        #stream = file(filename, 'w')
+
         stream = open(filename, 'w')
         yaml.dump(self.user_settings, stream)
         file.close(stream)
+
+        if os.path.getsize(filename) == 0:
+            self.logger.error( " ****** CORRUPT GAME USER SETTINGS FILE REPLACING WITH CLEAN DATA  --- restoring last copy ****************")
+            #remove bad file
+            os.remove(filename)
+            os.rename(filename+'.bak', filename)
+        else:         
+            self.logger.info("Settings saved to " + str(filename))
+       
 
     def load_game_data(self, template_filename, user_filename):
         """Loads the YAML game data configuration file.  This file contains
@@ -444,10 +458,20 @@ class GameController(object):
         See also: :meth:`save_game_data`
         """
         self.game_data = {}
-        template = yaml.load(open(template_filename, 'r'))
+        template_file = open(template_filename,'r')
+        template = yaml.load(template_file)
+        file.close(template_file)
+
         if os.path.exists(user_filename):
-            self.game_data = yaml.load(open(user_filename, 'r'))
-        
+            if os.path.getsize(user_filename) == 0:
+                self.logger.error(  " ****************   CORRUPT DATA FILE REPLACING WITH CLEAN DATA  --- ****************")
+                os.remove(user_filename)
+                os.rename(user_filename+'.bak', user_filename)
+
+            user_filename_file = open(user_filename, 'r')
+            self.game_data = yaml.load(user_filename_file)
+            file.close(user_filename_file)
+
         if template:
             for key, value in template.iteritems():
                 if key not in self.game_data:
@@ -456,11 +480,19 @@ class GameController(object):
     def save_game_data(self, filename):
         """Writes the game data to *filename*.  See :meth:`load_game_data`."""
         if os.path.exists(filename):
-            os.remove(filename)
-        #stream = file(filename, 'w')
+            if os.path.exists(filename+'.bak'):
+                os.remove(filename+'.bak')
+            os.rename(filename, filename+'.bak')
+
         stream = open(filename, 'w')
         yaml.dump(self.game_data, stream)
         file.close(stream)
+        #now check for successful write, if not restore backup file
+        if os.path.getsize(filename) == 0:
+            self.logger.info(  " ****************   CORRUPT DATA FILE REPLACING WITH CLEAN DATA  --- restoring last copy ****************")
+            #remove bad file
+            os.remove(filename)
+            os.rename(filename+'.bak', filename)
 
     def enable_flippers(self, enable):
         #return True

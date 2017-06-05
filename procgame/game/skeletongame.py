@@ -27,6 +27,7 @@ from ..modes import Trough, ballsave, BallSearch
 from ..modes import osc
 from ..modes import DMDHelper, SwitchMonitor
 from ..modes import bonusmode, service, Attract, TiltMonitorMode, Tilted
+#from ..modes import serviceHD
 
 from .. import sound
 from .. import config
@@ -166,10 +167,15 @@ class SkeletonGame(BasicGame):
                                     'evt_game_ending', 'evt_game_starting', 'evt_tilt_ball_ending', \
                                     'evt_player_added', 'evt_balls_missing', 'evt_balls_found',
                                     'evt_volume_up', 'evt_volume_down', 'evt_tilt_warning', \
-                                    'evt_game_ended', 'evt_initial_entry']
+                                    'evt_game_ended', 'evt_initial_entry', 'evt_mb_drain']
 
             for e in self.known_events:
                 self.event_handlers[e] = []
+
+            self.sg_event_queue = [] # if a known event fires while still processing another, this will
+            # hold the queue of out-standing SG events
+
+            self.event = None # the current SG event being processed
 
             self.game_tilted = False # indicates if any kind of tilt has occured; tilt, slam_tilt
 
@@ -192,6 +198,7 @@ class SkeletonGame(BasicGame):
             self.use_stock_attractmode = config.value_for_key_path('default_modes.attract', True)
             self.use_osc_input = config.value_for_key_path('default_modes.osc_input', True)
             self.use_stock_servicemode = config.value_for_key_path('default_modes.service_mode', True)
+            #self.use_HD_servicemode = config.value_for_key_path('default_modes.service_mode_HD', True)
             self.use_stock_tiltmode = config.value_for_key_path('default_modes.tilt_mode', True)
             self.use_ballsearch_mode = config.value_for_key_path('default_modes.ball_search', True)
             self.use_multiline_score_entry = config.value_for_key_path('default_modes.multiline_highscore_entry', False)
@@ -208,8 +215,10 @@ class SkeletonGame(BasicGame):
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
 
-            if(self.use_stock_servicemode):
-                self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])
+            #if(self.use_HD_servicemode):
+            #    self.service_mode = serviceHD.ServiceModeHD(self, 99, self.fonts['settings-font-small'], self.fonts['settings-font-small'], extra_tests=[])
+            #elif(self.use_stock_servicemode):
+            self.service_mode = service.ServiceMode(self, 99, self.fonts['settings-font-small'], extra_tests=[])
 
             if(self.use_stock_tiltmode):
                 # find a tilt switch
@@ -511,11 +520,13 @@ class SkeletonGame(BasicGame):
     def notifyNextMode(self):
         self.curr_delayed_by_mode = None
         if(len(self.notify_list)==0):
+            self.event = None
             if(self.event_complete_fn is not None):
                 self.logger.debug("Skel: completing event '%s' by calling '%s'" % (self.event, self.event_complete_fn))
                 self.event_complete_fn()
             else:
                 self.logger.debug("Skel: completing event '%s'." % (self.event))
+            self.checkOutstandingSGEvents()
             return
 
         # otherwise there are more modes awaiting notification
@@ -572,6 +583,14 @@ class SkeletonGame(BasicGame):
             # not okay, wrong caller!!
             self.logger.critical("Skel: notifyNextModeNow called by %s, but this mode is not blocking this event! (%s is)!?" % (caller_mode, self.curr_delayed_by_mode))
 
+    def checkOutstandingSGEvents(self):
+        if(len(self.sg_event_queue)>0):
+            self.logger.info("Processing SG Event Queue: contains %d events" % len(self.sg_event_queue))
+            evt = self.sg_event_queue.pop()
+            self.notifyModes(evt.name, evt.args, evt.on_complete_fn, evt.only_active_modes)
+        else:
+            self.logger.info("SG Event Queue -- All Clear")
+
     def notifyModes(self, event, args=None, event_complete_fn=None, only_active_modes=True):
         """ this method will notify all AdvencedMode derived modes of the given event.  Modes
             will be notified in priority order and notifications happen over time -- that is,
@@ -587,6 +606,14 @@ class SkeletonGame(BasicGame):
             modes.  This will be of _very_ limited utility, however is useful for events such as
             evt_player_added.
         """
+
+        if(self.event is not None):
+            #We are still processing an event
+            self.logger.error("Trying to notify modes about new event [%s] while [%s] is still being processed!!" % (event, self.event))
+
+            self.sg_event_queue.append(SGEvent(event,args,event_complete_fn,only_active_modes))            
+            return
+
         delay = 0
         self.notify_list = []
         self.event_complete_fn = event_complete_fn
@@ -881,6 +908,8 @@ class SkeletonGame(BasicGame):
                 self.logger.info("one ball in play, but game is tilted (supressing evt_single_ball_play)")
             else:
                 self.notifyModes('evt_single_ball_play', args=None, event_complete_fn=None)
+        else:
+            self.notifyModes('evt_mb_drain', args=None, event_complete_fn=None)
 
     def your_search_is_over(self):
         """ all balls have been accounted for --if you were blocking a game start, stop that. """
@@ -1225,6 +1254,15 @@ class SkeletonGame(BasicGame):
             # self.set_status("Balls Missing: PLEASE WAIT!!", 3.0)
             self.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
 
+class SGEvent(object):
+    """An object to hold an SGEvent; useful if multiple events come in at a time"""
+    def __init__(self, event_name, evt_args, on_complete_fn, only_active_modes):
+        super(SGEvent, self).__init__()
+        self.name = event_name
+        self.args = evt_args
+        self.on_complete_fn = on_complete_fn
+        self.only_active_modes = only_active_modes
+            
 class AdvPlayer(Player):
     """Represents a player in the game.
     The game maintains a collection of players in :attr:`GameController.players`."""

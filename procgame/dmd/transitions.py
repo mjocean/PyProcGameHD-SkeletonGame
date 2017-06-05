@@ -27,14 +27,14 @@ class LayerTransitionBase(object):
     def start(self):
         """Start the transition."""
         self.reset()
-        self.progress_mult = 1
+        self.progress_mult = 1.0
     def pause(self):
         """Pauses the transition at the current position."""
-        self.progress_mult = 0
+        self.progress_mult = 0.0
     def reset(self):
         """Reset the transition to the beginning."""
-        self.progress_mult = 0
-        self.progress = 0
+        self.progress_mult = 0.0
+        self.progress = 0.0
     def next_frame(self, from_frame, to_frame):
         """Applies the transition and increments the progress if the transition is running.  Returns the resulting frame."""
         #print 'TRANSITION NEXT FRAME PROGRESS IS' +str(self.progress)
@@ -176,7 +176,7 @@ class WipeTransition(LayerTransitionBase):
 
 class AccordianTransition(LayerTransitionBase):
     def __init__(self, direction='north'):
-        super(WipeTransition, self).__init__()
+        super(AccordianTransition, self).__init__()
         self.direction = direction
         self.progress_per_frame = 1.0/15.0
     def transition_frame(self, from_frame, to_frame):
