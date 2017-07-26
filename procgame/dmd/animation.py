@@ -3,8 +3,10 @@ import struct
 import yaml
 import sqlite3
 import bz2
-import StringIO
-# from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 import time
 from PIL import Image 
 # simple work-around to support PIL or PILLOW
@@ -187,7 +189,7 @@ class Animation(object):
         # If there was data in the cache:
         if data:
             # If it was in the cache, we know that it is in the dmd format:
-            self.populate_from_dmd_file(StringIO.StringIO(data))
+            self.populate_from_dmd_file(StringIO(data))
             # print "Loaded", path, "from cache",
             logger.debug('Loaded "%s" from cache in %0.3fs', key_path, time.time()-t0)
         else:
@@ -209,9 +211,7 @@ class Animation(object):
                 elif ext =='.zip':
                     z = zipfile.ZipFile(path, "r")
                     data = z.read(z.namelist()[0])    #Read in the first image data
-                    self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
-                elif ext =='.zng':
-                    self.populate_from_zng_file(path, composite_op = composite_op)
+                    self.populate_from_dmd_file(StringIO(data), composite_op = composite_op)
                 elif ext =='.mp4' or ext == '.avi':
                     self.populate_from_mp4_file(path)
                 else:
@@ -278,7 +278,6 @@ class Animation(object):
 
     convertImage = staticmethod(convertImage)
 
-
     def convertImageToOldDMD(src):
         pal_image= Image.new("P", (1,1))
         tuplePal = VgaDMD.get_palette()
@@ -295,31 +294,6 @@ class Animation(object):
                 frame.set_dot(x=x, y=y, value=color)
         return frame
     convertImageToOldDMD = staticmethod(convertImageToOldDMD)
-
-    def populate_from_zng_file(self, zip_file, composite_op = None):
-        with open(zip_file, 'rb') as f:
-            fake_zip_file = StringIO.StringIO(f.read())
-            z = zipfile.ZipFile(fake_zip_file)
-            for n in z.namelist():
-                frame_data = z.read(n)
-                fake_file = StringIO.StringIO(frame_data)
-                # self.populate_from_image_file_sdl2(fake_file, None, None)
-                src = Image.open(fake_file)
-                (w, h) = src.size
-                (self.width, self.height) = (w, h)
-                if src.mode == "P":
-                    src.convert("RGB")
-                    src.mode = "RGB"
-                texture = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=src.tobytes(), width=w, height=h, mode=src.mode, composite_op = composite_op)
-
-                frame = Frame(w,h,texture)
-
-                self.frames.append(frame)
-
-            # data = z.read(z.namelist()[0])    #Read in the first image data
-            # self.populate_from_dmd_file(StringIO.StringIO(data), composite_op = composite_op)
-
-
 
     def populate_from_image_file_sdl2(self, path, f, composite_op = None):
         # print("loading %s" % f)
@@ -358,55 +332,13 @@ class Animation(object):
             frame = Frame(w,h,surf)
 
             self.frames.append(frame)
-
-    def old_populate_from_image_file(self, path, f):
-        
-        if not Image:
-            raise RuntimeError, 'Cannot open non-native image types without Python Imaging Library: %s' % (path)
-        
-        src = Image.open(f)
-
-        (w, h) = src.size
-        if len(self.frames) > 0 and (w != self.width or h != self.height):
-            raise ValueError, "Image sizes must be uniform!  Anim is %dx%d, image is %dx%d" % (w, h, self.width, self.height)
-
-        (self.width, self.height) = (w, h)
-
-        if path.endswith('.gif'):
-            from . import animgif
-            self.frames += animgif.gif_frames(src)
-        else:
-            alpha = None
-            try:
-                alpha = Image.fromstring('L', src.size, src.tostring('raw', 'A'))
-            except:
-                pass # No alpha channel available?
-
-            reduced = src.convert("L")
-
-            frame = Frame(w, h)
-
-            # Construct a lookup table from 0-255 to 0-15:
-            eight_to_four_map = [0] * 256
-            for l in range(256):
-                eight_to_four_map[l] = int(round((l/255.0) * 15.0))
-            
-            for x in range(w):
-                for y in range(h):
-                    color = eight_to_four_map[reduced.getpixel((x,y))]
-                    if alpha:
-                        color += eight_to_four_map[alpha.getpixel((x,y))] << 4
-                    frame.set_dot(x=x, y=y, value=color)
-
-            self.frames.append(frame)
         
 
     def populate_from_dmd_file(self, f, composite_op = None):
         f.seek(0, os.SEEK_END) # Go to the end of the file to get its length
         file_length = f.tell()
-        ## MJO: Don't just skip the header!  Check it.
-        
-        f.seek(0) # Skip over the 4 byte DMD header.
+         
+        f.seek(0) # Skip back to the 4 byte DMD header.
         dmd_version = struct.unpack("I", f.read(4))[0]
         dmd_style = 0 # old
         if(dmd_version == 0x00646D64):
@@ -435,13 +367,8 @@ class Animation(object):
                 str_frame = f.read(self.width * self.height)
                 new_frame.build_surface_from_8bit_dmd_string(str_frame, composite_op)
             elif(dmd_style==1):
-                # print("LOADING FRAME...")
                 str_frame = f.read(self.width * self.height * 3)
-                # surface = pygame.image.fromstring(str_frame, (self.width, self.height), 'RGB')
-                # new_frame.set_surface(surface)
-                # https://wiki.libsdl.org/SDL_CreateRGBSurfaceFrom??
                 new_frame.pySurface = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=str_frame, width=self.width, height=self.height, composite_op=composite_op)
-                # print("made texture for this frame -- contents: " + str(new_frame.pySurface))
                 if(frame_index==1):
                     new_frame.font_dots = str_frame[0:97]                
             self.frames.append(new_frame)

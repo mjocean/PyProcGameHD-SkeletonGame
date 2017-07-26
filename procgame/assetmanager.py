@@ -195,7 +195,7 @@ class AssetManager(object):
             self.lengths[key] = tmp.frames[-1]
             if(len(tmp.frames)==1):
                 holdLastFrame = True
-                self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+                # self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
         if(streaming_load):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file, transparency_op=composite_op)
@@ -208,12 +208,21 @@ class AssetManager(object):
         self.numLoaded += 1
 
     def load(self):
+        l = logging.getLogger("PIL.PngImagePlugin")
+        l.setLevel(logging.WARNING)
+        l = logging.getLogger("game.assets")
+        l.setLevel(logging.WARNING)        
+        l = logging.getLogger("game.sound")
+        l.setLevel(logging.WARNING)        
+        l = logging.getLogger("game.dmdcache")
+        l.setLevel(logging.WARNING)        
         anims = self.value_for_key_path(keypath='Animations', default={}) or list()
         fonts = self.value_for_key_path(keypath='Fonts', default={}) or list()
         hfonts = value_for_key(fonts,'HDFonts',{}) or list()
         rfonts = value_for_key(fonts,'DMDFonts',{}) or list()
         fontstyles = value_for_key(fonts,'FontStyles',{}) or list()
         lamps = self.value_for_key_path(keypath='LampShows', default={}) or list() 
+        rgbshows = self.value_for_key_path(keypath='RGBShows', default={}) or list() 
         sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
         music = value_for_key(sounds,'Music',{}) or list()
         effects = value_for_key(sounds,'Effects',{}) or list() 
@@ -230,6 +239,7 @@ class AssetManager(object):
             rfonts += value_for_key(fonts,'DMDFonts',{}) or list()
             fontstyles += value_for_key(fonts,'FontStyles',{}) or list()
             lamps += self.value_for_key_path(keypath='LampShows', default={}) or list() 
+            rgbshows += self.value_for_key_path(keypath='RGBShows', default={}) or list() 
             sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
             music += value_for_key(sounds,'Music',{}) or list()
             effects += value_for_key(sounds,'Effects',{}) or list() 
@@ -244,7 +254,6 @@ class AssetManager(object):
                 k  = value_for_key(l,'key')
                 fname = value_for_key(l,'file')
                 self.updateProgressBar("Lampshows", fname)
-                # self.lampshows = self.game.sound.register_music(k,self.game.music_path+fname, volume=volume)            
                 f = self.game.lampshow_path + fname
                 current = 'Lampshow: [%s]: %s, %s ' % (k, f, fname)
                 self.game.lampctrl.register_show(k, f)
@@ -258,6 +267,16 @@ class AssetManager(object):
                         raise ValueError, "Name '%s' specified in lampshow does not match a driver in the machine yaml." % tr.name
 
                 self.numLoaded += 1            
+
+            for l in rgbshows:
+                k  = value_for_key(l,'key')
+                fname = value_for_key(l,'file')
+                self.updateProgressBar("RGBShows", fname)
+                f = self.game.lampshow_path + fname
+                current = 'RGBshow: [%s]: %s, %s ' % (k, f, fname)
+                self.game.rgbshow_player.load(k, f)
+                self.numLoaded += 1            
+
             for f in hfonts:
                 k  = value_for_key(f,'key')
                 sname = value_for_key(f,'systemName',k)
@@ -293,7 +312,6 @@ class AssetManager(object):
                                         line_color=lc )
                 self.fontstyles[k] = font_style
 
-            started = timeit.time.time()
             for anim in anims:
                 k  = value_for_key(anim,'key')
                 ft = value_for_key(anim,'frame_time',2)
@@ -307,9 +325,10 @@ class AssetManager(object):
                 streaming_load  = value_for_key(anim, 'streamingMovie', False)
                 current = 'Animation: [%s]: %s' % (k, f)
                 # started = timeit.time.time()
+                started = timeit.time.time()
                 self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load)
-            time_taken = timeit.time.time() - started
-            self.logger.info("loading visual asset took %.3f seconds" % time_taken)
+                time_taken = timeit.time.time() - started
+                self.logger.info("loading visual asset took %.3f seconds" % time_taken)
         except:
             self.logger.error("===ASSET MANAGER - ASSET FAILURE===")
             self.logger.error(current)

@@ -172,15 +172,19 @@ class Frame(object):
         # self.pySurface = newSurf
         # self.font_dots = []
 
-    def rotozoom(self,rotation=0, scale=1, origin=None):
-        """ Returns a rotated and possibly scaled version of the original frame """
+    def rotozoom(self,rotation=0, scale=1, origin=None, flip=0):
+        """ Returns a rotated and possibly scaled version of the original frame 
+            flip == 0 --> no flip
+            flip == 1 --> flips horiz
+            flip == 2 --> flips vert 
+        """
         # resizes a frame...
         (sw, sh) = (self.width*scale, self.height*scale)
         dstrect = (0, 0, int(sw), int(sh))
 
         F = Frame(self.width, self.height)
 
-        sdl2_DisplayManager.inst().roto_blit(self.pySurface, F.pySurface, dstrect, None, angle=rotation, origin=origin)
+        sdl2_DisplayManager.inst().roto_blit(self.pySurface, F.pySurface, dstrect, None, angle=rotation, origin=origin, flip=flip)
 
         return F
         # del self.pySurface

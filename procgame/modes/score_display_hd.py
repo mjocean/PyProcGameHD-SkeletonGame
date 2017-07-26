@@ -147,7 +147,14 @@ class ScoreDisplayHD(Mode):
         self.last_score = 0
         self.last_ball_num = -1 
 
-
+    def set_background(self, new_key):
+        self.single_player_layers[0] = self.game.animations[new_key]
+        self.multiplayer_layers[0] = self.game.animations[new_key]
+        if len(self.game.players) <= 1:
+            self.update_layer_1p()
+        else:
+            self.update_layer_4p()
+            
     def reset(self):
         """ call this when the machine is reset to also reset 
         the display state (from multiplayer back to 1), for example """

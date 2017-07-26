@@ -72,7 +72,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         super(SoundController, self).__init__(game,priority)
         self.logger = logging.getLogger('game.sound')
         try:
-            mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=256)  #256 prev
+            mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=256)  #256 prev
             mixer.init()
             mixer.set_num_channels(8)
 
@@ -93,7 +93,7 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
         self.music = {}
         self.music_ducking_effect = 1.0 # no adjustment
         self.current_music_track_volume = 1.0
-        self.set_volume(0.5)  # service mode should set the volume when it loads the last settings
+        self.__set_volume(0.5)  # service mode should set the volume when it loads the last settings
         self.volume_list = [0.00, 0.05, 0.10, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
 
     def play_music(self, key, loops=0, start_time=0.0, channel=CH_MUSIC):
@@ -493,39 +493,50 @@ class SoundController(mode.Mode):  #made this a mode since I want to use delay f
 
         if(enable):
             self.music_ducking_effect = DUCKED_MUSIC_PERCENT
-            self.set_volume(self.volume)
+            self.__set_volume(self.volume)
         else:
             # stop ducking!
             self.music_ducking_effect = 1.0
-            self.set_volume(self.volume)
-
+            self.__set_volume(self.volume)
 
     def volume_up(self):
-        """ """
+        """ increases the volume and returns the current volume INDEX value """
         if not self.enabled: return
         try:
-            volume_int = self.volume_list.index(self.volume)
+            volume_idx = self.volume_list.index(self.volume)
         except:
-            volume_int = 1
-        if volume_int < len(self.volume_list) - 1:
-            volume_int += 1
-            self.set_volume(self.volume_list[volume_int])
-        return int(volume_int)
+            volume_idx = int(self.get_max_volume()/2) # resets the volume to 1/2 volume
+
+        if volume_idx < self.get_max_volume() - 1:
+            volume_idx += 1
+        self.__set_volume(self.volume_list[volume_idx])
+        return volume_idx
 
     def volume_down(self):
-        """ """
+        """ decreases the volume and returns the current volume INDEX value """
         if not self.enabled: return
         try:
-            volume_int = self.volume_list.index(self.volume)
+            volume_idx = self.volume_list.index(self.volume)
         except:
-            volume_int = 1
-        if volume_int > 0:
-            volume_int -= 1
-            self.set_volume(self.volume_list[volume_int])
-        return int(volume_int)
+            volume_idx = int(self.get_max_volume()/2) # resets the volume to 1/2 volume
 
-    def set_volume(self, new_volume):
-        """ """
+        if volume_idx > 0:
+            volume_idx -= 1
+        self.__set_volume(self.volume_list[volume_idx])
+        return volume_idx
+
+    def set_volume_idx(self, volume_idx):
+        self.__set_volume(self.volume_list[volume_idx])
+
+    def get_volume_idx(self):
+        return self.volume_list.index(self.volume)
+
+    def get_max_volume(self):
+        return len(self.volume_list)-1
+
+    def __set_volume(self, new_volume):
+        """ sets a volume to a value, should be in the range [0..1] """
+
         if not self.enabled: return
         self.volume = new_volume
 

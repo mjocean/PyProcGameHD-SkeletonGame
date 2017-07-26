@@ -21,12 +21,21 @@ except Exception, e:
 
 from sdl2.ext.draw import prepare_color
 from sdl2.ext.color import convert_to_color
+from sdl2 import SDL_Init, SDL_INIT_VIDEO
+
+_HASSDLIMAGE = True
+try:
+    from sdl2 import sdlimage
+except ImportError:
+    _HASSDLIMAGE = False
+
 import ctypes
 import random 
 from sdl2 import endian, hints
 import time
 
 from ctypes import byref, cast, POINTER, c_int, c_float, sizeof, c_uint32, c_double
+
 
 # An SDL2 Display Helper ; Somewhat PyGame like 
 
@@ -87,6 +96,7 @@ class FontManagerExtended(sdl2.ext.FontManager):
         #                                                    width)
         # elif bg_color == sdl2.pixels.SDL_Color(0, 0, 0):
         sf = sdl2.sdlttf.TTF_RenderUTF8_Blended(font, text, border_color)
+        # sf = sdl2.sdlttf.TTF_RenderUTF8_Solid(font, text, border_color)
         # else:
         #     sf = sdl2.sdlttf.TTF_RenderUTF8_Shaded(font, text, border_color, bg_color)
         if not sf:
@@ -123,7 +133,7 @@ class sdl2_DisplayManager(object):
         self.window_h = dots_h * scale
 
         sdl2.ext.Window.DEFAULTPOS=(screen_position_x, screen_position_y)
-        sdl2.ext.init()
+        SDL_Init(SDL_INIT_VIDEO)
         self.window = sdl2.ext.Window(title, size=(self.window_w, self.window_h), flags=flags)
         sdl2.SDL_ShowCursor(sdl2.SDL_DISABLE)
 
@@ -263,23 +273,12 @@ class sdl2_DisplayManager(object):
 
         return t
 
-    def font_render_bordered_text(self, msg, font_alias=None, size=None, width=None, color=None, bg_color=None, border_width=1, border_color=None):
-        # returns surfaces (outline, interior)
+    def font_render_bordered_text_Faster(self, txtarget, dst_loc, msg, font_alias=None, size=None, width=None, color=None, bg_color=None, border_width=1, border_color=None):
+        # create outline, interior
         (srf_outline, srf_interior) = self.font_manager.render_border(msg, alias=font_alias, size=size, width=width, color=color, bg_color=bg_color, border_width=border_width, border_color=border_color)
-
-        # make target
-        rtarget =  sdl2.render.SDL_CreateTexture(self.texture_renderer.renderer, sdl2.pixels.SDL_PIXELFORMAT_RGB888,
-                                                                  sdl2.render.SDL_TEXTUREACCESS_TARGET,
-                                                                  srf_outline.w, srf_outline.h)
-        sdl2.SDL_SetTextureBlendMode(rtarget, sdl2.SDL_BLENDMODE_BLEND)
-        txtarget = sdl2.ext.TextureSprite(rtarget)
-        self.texture_clear(txtarget, color=(0,0,0,0))
-
         tx_outline = self.texture_from_surface(srf_outline)  # make outline texture
         tx_interior = self.texture_from_surface(srf_interior) # make interior texture
 
-        # blit the outline, then the interior
-        # blit(source_tx, dest_tx, dest_loc)
         if(len(border_color)==4):
             ret = sdl2.SDL_SetTextureAlphaMod(tx_outline.texture, int(border_color[3]))            
             if ret == -1:
@@ -290,43 +289,22 @@ class sdl2_DisplayManager(object):
             if ret == -1:
                 raise sdl2.ext.SDLError()
 
-
-        self.blit(tx_outline, txtarget, (0,0, srf_outline.w, srf_outline.h))
-        self.blit(tx_interior, txtarget, (border_width,border_width, srf_interior.w, srf_interior.h))
+        # blit the outline, then the interior
+        # blit(source_tx, dest_tx, dest_loc)
+        self.blit(tx_outline, txtarget, (dst_loc['x'] + 0, dst_loc['y'] + 0, srf_outline.w, srf_outline.h))
+        self.blit(tx_interior, txtarget, (dst_loc['x'] +border_width, dst_loc['y'] +border_width, srf_interior.w, srf_interior.h))
 
         sdl2.surface.SDL_FreeSurface(srf_interior)
         sdl2.surface.SDL_FreeSurface(srf_outline)
+
+        w = int(srf_outline.w)
 
         del srf_interior
         del srf_outline
         del tx_interior
         del tx_outline
 
-        return txtarget
-
-
-    # def font_render_bordered_text(self, msg, font_alias=None, size=None, width=None, color=None, bg_color=None, border_width=1, border_color=None):
-    #     # returns center then outline
-    #     (bsurf, isurf) = self.font_manager.render_border(msg, alias=font_alias, size=size, width=width, color=color, bg_color=bg_color, border_width=border_width, border_color=border_color)
-
-    #     r = sdl2.rect.SDL_Rect(border_width, border_width, bsurf.w, bsurf.h)
-
-    #     sdl2.surface.SDL_BlitSurface(isurf, None, bsurf, r)
-
-    #     # ssurf = sdl2.ext.SoftwareSprite(tsurf, True)
-    #     tx_surf = self.texture_from_surface(bsurf)  # outline
-
-    #     # tx_isurf = self.texture_from_surface(isurf) # interior
-
-    #     # self.blit(tx_surf, tx_isurf, (0,0,bsurf.w, bsurf.h))
-    #     del bsurf
-    #     del isurf
-
-    #     #del tx_isurf
-
-    #     # self.texture_renderer.copy(source_tx, srcrect=area, dstrect=dstrect)
-
-    #     return tx_surf
+        return w
     
     def Init(dots_w, dots_h, scale=1, title="ppgHD", x=0, y=0, flags=None, blur="0"):
         global SDL2_DM 
@@ -527,43 +505,48 @@ class sdl2_DisplayManager(object):
         return s
 
     def load_texture(self, fname, composite_op=None):
-        tsurface = sdl2.ext.image.load_image(fname)
-        if not tsurface:
-            raise sdl2.ext.SDLError()
-
         # support for blacksrc
-        if(composite_op is not None and composite_op!="None"):
-            if(composite_op == "blacksrc"):
-                trans_color = (0,0,0)
-            elif(composite_op == "greensrc"):
-                trans_color = (0,255,0)
-            elif(composite_op == "magentasrc"):
-                trans_color = (255,0,255)
-            else:
-                raise ValueError, "Composite_op '%s' not recognized/supported." % composite_op
+        tsurface = None
 
-            trans_color = convert_to_color(trans_color)
-            sf = tsurface
-            fmt = sf.format.contents
-
-            # how do I figure out the mode ..?
-            if(sf.format.contents.BytesPerPixel==4):
-                trans_color = sdl2.pixels.SDL_MapRGBA(fmt, trans_color.r, trans_color.g, trans_color.b, trans_color.a)
-            else:
-                trans_color = sdl2.pixels.SDL_MapRGB(fmt, trans_color.r, trans_color.g, trans_color.b)
-
-            ret = sdl2.surface.SDL_SetColorKey( tsurface, sdl2.SDL_TRUE, trans_color );
-            if ret == -1:
+        if(not _HASSDLIMAGE) or (composite_op is not None and composite_op!="None"):
+            tsurface = sdl2.ext.image.load_image(fname)
+            if not tsurface:
                 raise sdl2.ext.SDLError()
-        # end support for blacksrc
 
-        texture = sdl2.render.SDL_CreateTextureFromSurface(self.texture_renderer.renderer,
+            if(composite_op is not None and composite_op!="None"):
+                if(composite_op == "blacksrc"):
+                    trans_color = (0,0,0)
+                elif(composite_op == "greensrc"):
+                    trans_color = (0,255,0)
+                elif(composite_op == "magentasrc"):
+                    trans_color = (255,0,255)
+                else:
+                    raise ValueError, "Composite_op '%s' not recognized/supported." % composite_op
+
+                trans_color = convert_to_color(trans_color)
+                sf = tsurface
+                fmt = sf.format.contents
+
+                if(sf.format.contents.BytesPerPixel==4):
+                    trans_color = sdl2.pixels.SDL_MapRGBA(fmt, trans_color.r, trans_color.g, trans_color.b, trans_color.a)
+                else:
+                    trans_color = sdl2.pixels.SDL_MapRGB(fmt, trans_color.r, trans_color.g, trans_color.b)
+
+                ret = sdl2.surface.SDL_SetColorKey( tsurface, sdl2.SDL_TRUE, trans_color );
+                if ret == -1:
+                    raise sdl2.ext.SDLError()
+
+            texture = sdl2.render.SDL_CreateTextureFromSurface(self.texture_renderer.renderer,
                                                       tsurface)
+        else: # we have SDL image...
+            texture = sdlimage.IMG_LoadTexture(self.texture_renderer.renderer, fname)
+
         if not texture:
             raise sdl2.ext.SDLError()
         t = sdl2.ext.TextureSprite(texture.contents)
 
-        sdl2.surface.SDL_FreeSurface(tsurface)
+        if(tsurface):
+            sdl2.surface.SDL_FreeSurface(tsurface)
 
         return t
 
@@ -797,77 +780,6 @@ class sdl2_DisplayManager(object):
         else:
             self.texture_renderer.fill(rects=list(rect), color=color)
 
-    def make_texture_from_image_tedious(self, img):
-        """Creates a Sprite from a Python imaging Image."""
-        width, height = img.size
-
-        if width < 1:
-            raise ValueError("width must be greater than 0")
-
-        # rtarget =  sdl2.render.SDL_CreateTexture(self.texture_renderer.renderer, sdl2.pixels.SDL_PIXELFORMAT_RGB888,
-        #                                                           sdl2.render.SDL_TEXTUREACCESS_TARGET,
-        #                                                           width, height)
-        # sdl2.SDL_SetTextureBlendMode(rtarget, sdl2.SDL_BLENDMODE_BLEND)
-
-        # txtarget = sdl2.ext.TextureSprite(rtarget)
-
-        rmask = gmask = bmask = amask = 0
-        imgsurface = sdl2.surface.SDL_CreateRGBSurface(0, width, height, 32,
-                                                  rmask, gmask, bmask, amask)
-        if not imgsurface:
-            raise sdl2.ext.SDLError()
-        swtarget = sdl2.ext.SoftwareSprite(imgsurface.contents, True)
-        rtarget = swtarget.surface
-
-        pitch = rtarget.pitch
-        bpp = rtarget.format.contents.BytesPerPixel
-        frac = pitch / bpp
-        clip_rect = rtarget.clip_rect
-        left, right = clip_rect.x, clip_rect.x + clip_rect.w - 1
-        top, bottom = clip_rect.y, clip_rect.y + clip_rect.h - 1
-
-        print((width, height))
-        print(pitch)
-        print(bpp)
-        print(frac)
-        print(clip_rect)
-        # if bpp == 3:
-        #     raise UnsupportedError(line, "24bpp are currently not supported")
-        # if bpp == 2:
-        #     pxbuf = ctypes.cast(rtarget.pixels, ctypes.POINTER(ctypes.c_uint16))
-        # elif bpp == 4:
-        pxbuf = ctypes.cast(rtarget.pixels, ctypes.POINTER(ctypes.c_uint32))
-        # else:
-        #     pxbuf = rtarget.pixels  # byte-wise access.
-
-        #pxbuf = bytes
-        # for y in range(0, height):
-        #     for x in range(0,width):
-        #         pxbuff[int()]
-
-        # casting -- no.
-        # b = (ctypes.c_uint32 * int(width * height / int(4)) )(bytes)
-
-        # for i,b in enumerate(bytes):
-        #     pxbuf[int(i)] = (b)
-        for i,col in enumerate(img.getdata()): #range(0,pitch):
-            # col = mpx
-            # # col = (ord(bytes[i]),ord(bytes[i+1]),ord(bytes[i+2]),ord(bytes[i+3]))
-            #col = (random.randint(0,255),0,0, 128)
-            # pxbuf[int(i)] = prepare_color( col , swtarget)
-            pxbuf[int(i)] = prepare_color( col , swtarget)
-            print("[%05d] copy data %s" % (i,col))
-
-        # Uint32 * pixels = new Uint32[640 * 480];
-        ###sdl2.SDL_UpdateTexture(rtarget, None, pxbuf, width * sizeof(ctypes.c_uint32));
-
-        # sw_sprite = self.load_surface("assets/dmd/smile.png")
-        # tx = self.texture_from_surface(sw_sprite)
-        
-        tx = self.texture_from_surface(swtarget)
-        #self.copy_rect(tx)
-        del swtarget
-        return tx
 
     def make_texture_from_bits(self, bits, width, height):
         if width < 1:
@@ -916,32 +828,8 @@ class sdl2_DisplayManager(object):
         del swtarget
         return tx
 
-    def make_texture_from_bits_fail(self, obj):
-        """Creates a Sprite from an arbitrary object."""
-        if True: #self.sprite_type == TEXTURE:
-            rw = sdl2.rwops.rw_from_object(obj)
-            # TODO: support arbitrary objects.
-            imgsurface = surface.SDL_LoadBMP_RW(rw, True)
-            if not imgsurface:
-                raise sdl2.ext.SDLError()
-            s = self.from_surface(imgsurface.contents, True)
-        else: #elif self.sprite_type == SOFTWARE:
-            rw = sdl2.rwops.rw_from_object(obj)
-            imgsurface = surface.SDL_LoadBMP_RW(rw, True)
-            if not imgsurface:
-                raise sdl2.ext.SDLError()
-            s = SoftwareSprite(imgsurface.contents, True)
-        return s   
-
-
 
     def new_texture(self, width, height, color=(0,0,0,0)):
-        # ts = self.factory.create_texture_sprite(renderer=self.texture_renderer, size=(width,height),
-        #                       pformat=sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,
-        #                       access=sdl2.render.SDL_TEXTUREACCESS_STATIC )
-        # print("New texture created: %s " % ts.texture)
-        # return ts
-
         t =  sdl2.render.SDL_CreateTexture(self.texture_renderer.renderer, sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,
                                                                   sdl2.render.SDL_TEXTUREACCESS_TARGET,
                                                                   width, height)
@@ -950,16 +838,6 @@ class sdl2_DisplayManager(object):
         self.texture_clear(t, color)
         #print("New texture created: %s " % t.contents)
         return sdl2.ext.TextureSprite(t.contents)
-
-
-        # ss = self.factory.create_software_sprite(size=(width, height))
-        # t = self.factory.from_surface(ss.surface,free=False)
-        # #del ss
-        # print("New texture created: %s " % t.texture)
-        # return t #sdl2.ext.TextureSprite(t.contents)
-
-    #dot_tex = factory.create_texture_sprite(texture_renderer, (dots_w*10,dots_h*10), pformat=sdl2.SDL_PIXELFORMAT_RGBA8888, access=sdl2.SDL_TEXTUREACCESS_TARGET) 
-    #sdl2.SDL_SetTextureBlendMode(dot_tex.texture,sdl2.SDL_BLENDMODE_BLEND)
 
 
     def texture_from_surface(self, surface):

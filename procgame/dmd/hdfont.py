@@ -125,18 +125,10 @@ class HDFont(object):
 
         if(font_size is None):
             font_size = self.font_size
+        x = int(x)
+        y = int(y)
 
-        surf = sdl2_DisplayManager.inst().font_render_bordered_text(text, font_alias=self.name, size=font_size, width=None, color=interior_color, bg_color=fill_color, border_color=line_color, border_width=line_width)
-        (w,h) = surf.size
-
-        tmp = Frame(w,h, from_surface=surf)
-
-        # tmp.composite_op = "blacksrc"
-
-        # w = min(w, frame.width)
-        # h = min(h, frame.height)        
-        Frame.copy_rect(dst=frame, dst_x=x, dst_y=y, src=tmp, src_x=0, src_y=0, width=w, height=h, op=self.composite_op)
-        #Frame.copy_rect(dst=frame, dst_x=x, dst_y=y, src=self.bitmap, src_x=char_x, src_y=char_y, width=width, height=self.char_size, op=self.composite_op)
+        w = sdl2_DisplayManager.inst().font_render_bordered_text_Faster(frame.pySurface, {'x':x, 'y':y},text, font_alias=self.name, size=font_size, width=None, color=interior_color, bg_color=fill_color, border_color=line_color, border_width=line_width)
             
         return x+w
 
@@ -333,29 +325,24 @@ def main():
     for char_offset,c in zip(xrange(0,95),lChars):
         # surf = f.textHollow(c, line_color, interior_color, line_width, fill_color)
         
-        surf = sdl2_DisplayManager.inst().font_render_bordered_text(c, font_alias='export_font', size=font_size, border_width=line_width, border_color=line_color, color=interior_color)
-        (w,h) = surf.size
+        char_x = char_size * (char_offset % 10)
+        char_y = char_size * (char_offset / 10)
+    
+        surf = sdl2_DisplayManager.inst().font_render_bordered_text_Faster(frame.pySurface, {'x':char_x, 'y':char_y}, c, font_alias='export_font', size=font_size, border_width=line_width, border_color=line_color, color=interior_color)
+
         (font_width,font_height) = sdl2_DisplayManager.inst().font_get_size(c,'export_font', font_size)
         
         #font_sizes += format(font_width,'x')
         font_sizes  += str(font_width)
         font_sizes += ","
-        F = Frame(width=w, height=h, from_surface=surf)
             
-        char_x = char_size * (char_offset % 10)
-        char_y = char_size * (char_offset / 10)
-
-        Frame.copy_rect(dst=frame, dst_x=char_x, dst_y=char_y, src=F, src_x=0, src_y=0, width=w, height=h, op='copy')
-        #x += width + self.tracking
-
-        
     sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)#, area=(10,10,400,200))
     
     texture_renderer = sdl2_DisplayManager.inst().texture_renderer
     bk = sdl2.SDL_GetRenderTarget(texture_renderer.renderer)
     
     t =  sdl2.render.SDL_CreateTexture(texture_renderer.renderer, sdl2.pixels.SDL_PIXELFORMAT_RGBA8888,
-                                                                  sdl2.render.SDL_TEXTUREACCESS_STREAMING,
+                                                                  sdl2.render.SDL_TEXTUREACCESS_TARGET,
                                                                   width, height)
     #create a new texture and blit the frame to it, then grab bits from that
     texture_renderer.clear((0,0,0,0))

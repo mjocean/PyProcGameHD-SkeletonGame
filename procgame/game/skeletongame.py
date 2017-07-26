@@ -58,6 +58,7 @@ from procgame.yaml_helper import value_for_key
 # from weakref import WeakValueDictionary
 
 from game import config_named
+from procgame.modes.rgbshow import RgbShowPlayer
 
 try:
     # Mac/Linux version
@@ -188,6 +189,11 @@ class SkeletonGame(BasicGame):
             # create a lamp controller for lampshows
             self.lampctrl = lamps.LampController(self)
 
+            ### the rgb show player is a player for rgb lamps 
+            self.rgbshow_player = RgbShowPlayer(game=self, priority=50)
+            self.modes.add(self.rgbshow_player)
+            self.rgbshow_player.reset()
+
             # call load_assets function to load fonts, sounds, etc.
             self.load_assets()
 
@@ -214,6 +220,8 @@ class SkeletonGame(BasicGame):
 
             if(self.use_stock_bonusmode):
                 self.bonus_mode = bonusmode.BonusMode(game=self)
+
+            self.load_settings_and_stats()
 
             #if(self.use_HD_servicemode):
             #    self.service_mode = serviceHD.ServiceModeHD(self, 99, self.fonts['settings-font-small'], self.fonts['settings-font-small'], extra_tests=[])
@@ -340,14 +348,16 @@ class SkeletonGame(BasicGame):
             self.switchmonitor = SwitchMonitor(game=self)
             self.modes.add(self.switchmonitor)
 
-            self.load_settings_and_stats()
-
             # # call reset (to reset the machine/modes/etc)
 
             self.genLayerFromYAML = self.dmdHelper.genLayerFromYAML
 
             self.notify_list = None
             self.curr_delayed_by_mode = None
+
+            if(self.use_stock_attractmode):
+                start_lamp = self.lamps.item_named_or_tagged('start_button')
+                self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
 
         except Exception, e:
             if(hasattr(self,'osc') and self.osc is not None):
@@ -718,13 +728,6 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.dmdHelper)
         self.modes.add(self.switchmonitor)
 
-        if(self.use_stock_attractmode):
-            start_lamp = self.lamps.item_named_or_tagged('start_button')
-            # start_lamp = self.find_item_name('start_button', self.lamps)
-            # if(start_lamp is not None):
-            #     start_lamp = self.lamps[start_lamp]
-            self.attract_mode = Attract(game=self, start_button_lamp=start_lamp)
-
     def start_attract_mode(self):
         self.attract_mode.reset()
         self.modes.add(self.attract_mode) # plays the attract mode and kicks off the game
@@ -784,18 +787,19 @@ class SkeletonGame(BasicGame):
     def load_settings_and_stats(self):
         self.load_game_data('game_default_data.yaml','game_user_data.yaml')
 
+        game_volume = self.load_volume()
+        self.logger.info("VOLUME SET TO: %d / %d" % (game_volume, self.sound.get_max_volume()))
+
         if(self.load_settings('game_default_settings.yaml','game_user_settings.yaml')):
             # settings changed as a result of reconciling with the default template! re-save
+            self.user_settings['Sound']['Initial volume'] = game_volume
             self.logger.warning('settings changed.  Re-Saving!')
             self.save_settings()
 
         self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
         # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
 
-        game_volume = self.user_settings['Sound']['Initial volume']
-        v = game_volume/10.0
-        self.logger.info("VOLUME SET TO: %f" % v)
-        self.sound.set_volume(v)
+        self.user_settings['Sound']['Initial volume'] = game_volume
 
         ## high score stuff:
         self.highscore_categories = []
@@ -832,6 +836,26 @@ class SkeletonGame(BasicGame):
         self.animations = self.asset_mgr.animations
         self.fontstyles = self.asset_mgr.fontstyles
         self.fonts = self.asset_mgr.fonts
+
+    def load_volume(self):
+        try:
+            v_file_path = os.path.join('config/game_user_volume.txt')
+            vol_file = open(v_file_path,'r')
+            vol = int(vol_file.readline())
+            self.logger.info("Read volume file value: %d" % vol)
+        except Exception, e:
+            self.logger.warning("Loading volume failed: %s" % e)
+            vol = 5
+        self.sound.set_volume_idx(vol)
+        return vol
+
+    def save_volume(self):
+        try:
+            v_file_path = os.path.join('config/game_user_volume.txt')
+            vol_file = open(v_file_path,'w')
+            vol_file.write(str(self.sound.get_volume_idx()))
+        except Exception, e:
+            self.logger.warning("Saving volume failed: %s" % e)
 
     def ball_starting(self):
         """ this is auto-called when the ball is actually starting
@@ -923,16 +947,18 @@ class SkeletonGame(BasicGame):
     def volume_down(self):
         """ decrease volume and store the new setting """
         volume = self.sound.volume_down()
-        self.notifyModes('evt_volume_down', args=int(volume), event_complete_fn=None)
+        self.notifyModes('evt_volume_down', args=volume, event_complete_fn=None)
         self.user_settings['Sound']['Initial volume'] = int(volume)
-        self.save_settings()
+        self.save_volume()
+        # self.save_settings()
 
     def volume_up(self):
         """ increase volume and store the new setting """
         volume = self.sound.volume_up()
-        self.notifyModes('evt_volume_up', args=int(volume), event_complete_fn=None)
+        self.notifyModes('evt_volume_up', args=volume, event_complete_fn=None)
         self.user_settings['Sound']['Initial volume'] = int(volume)
-        self.save_settings()
+        self.save_volume()
+        # self.save_settings()
 
     def request_additional_player(self):
         """ attempt to add an additional player, but honor the max_players setting """
@@ -1185,6 +1211,8 @@ class SkeletonGame(BasicGame):
             self.modes.remove(m)
 
         self.lampctrl.stop_show()
+        self.rgbshow_player.stop_all()
+
         self.disableAllLamps()
         self.sound.stop_music()
 

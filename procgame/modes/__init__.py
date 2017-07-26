@@ -11,7 +11,8 @@ __all__ = [
     'dmdhelper',
     'attract',
     'tilt',
-    'switchmonitor'
+    'switchmonitor',
+    'rgbshow'
 ]
 from ballsave import *
 from ballsearch import *
@@ -26,8 +27,10 @@ from dmdhelper import *
 from attract import *
 from tilt import *
 from switchmonitor import *
+from rgbshow import *
 
 from ..game import Mode
+
 class TransitionOutHelperMode(Mode):
     def __init__(self, game, priority, transition, layer):
         super(TransitionOutHelperMode, self).__init__(game=game, priority=priority)
