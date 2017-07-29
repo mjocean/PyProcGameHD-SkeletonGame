@@ -668,6 +668,7 @@ class SkeletonGame(BasicGame):
         # clear the notification list
         self.notify_list = []
         self.event_complete_fn = None
+        self.sg_event_queue = [] 
         self.switchmonitor.cancel_delayed(name='notifyNextMode')
 
         super(SkeletonGame,self).reset()
@@ -842,6 +843,7 @@ class SkeletonGame(BasicGame):
             v_file_path = os.path.join('config/game_user_volume.txt')
             vol_file = open(v_file_path,'r')
             vol = int(vol_file.readline())
+            vol_file.close()
             self.logger.info("Read volume file value: %d" % vol)
         except Exception, e:
             self.logger.warning("Loading volume failed: %s" % e)
@@ -854,6 +856,7 @@ class SkeletonGame(BasicGame):
             v_file_path = os.path.join('config/game_user_volume.txt')
             vol_file = open(v_file_path,'w')
             vol_file.write(str(self.sound.get_volume_idx()))
+            vol_file.close()
         except Exception, e:
             self.logger.warning("Saving volume failed: %s" % e)
 

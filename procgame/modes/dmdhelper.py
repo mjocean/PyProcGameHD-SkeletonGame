@@ -235,26 +235,29 @@ class DMDHelper(Mode):
             if ('HighScores' in yamlStruct):
                 v = yamlStruct['HighScores']
 
-                fields = value_for_key(v,'Order')
                 duration =  value_for_key(v,'duration', 2.0)
                 lampshow = value_for_key(v, 'lampshow')
                 sound = value_for_key(v, 'sound')
+
+                fields = value_for_key(v,'Order')
                 (fnt, font_style) = self.parse_font_data(v, required=False)
 
                 background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
-                lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-                entry_ct = len(self.game.get_highscore_data())
-                for rec in self.game.get_highscore_data():
-                    if fields is not None:
-                        records = [rec[f] for f in fields]
-                    else:
-                        records = [rec['category'], rec['player'], rec['score']]
-                    lT = self.genMsgFrame(records, background, font_key=fnt, font_style=font_style)
+                # lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
+                # entry_ct = len(self.game.get_highscore_data())
+                # for rec in self.game.get_highscore_data():
+                #     if fields is not None:
+                #         records = [rec[f] for f in fields]
+                #     else:
+                #         records = [rec['category'], rec['player'], rec['score']]
+                #     lT = self.genMsgFrame(records, background, font_key=fnt, font_style=font_style)
 
-                    lyrTmp.append(lT, duration)
+                #     lyrTmp.append(lT, duration)
 
-                duration = entry_ct*duration
+                # duration = entry_ct*duration
+                lyrTmp = dmd.ScoresLayer(self.game, fields, fnt, font_style, background, duration)
+                duration = lyrTmp.regenerate()
 
             elif('LastScores' in yamlStruct):
                 v = yamlStruct['LastScores']

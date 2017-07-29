@@ -736,7 +736,12 @@ class ScriptedLayer(Layer):
            # print layer_item['layer']
            if layer_item['layer'] != None:
                layer_item['layer'].reset()
-        
+
+    def regenerate(self):
+        """ calls regenerate on layers that support it """
+        for layer_item in self.script:
+           if layer_item['layer'] != None and hasattr(layer_item['layer'],'regenerate'):
+               layer_item['layer'].regenerate()
 
 class ScriptlessLayer(ScriptedLayer):
     """ displays a set of layers but builds the script internally via helper methods
@@ -768,6 +773,35 @@ class ScriptlessLayer(ScriptedLayer):
         else:
             self.script.append({'layer':layer, 'seconds':seconds, 'callback':callback})
 
+class ScoresLayer(ScriptlessLayer):
+    def __init__(self, game, fields, fnt, font_style, background, duration):
+        super(ScoresLayer, self).__init__(game.dmd.width, game.dmd.height)
+        self.fields = fields
+        self.fnt = fnt
+        self.font_style = font_style
+        self.game = game
+        self.duration = duration
+        self.background = background
+
+    def regenerate(self):
+        self.game.logger.info("re-generating scores layer!!!!!!!!!!!!!!!!!!!!")
+        self.script = []
+        entry_ct = len(self.game.get_highscore_data())
+        for rec in self.game.get_highscore_data():
+            if self.fields is not None:
+                records = [rec[f] for f in self.fields]
+            else:
+                records = [rec['category'], rec['player'], rec['score']]
+            self.game.logger.info("re-generating scores: %s " % str(records))
+            lT = self.game.dmdHelper.genMsgFrame(records, self.background, font_key=self.fnt, font_style=self.font_style)
+
+            self.append(lT, self.duration)
+
+        duration = entry_ct*self.duration
+        return duration
+
+    def reset(self):
+        super(ScoresLayer,self).reset()
 
 class GroupedLayer(Layer):
     """:class:`.Layer` subclass that composites several sublayers (members of its :attr:`layers` list attribute) together."""

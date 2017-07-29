@@ -69,6 +69,7 @@ class Attract(Mode):
             self.start_button_lamp.disable()
 
         if(self.layer is not None):
+            self.layer.regenerate()
             self.layer.reset()
         pass
 
@@ -79,6 +80,16 @@ class Attract(Mode):
     def sw_flipperLwR_active_for_50ms(self, sw):
         self.layer.force_next(True)
         return False
+
+    # def sync_lamps_and_sounds(self):
+    #     next_segment = self.segments[self.layer.script_index]
+    #     if(next_segment.music is not None):
+    #         self.stop_sounds()
+        
+    #     if(next_segment.show is not None):
+    #         self.game.log("Attract: Playing next lampshow: %s" % lampshow_key)
+    #         self.game.lampctrl.play_show(lampshow_key, repeat=True)
+            
 
     def next_both(self):
         self.next_show()
