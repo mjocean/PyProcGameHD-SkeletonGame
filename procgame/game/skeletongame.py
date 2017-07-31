@@ -649,6 +649,47 @@ class SkeletonGame(BasicGame):
 
         self.notifyNextMode()
 
+    def quickNotifyModes(self, event, args=None, event_complete_fn=None, only_active_modes=True):
+        """ this method will notify all AdvencedMode derived modes of the given event.  Modes
+            will be notified in priority order and notifications happen within this run_loop cycle -- that is,
+            the next mode will be notified immediately after the previous mode has executed its event
+            handler method. Modes should not respond to notifications by returning a
+            number of seconds required to complete the handling of this event, because it will be ignored.  
+
+            Setting the only_active_modes=False will notify _all_ known modes, not just active
+            modes.  This will be of _very_ limited utility, however is useful for events such as
+            evt_player_added.
+        """
+
+        if(self.event is not None):
+            #We are still processing an event
+            self.logger.info("NOTE: we are notifying modes about a 'quick' event [%s] while a system event [%s] is still being processed!!" % (event, self.event))
+
+        quick_notify_list = []
+
+        self.logger.info("Skel: preparing to notify modes of 'quick' event %s." % event)
+
+        if(only_active_modes):
+            handlers = [h() for h in self.event_handlers[event] if h() is not None and h() in self.modes]
+        else:
+            handlers = [h() for h in self.event_handlers[event] if h() is not None]
+
+        for h in handlers:
+            self.logger.debug("Skel: quick event '%s' handler found in mode [%s]" % (event, h))
+            quick_notify_list.append(h)
+
+        # note this sort is in reverse priority order because we pop
+        # off the back!
+        quick_notify_list.sort(lambda x, y: x.priority - y.priority)
+
+
+        for h in quick_notify_list:
+            self.logger.debug("Skel: quick event '%s' being handled in mode [%s]" % (event, h))
+            d = h.handle_game_event(event,params=args)
+            if(d is not None) and (d!=0):
+                self.logger.error("modes '%s' has a quick event handler for event [%s] that seems to be requesting additional time.  This is not possible!" % (event, h))
+
+
     # called when you want to fully reset the game
     def reset(self):
         self.logger.info("Skel: RESET()")
@@ -668,7 +709,7 @@ class SkeletonGame(BasicGame):
         # clear the notification list
         self.notify_list = []
         self.event_complete_fn = None
-        self.sg_event_queue = [] 
+        #self.sg_event_queue = []  # <-- do NOT clear the queue, if something is waiting it might matter 
         self.switchmonitor.cancel_delayed(name='notifyNextMode')
 
         super(SkeletonGame,self).reset()
@@ -950,7 +991,7 @@ class SkeletonGame(BasicGame):
     def volume_down(self):
         """ decrease volume and store the new setting """
         volume = self.sound.volume_down()
-        self.notifyModes('evt_volume_down', args=volume, event_complete_fn=None)
+        self.quickNotifyModes('evt_volume_down', args=volume, event_complete_fn=None)
         self.user_settings['Sound']['Initial volume'] = int(volume)
         self.save_volume()
         # self.save_settings()
@@ -958,7 +999,7 @@ class SkeletonGame(BasicGame):
     def volume_up(self):
         """ increase volume and store the new setting """
         volume = self.sound.volume_up()
-        self.notifyModes('evt_volume_up', args=volume, event_complete_fn=None)
+        self.quickNotifyModes('evt_volume_up', args=volume, event_complete_fn=None)
         self.user_settings['Sound']['Initial volume'] = int(volume)
         self.save_volume()
         # self.save_settings()
@@ -973,7 +1014,7 @@ class SkeletonGame(BasicGame):
     def add_player(self):
         """ add another player (even if there are too many); fires evt_player_added to notify modes that care """
         player = super(SkeletonGame, self).add_player()
-        self.notifyModes('evt_player_added', args=(player), event_complete_fn=None, only_active_modes=False)
+        self.quickNotifyModes('evt_player_added', args=(player), event_complete_fn=None, only_active_modes=False)
         return player
 
     def slam_tilted(self):
