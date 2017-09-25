@@ -69,8 +69,8 @@ class Attract(Mode):
             self.start_button_lamp.disable()
 
         if(self.layer is not None):
-            self.layer.regenerate()
             self.layer.reset()
+            self.layer.regenerate()
         pass
 
     def sw_flipperLwL_active_for_50ms(self, sw):

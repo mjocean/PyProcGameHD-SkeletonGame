@@ -709,8 +709,9 @@ class SkeletonGame(BasicGame):
         # clear the notification list
         self.notify_list = []
         self.event_complete_fn = None
-        #self.sg_event_queue = []  # <-- do NOT clear the queue, if something is waiting it might matter 
+        self.sg_event_queue = []
         self.switchmonitor.cancel_delayed(name='notifyNextMode')
+        self.event = None
 
         super(SkeletonGame,self).reset()
 
