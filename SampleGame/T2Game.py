@@ -16,7 +16,7 @@ from procgame.game.skeletongame import run_proc_game
 # these are modes that you define, and probably store in
 # a my_modes folder under this one....
 import my_modes
-from my_modes import BaseGameMode, ExBlankMode
+from my_modes import BaseGameMode, MachineMonitorMode, ExBlankMode
 
 # set up a few more things before we get started 
 # the logger's configuration and format
@@ -47,6 +47,7 @@ class T2Game(SkeletonGame):
 
         self.base_game_mode = BaseGameMode(game=self)
         self.blank_mode = ExBlankMode(game=self)
+        self.machine_monitor = MachineMonitorMode(game=self)
 
         # this is also a reasonable place to setup lists of lamps, switches, drivers, etc.
         # that might be useful in more than one mode.
@@ -55,6 +56,8 @@ class T2Game(SkeletonGame):
                         self.lamps.target3,
                         self.lamps.target4,
                         self.lamps.target5]
+
+        self.define_bonuses('config/bonus_defs.yaml')
 
         # call reset (to reset the machine/modes/etc)
         self.reset()

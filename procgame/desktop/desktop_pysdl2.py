@@ -115,8 +115,6 @@ class Desktop():
             sdl2.SDL_SetRenderTarget(sdl2_DisplayManager.inst().texture_renderer.renderer, bk) # revert back
         else:
             self.draw = self.draw_no_dot_effect
-
-
     
     def add_key_map(self, key, switch_number):
         """Maps the given *key* to *switch_number*, where *key* is one of the key constants in :mod:`pygame.locals`."""
@@ -185,23 +183,6 @@ class Desktop():
 
         sdl2_DisplayManager.Init(self.dots_w, self.dots_h, self.screen_scale,  "PyProcGameHD.  [CTRL-C to exit]", self.screen_position_x,self.screen_position_y, flags, self.dmd_soften)
         sdl2_DisplayManager.inst().fonts_init(None,"Courier")
-
-        # pygame.mouse.set_visible(False)
-
-        # todo: these...
-        # if(self.fullscreen==True):
-        #     opts = pygame.HWPALETTE|pygame.FULLSCREEN|pygame.DOUBLEBUF
-        # elif(self.window_border == False):
-        #     opts =  pygame.NOFRAME  
-        # else:
-        #     opts = 0
-        
-        print("****************")
-        # print(pygame.display.Info())
-        pygame.init()
-        print "WINDOW SET"
-        print("****************")
-
 
     def draw(self, frame):
         """Draw the given :class:`~procgame.dmd.Frame` in the window."""

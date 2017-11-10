@@ -2,13 +2,14 @@ from dmd import *
 from procgame import config
 from random import randrange
 import hdfont
+import logging
 try:
     import cv2
-    import cv2.cv as cv
+    import cv2 as cv
+    from movie import capPropId, getColorProp
     OpenCV_avail = True
     from movie import Movie
 except ImportError:
-    import logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     logging.error("OpenCV is not available on your system.  The MovieLayer (mp4) support is unavailable")
     OpenCV_avail = False
@@ -233,12 +234,18 @@ class MovieLayer(Layer):
     vc = None
     """ this is the video controller that is handling the interface to the video
     it handles the next frame stuff"""
+
+    composite_op = None
+    """ set via transparency_op argument,  value of blacksrc, magentasrc, etc. will cause those pixels to be translated
+        to transparent.  Performance may drop as a result of using this argument
+    """
     
     duration = None
 
-    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None):
+    def __init__(self, opaque=False, hold=True, repeat=False, frame_time=1, movie=None, movie_file_path=None, transparency_op=None):
         if(cv2 is None):
             raise ValueError, "MP4 is unavailable as OpenCV is not installed"
+        # self.logger = logging.getLogger('movie_layer')
 
         super(MovieLayer, self).__init__(opaque)
         self.hold = hold
@@ -247,7 +254,7 @@ class MovieLayer(Layer):
         if(movie is None and movie_file_path is None):
             raise ValueError, "MovieLayer requires either a movie_file_path argument -or- an instantiated movie object"
         elif(movie_file_path is not None):
-            movie = Movie().load(movie_file_path)
+            movie = Movie(movie_file_path)
 
         self.movie = movie
 
@@ -262,6 +269,8 @@ class MovieLayer(Layer):
         
         self.frame_listeners = []
         self.frame_pointer = 0
+
+        self.composite_op = transparency_op
         
         self.frame = Frame(self.movie.width, self.movie.height)
         self.fps = config.value_for_key_path('dmd_framerate', None) 
@@ -277,7 +286,7 @@ class MovieLayer(Layer):
         """Resets the animation back to the first frame."""
         self.frame_pointer = 0
         # and reset the video capture position to 0
-        self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
+        self.movie.vc.set(capPropId("POS_FRAMES"),0)
     
     def add_frame_listener(self, frame_index, listener):
         """Registers a method (``listener``) to be called when a specific 
@@ -315,26 +324,34 @@ class MovieLayer(Layer):
         if (self.frame_pointer >= self.movie.frame_count) and self.frame_time_counter == 0:
             if self.repeat:
                 self.frame_pointer = 0
-                self.movie.vc.set(cv.CV_CAP_PROP_POS_FRAMES,0)
+                self.movie.vc.set(capPropId("POS_FRAMES"),0)
             elif self.hold:
                 self.frame_time_counter = self.frame_time
                 return self.frame
             else:
-                self.frame_time_counter = self.frame_time
+                self.frame_time_counter = 0
                 return None
-            
+        
+        video_frame = None
         if self.frame_time_counter == 0:
             rval, video_frame = self.movie.vc.read()
             self.frame_pointer += 1
             self.frame_time_counter = self.frame_time
 
-        if rval is not None:
-            video_frame = cv2.cvtColor(video_frame,cv2.cv.CV_BGR2RGB)
-            the_frame = cv.fromarray(video_frame)
-            # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
-            surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.movie.width, height=self.movie.height, mode='RGB', composite_op = None)
+            if rval is True and video_frame is not None:
+                # self.logger.info("pulling frame %d / %d" % (self.frame_pointer, self.movie.frame_count))
+                video_frame = cv2.cvtColor(video_frame,getColorProp())
+                the_frame = video_frame #tODO: OpenCV3 fix cv.fromarray(video_frame)
+                # surface = pygame.image.frombuffer(the_frame.tostring(), (self.movie.width, self.movie.height), 'RGB')
+                surf = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=the_frame.tostring(), width=self.movie.width, height=self.movie.height, mode='RGB', composite_op = self.composite_op)
 
-            self.frame.pySurface = surf
+                self.frame.pySurface = surf
+            else:
+                # self.logger.info("ERROR OCCURED [%s] [%s]" % (rval, video_frame))
+                # end movie prematurely
+                self.movie.frame_count = self.frame_pointer - 1
+
+
 
         return self.frame
 
@@ -719,7 +736,12 @@ class ScriptedLayer(Layer):
            # print layer_item['layer']
            if layer_item['layer'] != None:
                layer_item['layer'].reset()
-        
+
+    def regenerate(self):
+        """ calls regenerate on layers that support it """
+        for layer_item in self.script:
+           if layer_item['layer'] != None and hasattr(layer_item['layer'],'regenerate'):
+               layer_item['layer'].regenerate()
 
 class ScriptlessLayer(ScriptedLayer):
     """ displays a set of layers but builds the script internally via helper methods
@@ -751,6 +773,35 @@ class ScriptlessLayer(ScriptedLayer):
         else:
             self.script.append({'layer':layer, 'seconds':seconds, 'callback':callback})
 
+class ScoresLayer(ScriptlessLayer):
+    def __init__(self, game, fields, fnt, font_style, background, duration):
+        super(ScoresLayer, self).__init__(game.dmd.width, game.dmd.height)
+        self.fields = fields
+        self.fnt = fnt
+        self.font_style = font_style
+        self.game = game
+        self.duration = duration
+        self.background = background
+
+    def regenerate(self):
+        self.game.logger.info("re-generating scores layer!!!!!!!!!!!!!!!!!!!!")
+        self.script = []
+        entry_ct = len(self.game.get_highscore_data())
+        for rec in self.game.get_highscore_data():
+            if self.fields is not None:
+                records = [rec[f] for f in self.fields]
+            else:
+                records = [rec['category'], rec['player'], rec['score']]
+            self.game.logger.info("re-generating scores: %s " % str(records))
+            lT = self.game.dmdHelper.genMsgFrame(records, self.background, font_key=self.fnt, font_style=self.font_style)
+
+            self.append(lT, self.duration)
+
+        duration = entry_ct*self.duration
+        return duration
+
+    def reset(self):
+        super(ScoresLayer,self).reset()
 
 class GroupedLayer(Layer):
     """:class:`.Layer` subclass that composites several sublayers (members of its :attr:`layers` list attribute) together."""
@@ -1067,16 +1118,25 @@ class HDTextLayer(TextLayer):
 
     # def __init__(self, x, y, font, justify="left", opaque=False, width=192, height=96, fill_color=None):
 
-    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None):
+    def __init__(self, x, y, font, justify="left", vert_justify=None, opaque=False, width=192, height=96, line_color=None, line_width=0, interior_color=(255,255,255), fill_color=None, fontstyle=None):
         super(HDTextLayer, self).__init__(x,y,font,justify,opaque,width,height,fill_color)
         # self.x = x
         # self.y = y
         # self.width = width
         # self.height = height
-        self.fill_color = fill_color
-        self.interior_color = interior_color
-        self.line_color = line_color
-        self.line_width = line_width
+        if fontstyle != None:
+            
+            self.line_color=fontstyle.line_color
+            self.line_width=fontstyle.line_width
+            self.interior_color=fontstyle.interior_color
+            self.fill_color=fontstyle.fill_color
+            self.style = fontstyle
+        else:
+            self.interior_color = interior_color
+            self.line_color = line_color
+            self.fill_color = fill_color
+            self.line_width = line_width
+        
         self.Vjustify = vert_justify
         # self.font = font
         # self.started_at = None

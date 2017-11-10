@@ -3,9 +3,10 @@ import time
 
 class AttrCollection(object):
     """A collection of :class:`procgame.game.GameItem` objects."""
-    def __init__(self):
+    def __init__(self, name):
         self.__items_by_name = {}
         self.__items_by_number = {}
+        self.name = name or self
     def __getattr__(self, attr):
         try:
             if type(attr) == str or type(attr) == unicode:
@@ -13,7 +14,10 @@ class AttrCollection(object):
             else:
                 return self.__items_by_number[attr]
         except KeyError, e:
-            raise KeyError, "Error looking up key %s: %s" % (attr, e)
+            if(attr is None):
+                raise KeyError, "Something has attempted to reference an item in the collection '%s' using a key with value 'None'" % self.name
+            raise KeyError, "The collection '%s' does not define an element named/numbered '%s' (exception=%s)" % (self.name, attr, e)
+
     def add(self, item, value):
         self.__items_by_name[item] = value
         if hasattr(value, 'number'):
@@ -46,6 +50,20 @@ class AttrCollection(object):
             if tag in item.tags:
                 output.append(item)
         return output
+
+    def item_named_or_tagged(self, identifier):
+        """ returns the first item named *identifier*, or the first 
+            item tagged *identifier* """
+
+        if self.__items_by_name.has_key(identifier):
+            return self.__items_by_name[identifier]
+
+        l = self.items_tagged(identifier)
+        if(len(l)==0):
+            return None
+        elif(len(l)>1):
+            logging.getLogger('SG').warning("Multiple items are tagged '%s' -- only the first will be used." % tag)
+        return l[0]
 
 class GameItem(object):
     """Base class for :class:`Driver` and :class:`Switch`.  Contained in an instance of :class:`AttrCollection` within the :class:`GameController`."""
@@ -82,17 +100,25 @@ class Driver(GameItem):
         GameItem.__init__(self, game, name, number)
         self.logger = logging.getLogger('game.driver')
 
-    def set_color(self, arg):
-        self.logger.debug('set_color failed for Driver %s - is NOT wsRGB', self.name)
+    def set_color(self, arg, time=0):
+        if(self.name in self.game.lamps):      
+            if(arg[0]>128 or arg[1]>128 or arg[2]>128):
+                self.logger.debug('set_color enable %s %s for NON wsRGB' % (self.name, str(arg)))
+                self.enable()
+            else:
+                self.logger.debug('set_color disable %s for NON wsRGB' % self.name)
+                self.disable()
+        else:
+            self.logger.debug('set_color failed for Driver %s - is NOT wsRGB' % self.name)
         pass
 
     def restore_default_color(self):
-        self.logger.debug('restore_color failed for Driver %s - is NOT wsRGB', self.name)
+        self.logger.debug('restore_color failed for Driver %s - is NOT wsRGB' % self.name)
         pass
         
     def disable(self):
         """Disables (turns off) this driver."""
-        self.logger.debug('Driver %s - disable', self.name)
+        self.logger.debug('Driver %s - disable' % self.name)
         self.game.proc.driver_disable(self.number)
         self.last_time_changed = time.time()
     def pulse(self, milliseconds=None):

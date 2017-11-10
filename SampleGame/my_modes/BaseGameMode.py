@@ -1,9 +1,6 @@
 import procgame.game
 from procgame.game import AdvancedMode
-
-import pygame
-from pygame.locals import *
-from pygame.font import *
+import logging
 
 class BaseGameMode(procgame.game.AdvancedMode):
     """
@@ -64,6 +61,7 @@ class BaseGameMode(procgame.game.AdvancedMode):
         player.setState('leftTargets', [False, False, False, False, False])
         player.setState('kickbackEnabled', False)
         
+        
         """
         Notice that progress is stored in the player object, so check with:
             self.game.getPlayerState(key)
@@ -74,20 +72,23 @@ class BaseGameMode(procgame.game.AdvancedMode):
     def evt_ball_starting(self):
         """ an event that gets fired when a ball is starting (for any player) """
 
-        # to use the ball saver, we give it the name of a ball-saver
-        # method to be called when the ball is saved --that is 
-        # defined below
-        self.game.ball_saver_enable(num_balls_to_save=1, time=5, now=True, 
-            allow_multiple_saves=False, callback=self.ballsaved)
+        # since we might actually want to account for time spent in the trough, 
+        # let's reset the timer when the shooter lane goes inactive.
+
         self.game.sound.fadeout_music()
         self.game.sound.play_music('base-music-bgm')
 
-    def ballsaved(self):
-        """ this is the method that we told the ball-saver to call if
-            the ball is saved by the ball-saver; see the call to 
-            ball_saver_enable.  This just shows a message and plays a
-            sound but does NOT launch balls.  The ballsaver/trough
-            handle this for us!
+    def sw_shooter_inactive_for_250ms(self, sw):
+        # ball saver syntax has changed.  We no longer need to supply a callback
+        # method instead, evt_ball_saved() will be called if a ball is saved.
+        # to enable it, use this 
+        # (defaults are 1 ball, save time length is based on service mode setting)
+
+        self.game.enable_ball_saver()
+        
+
+    def evt_ball_saved(self):
+        """ this event is fired to notify us that a ball has been saved
         """
         self.game.log("BaseGameMode: BALL SAVED from Trough callback")
         self.game.sound.play('ball_saved')
@@ -279,12 +280,14 @@ class BaseGameMode(procgame.game.AdvancedMode):
     def sw_standupMidL_active(self, sw): 
         self.game.setPlayerState('standupSwitchL',True)
         self.game.lamps.standupMidL.enable()
+        self.game.bonus("loop")
         self.checkAllSwitches()
         return procgame.game.SwitchContinue 
         
     def sw_standupMidC_active(self, sw):
         self.game.setPlayerState('standupSwitchC',True)
         self.game.lamps.standupMidC.enable()
+        self.game.bonus("reverb")
         self.checkAllSwitches()
         return procgame.game.SwitchContinue
         
@@ -310,6 +313,7 @@ class BaseGameMode(procgame.game.AdvancedMode):
                 self.game.setPlayerState('standupSwitchC', False)
                 self.game.setPlayerState('standupSwitchR', False)
         else:
+                self.game.score(10)
                 self.game.sound.play('target')
 
     """ An alternate way of handling a bank of related switches

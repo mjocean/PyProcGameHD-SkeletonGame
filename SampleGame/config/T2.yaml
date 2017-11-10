@@ -217,6 +217,7 @@ PRCoils:
         ballsearch: True
     plunger:
         number: C09
+        tags: autoPlunger # add this tag to support autoplunging on ball save
     lockTop:
         number: C10
         ballsearch: True
@@ -272,6 +273,7 @@ PRLamps:
         number: L15
     shootAgain:
         number: L16
+        tags: shoot_again
     mouth:
         number: L17
     kickback:

@@ -12,11 +12,12 @@ hdfont_path: ./assets/fonts/
 
 
 default_modes:  # these are the default provided modes by SkeletonGame; turn them off here.
-    score_display: True
+    # score_display: True
+    score_display: HD # if HD, the new score display is used: see sample/config/new_score_display.yaml
     bonus_tally: True
     osc_input: True
     service_mode: True
-
+    ball_search: True   # indicates the game should use yaml tags for "smart" ball search 
 pinproc_class: procgame.fakepinproc.FakePinPROC # comment out this line when using a real P-ROC. 
 
 # all of this is for the hdDMD

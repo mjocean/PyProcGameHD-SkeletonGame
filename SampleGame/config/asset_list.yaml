@@ -22,6 +22,8 @@ LampShows:
 - key: 'attract_show_2'
   file: 'attract_show_2.lampshow'  
 Animations:
+- key: missing
+  file: missing.png
 - key: 't800-war'
   file: 'explosion1_64x48/explosion1_%04d.png'
   frame_time : 2
@@ -44,9 +46,15 @@ Animations:
 - key: 'chrome'
   file: 'light_texture.png'  
 - key: 'dark_chrome'
-  file: 'texture.png'  
+  file: 'texture.png'
+- key: 'status_bg'
+  file: light_texture.png
 Fonts:
   FontStyles:
+  - key: status_font_style
+    interior_color: [200,20,20]
+    line_width: 1
+    line_color: [20,20,20]
   - key: weird
     interior_color:
       - 0
@@ -68,6 +76,9 @@ Fonts:
       - 0
       - 128
   HDFonts:
+  - key: 'status_font'
+    file: 'Oswald-Heavy.ttf'
+    size: 28
   - key: 'default'  # NOTE: The font keyed 'default' is used if a specific name cannot be found!
     file: 'Oswald-Heavy.ttf'
     size: 15
@@ -192,7 +203,7 @@ Audio:
   Voice:
     - key: 'ss_successV'
       file: 'DirectHit1.ogg'
-      volume: 0.8
+      # volume: 0.8
     - key: 'ss_missV'
       file: 'YouMissed2.ogg'
       volume: 0.8

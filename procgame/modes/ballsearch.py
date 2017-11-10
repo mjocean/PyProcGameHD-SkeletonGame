@@ -71,13 +71,14 @@ class BallSearch(Mode):
 				# the switch, and then call it using getattr()
 				if sw_state_fn():
 					schedule_search = 0
+					break
 
 			if schedule_search:
 				self.cancel_delayed(name='ball_search_countdown');
 				self.delay(name='ball_search_countdown', event_type=None, delay=self.countdown_time, handler=self.perform_search, param=0)
 				self.logger.debug("RESET via '%s'; will search in %ds." % (sw, self.countdown_time))
 			else:
-				self.logger.debug("RESET via '%s'; next search is not scheduled.")
+				self.logger.debug("RESET (requested); next search is not scheduled due to current switch states.")
 
 	def stop(self,sw):
 		self.logger.debug("countdown STOPPED via '%s'" % ("" if sw is None else sw))
@@ -94,7 +95,7 @@ class BallSearch(Mode):
 		if (completion_wait_time != 0):
 			self.logger.info("Initiated")
 			if(silent is False):
-				self.game.set_status("Balls Missing") # Replace with permanent message
+				self.game.notifyModes('evt_balls_missing', args=None, event_complete_fn=None)
 		self.completion_handler = completion_handler
 		delay = .150
 		for coil in self.coils:
@@ -115,9 +116,10 @@ class BallSearch(Mode):
 	def start_special_handler_modes(self):
 		d = 0
 		for special_handler_mode in self.special_handler_modes:
-			self.game.modes.add(special_handler_mode)
-			self.delay(name='remove_special_handler_mode', event_type=None, delay=d, handler=self.remove_special_handler_mode, param=special_handler_mode)
-			d+=3
+			if(special_handler_mode not in self.game.modes):
+				self.game.modes.add(special_handler_mode)
+				self.delay(name='remove_special_handler_mode', event_type=None, delay=d, handler=self.remove_special_handler_mode, param=special_handler_mode)
+				d+=3
 		if(self.completion_handler is not None):
 			self.delay(name='completion_handler', event_type=None, delay=d, handler=self.completion_handler)
 

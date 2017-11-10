@@ -1,0 +1,104 @@
+ScoreLayout:       
+    SinglePlayer:
+        Score:
+            visible: True # don't make this invisible...
+            font: score_1p
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: center
+            v_justify: center
+            x:  0.5
+            y: 0.5
+            Background: flames
+        CreditIndicator:                  
+            visible: True # toggle this to False to make this invisible
+            format: FREE PLAY
+            font: score_sub
+            font_style: 
+                interior_color: [192, 192, 96]
+                line_width: 1
+                line_color: [128, 128, 0]
+            x:  0.05 # values can be 0.0 to 1.0 as percentage of display
+            y: 1.0 # whole numbers are taken as literal X-Y dimensions
+            h_justify: left     # the text will be positioned on a point
+            v_justify: bottom   # relative to the justification
+        BallNumber:
+            visible: True # toggle this to False to make this invisible
+            format: BALL _
+            font: score_sub
+            font_style: 
+                interior_color: [192, 192, 96]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: right
+            v_justify: bottom
+            x:  0.95
+            y: 1.0
+        Background: 
+            Animation: 
+                Name: dark_chrome
+        Foreground:
+            animation_layer: 
+                name: t800-war
+                x: 0.5
+                y: 0.5
+    MultiPlayer:
+        Background: # if omitted here, Singleplayer value is used.  Set to None to disable
+            Animation: 
+                Name: chrome
+        Foreground: None # set to None to disable
+        # CreditIndicator: # if you define these here too, they replace the others
+        # BallNumber:   # as above
+        ActivePlayer:
+            font: score_1p
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            in_place_if_active: False
+            h_justify: center
+            v_justify: center
+            x:  0.5
+            y: 0.5
+        PlayerOne:
+            font: score_sub
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: left
+            v_justify: top
+            x:  1
+            y:  1
+        PlayerTwo:
+            font: score_sub
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: right
+            v_justify: top
+            x:  -1
+            y: 1
+        PlayerThree:
+            font: score_sub
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: left
+            v_justify: bottom
+            x: 1
+            y: 0.75 
+        PlayerFour:
+            font: score_sub
+            font_style: 
+                interior_color: [255, 255, 128]
+                line_width: 1
+                line_color: [128, 128, 0]
+            h_justify: right
+            v_justify: bottom
+            x: -1
+            y: 0.75

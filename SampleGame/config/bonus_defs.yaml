@@ -1,0 +1,5 @@
+BonusDefs:
+  - reverb:
+      points: 300
+  - loop:
+      points: 200

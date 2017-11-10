@@ -7,6 +7,7 @@ import os
 import sys
 import yaml
 import logging
+import timeit
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 from procgame.yaml_helper import value_for_key
 
@@ -33,6 +34,7 @@ class AssetManager(object):
     game = None
 
     loaded_map = {}
+    loaded_assets_files = []
     animations = DictWithDefault(default_miss_key='missing')
     lengths = DictWithDefault(default_miss_key='missing')
     fonts = DictWithDefault(default_miss_key='default')
@@ -82,6 +84,8 @@ class AssetManager(object):
         self.logger = logging.getLogger('game.assets')
         self.game = game
         self.dmd_path = game.dmd_path
+        
+        
         # self.screen=game.desktop.screen
         # pygame.font.init()
         # p = pygame.font.match_font('Arial')
@@ -98,6 +102,7 @@ class AssetManager(object):
             self.loadConfig(game.curr_file_path,yaml_file)
 
         splash_file = self.value_for_key_path('UserInterface.splash_screen', None)
+        self.single_line = self.value_for_key_path('UserInterface.single_line', False)
         self.rect_color = self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255))
         self.inner_rect_color = self.value_for_key_path('UserInterface.progress_bar.fill',(255,84,84,255))
         self.bar_x = self.value_for_key_path('UserInterface.progress_bar.x_center', 0.5)
@@ -128,6 +133,7 @@ class AssetManager(object):
 
         self.load()
 
+
     def updateProgressBar(self, displayType,fname):
         if(self.splash_image is not None):
             sdl2_DisplayManager.inst().screen_blit(self.splash_image, expand_to_fill=True)
@@ -140,12 +146,17 @@ class AssetManager(object):
 
         sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True) 
 
-        s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
-        tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-        sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
-
-        tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-        sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
+        if (self.single_line):
+            s = "Loading %s: [%06d] of [%06d]: %s" % (displayType, self.numLoaded+1,self.total, fname)
+            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+        else:
+            s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
+            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+    
+            tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
 
 
     #   self.screen.blit(surf,(self.prog_bar_x,self.prog_bar_y + (1.1 * self.prog_bar_height)) )
@@ -165,7 +176,7 @@ class AssetManager(object):
         pygame.display.flip()
 
 
-    def loadIntoCache(self,key,frametime=2,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
+    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
         if(file==None):
             file=key + '.vga.dmd.zip'
         
@@ -184,12 +195,12 @@ class AssetManager(object):
             self.lengths[key] = tmp.frames[-1]
             if(len(tmp.frames)==1):
                 holdLastFrame = True
-                self.logger.error("Single frame animtation '%s'; setting holdLastFrame to True" % file)
+                # self.logger.info("Single frame animtation '%s'; setting holdLastFrame to True" % file)
 
         if(streaming_load):
-            self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file)
+            self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file, transparency_op=composite_op)
         else:
-            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame) 
+            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque) 
 
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
@@ -197,17 +208,43 @@ class AssetManager(object):
         self.numLoaded += 1
 
     def load(self):
+        l = logging.getLogger("PIL.PngImagePlugin")
+        l.setLevel(logging.WARNING)
+        l = logging.getLogger("game.assets")
+        l.setLevel(logging.WARNING)        
+        l = logging.getLogger("game.sound")
+        l.setLevel(logging.WARNING)        
+        l = logging.getLogger("game.dmdcache")
+        l.setLevel(logging.WARNING)        
         anims = self.value_for_key_path(keypath='Animations', default={}) or list()
         fonts = self.value_for_key_path(keypath='Fonts', default={}) or list()
         hfonts = value_for_key(fonts,'HDFonts',{}) or list()
         rfonts = value_for_key(fonts,'DMDFonts',{}) or list()
         fontstyles = value_for_key(fonts,'FontStyles',{}) or list()
         lamps = self.value_for_key_path(keypath='LampShows', default={}) or list() 
+        rgbshows = self.value_for_key_path(keypath='RGBShows', default={}) or list() 
         sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
         music = value_for_key(sounds,'Music',{}) or list()
         effects = value_for_key(sounds,'Effects',{}) or list() 
         voice = value_for_key(sounds,'Voice',{}) or list()
         
+        paths = self.value_for_key_path(keypath='AssetListFiles', default={}) or list()
+        #if there was a list of files to load, then load those
+        for path in paths:
+            self.loaded_assets_files.append(path)
+            self.values = yaml.load(open(path, 'r'))
+            anims += self.value_for_key_path(keypath='Animations', default={}) or list()
+            fonts = self.value_for_key_path(keypath='Fonts') or list()
+            hfonts += value_for_key(fonts,'HDFonts',{}) 
+            rfonts += value_for_key(fonts,'DMDFonts',{}) or list()
+            fontstyles += value_for_key(fonts,'FontStyles',{}) or list()
+            lamps += self.value_for_key_path(keypath='LampShows', default={}) or list() 
+            rgbshows += self.value_for_key_path(keypath='RGBShows', default={}) or list() 
+            sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
+            music += value_for_key(sounds,'Music',{}) or list()
+            effects += value_for_key(sounds,'Effects',{}) or list() 
+            voice += value_for_key(sounds,'Voice',{}) or list()
+
         # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
         self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
 
@@ -217,7 +254,6 @@ class AssetManager(object):
                 k  = value_for_key(l,'key')
                 fname = value_for_key(l,'file')
                 self.updateProgressBar("Lampshows", fname)
-                # self.lampshows = self.game.sound.register_music(k,self.game.music_path+fname, volume=volume)            
                 f = self.game.lampshow_path + fname
                 current = 'Lampshow: [%s]: %s, %s ' % (k, f, fname)
                 self.game.lampctrl.register_show(k, f)
@@ -231,6 +267,16 @@ class AssetManager(object):
                         raise ValueError, "Name '%s' specified in lampshow does not match a driver in the machine yaml." % tr.name
 
                 self.numLoaded += 1            
+
+            for l in rgbshows:
+                k  = value_for_key(l,'key')
+                fname = value_for_key(l,'file')
+                self.updateProgressBar("RGBShows", fname)
+                f = self.game.lampshow_path + fname
+                current = 'RGBshow: [%s]: %s, %s ' % (k, f, fname)
+                self.game.rgbshow_player.load(k, f)
+                self.numLoaded += 1            
+
             for f in hfonts:
                 k  = value_for_key(f,'key')
                 sname = value_for_key(f,'systemName',k)
@@ -278,8 +324,11 @@ class AssetManager(object):
                 y  = value_for_key(anim, 'y_loc', 0)
                 streaming_load  = value_for_key(anim, 'streamingMovie', False)
                 current = 'Animation: [%s]: %s' % (k, f)
+                # started = timeit.time.time()
+                started = timeit.time.time()
                 self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load)
-
+                time_taken = timeit.time.time() - started
+                self.logger.info("loading visual asset took %.3f seconds" % time_taken)
         except:
             self.logger.error("===ASSET MANAGER - ASSET FAILURE===")
             self.logger.error(current)
@@ -299,8 +348,9 @@ class AssetManager(object):
             k  = value_for_key(s,'key')
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
+            is_voice = value_for_key(s, 'voice', False)
             self.updateProgressBar("Audio SFX", fname)
-            self.game.sound.register_sound(k,self.game.sfx_path+fname, volume=volume)
+            self.game.sound.register_sound(k,self.game.sfx_path+fname, volume=volume, is_voice=is_voice)
             self.numLoaded += 1
 
         for s in voice:
@@ -308,7 +358,7 @@ class AssetManager(object):
             fname = value_for_key(s,'file')
             volume = value_for_key(s,'volume',.5)
             self.updateProgressBar("Audio Voices", fname)
-            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume) #, is_voice=True)
+            self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume, is_voice=True)
             self.numLoaded += 1
 
 

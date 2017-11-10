@@ -37,7 +37,7 @@ class Frame(object):
         self.y_offset = self.width*4 # every y_offset Bytes is the next line
         self.font_dots = []
 
-    def copy_rect(dst, dst_x, dst_y, src, src_x, src_y, width, height, op="copy", blendmode=None, alpha=None):
+    def copy_rect(dst, dst_x, dst_y, src, src_x, src_y, width, height, op="copy", blendmode=None, alpha=None, dest_rect=None):
         """Static method which performs some type checking before calling :meth:`pinproc.DMDBuffer.copy_to_rect`."""
 
         # print "copy_rect(dst_x=%d, dst_y=%d, src_x=%d, src_y=%d, width=%d, height=%d)" % (dst_x, dst_y, src_x, src_y, width, height)
@@ -50,7 +50,8 @@ class Frame(object):
         #     width = src.width
         # if(height > src.height):
         #     height = src.height
-        dest_rect = (int(dst_x),int(dst_y),int(width),int(height))
+        if(dest_rect is None):
+            dest_rect = (int(dst_x),int(dst_y),int(width),int(height))
 
         # """ 1.8.0: BLEND_ADD, BLEND_SUB, BLEND_MULT, BLEND_MIN, BLEND_MAX 
         #  in 1.8.1: BLEND_RGBA_ADD, BLEND_RGBA_SUB, BLEND_RGBA_MULT, BLEND_RGBA_MIN, 
@@ -171,15 +172,19 @@ class Frame(object):
         # self.pySurface = newSurf
         # self.font_dots = []
 
-    def rotozoom(self,rotation=0, scale=1, origin=None):
-        """ Returns a rotated and possibly scaled version of the original frame """
+    def rotozoom(self,rotation=0, scale=1, origin=None, flip=0):
+        """ Returns a rotated and possibly scaled version of the original frame 
+            flip == 0 --> no flip
+            flip == 1 --> flips horiz
+            flip == 2 --> flips vert 
+        """
         # resizes a frame...
         (sw, sh) = (self.width*scale, self.height*scale)
         dstrect = (0, 0, int(sw), int(sh))
 
         F = Frame(self.width, self.height)
 
-        sdl2_DisplayManager.inst().roto_blit(self.pySurface, F.pySurface, dstrect, None, angle=rotation, origin=origin)
+        sdl2_DisplayManager.inst().roto_blit(self.pySurface, F.pySurface, dstrect, None, angle=rotation, origin=origin, flip=flip)
 
         return F
         # del self.pySurface

@@ -4,19 +4,22 @@ __all__ = [
     'drops'
     'replay',
     'scoredisplay',
+    'scoredisplayhd'
     'service',
     'trough',
     'OSC',
     'dmdhelper',
     'attract',
     'tilt',
-    'switchmonitor'
+    'switchmonitor',
+    'rgbshow'
 ]
 from ballsave import *
 from ballsearch import *
 from drops import *
 from replay import *
 from score_display import *
+from score_display_hd import *
 from trough import *
 from service import *
 from osc import *
@@ -24,8 +27,10 @@ from dmdhelper import *
 from attract import *
 from tilt import *
 from switchmonitor import *
+from rgbshow import *
 
 from ..game import Mode
+
 class TransitionOutHelperMode(Mode):
     def __init__(self, game, priority, transition, layer):
         super(TransitionOutHelperMode, self).__init__(game=game, priority=priority)

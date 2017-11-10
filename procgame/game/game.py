@@ -40,13 +40,13 @@ class GameController(object):
     modes = None
     """An instance of :class:`ModeQueue`, which manages the presently active modes."""
     
-    coils = AttrCollection()
+    coils = AttrCollection("drivers")
     """An :class:`AttrCollection` of :class:`Driver` objects.  Populated by :meth:`load_config`."""
-    lamps = AttrCollection()
+    lamps = AttrCollection("lamps")
     """An :class:`AttrCollection` of :class:`Driver` objects.  Populated by :meth:`load_config`."""
-    switches = AttrCollection()
+    switches = AttrCollection("switches")
     """An :class:`AttrCollection` of :class:`Switch` objects.  Populated by :meth:`load_config`."""
-    leds = AttrCollection()
+    leds = AttrCollection("leds")
     """An :class:`AttrCollection` of :class:`LED` objects.  Populated by :meth:`load_config`."""
     
     ball = 0
@@ -371,33 +371,83 @@ class GameController(object):
         
         See also: :meth:`save_settings`
         """
+        settings_changed = False
+
         self.user_settings = {}
         self.settings = yaml.load(open(template_filename, 'r'))
         if os.path.exists(user_filename):
             self.user_settings = yaml.load(open(user_filename, 'r'))
         
+        # this pass ensures the user settings include everything in the 
+        # game settings by assigning defaults for anything missing
         for section in self.settings:
             for item in self.settings[section]:
                 if not section in self.user_settings:
                     self.user_settings[section] = {}
+                    settings_changed = True
+                if not item in self.user_settings[section]:
+                    settings_changed = True
+                    self.logger.error("Missing setting in user settings file; will be replaced with default:\n%s:{%s}\n-------" % (section,item))                        
                     if 'default' in self.settings[section][item]:
                         self.user_settings[section][item] = self.settings[section][item]['default']
                     else:
                         self.user_settings[section][item] = self.settings[section][item]['options'][0]
-                elif not item in self.user_settings[section]:
-                    if 'default' in self.settings[section][item]:
-                        self.user_settings[section][item] = self.settings[section][item]['default']
-                    else:
-                        self.user_settings[section][item] = self.settings[section][item]['options'][0]
+                else:
+                    if 'increments' not in self.settings[section][item]:
+                        if(self.user_settings[section][item] not in self.settings[section][item]['options']):
+                            settings_changed = True
+                            self.logger.error("Invalid value found in user settings file; will be replaced with default:\n%s:{%s}\n-------" % (section,item))
+                            if 'default' in self.settings[section][item]:
+                                self.user_settings[section][item] = self.settings[section][item]['default']
+                            else:
+                                self.user_settings[section][item] = self.settings[section][item]['options'][0]
+
+
+        # this pass logs settings that occur in the user settings 
+        # but not in game settings and removes them
+        invalid_sections = []
+        for section in self.user_settings:
+            if(section not in self.settings):
+                settings_changed = True
+                self.logger.error("Deprecated section found in user settings file; will be removed:\n%s\n-------" % section)
+                invalid_sections.append(section)        
+            else:
+                invalid_items = []
+                for item in self.user_settings[section]:
+                    if item not in self.settings[section]:
+                        settings_changed = True
+                        self.logger.error("Deprecated setting found in user settings file; will be removed:\n%s:{%s}\n-------" % (section, item))
+                        invalid_items.append(item)
+                for item in invalid_items:
+                    self.user_settings[section].pop(item)
+        for section in invalid_sections:
+            self.user_settings.pop(section)
+
+        return settings_changed
+
 
     def save_settings(self, filename):
         """Writes the game settings to *filename*.  See :meth:`load_settings`."""
         if os.path.exists(filename):
+            if os.path.exists(filename+'.bak'):
+                os.remove(filename+'.bak')
+            os.rename(filename, filename+'.bak')
+            
+        if os.path.exists(filename):
             os.remove(filename)
-        #stream = file(filename, 'w')
+
         stream = open(filename, 'w')
         yaml.dump(self.user_settings, stream)
         file.close(stream)
+
+        if os.path.getsize(filename) == 0:
+            self.logger.error( " ****** CORRUPT GAME USER SETTINGS FILE REPLACING WITH CLEAN DATA  --- restoring last copy ****************")
+            #remove bad file
+            os.remove(filename)
+            os.rename(filename+'.bak', filename)
+        else:         
+            self.logger.info("Settings saved to " + str(filename))
+       
 
     def load_game_data(self, template_filename, user_filename):
         """Loads the YAML game data configuration file.  This file contains
@@ -408,10 +458,20 @@ class GameController(object):
         See also: :meth:`save_game_data`
         """
         self.game_data = {}
-        template = yaml.load(open(template_filename, 'r'))
+        template_file = open(template_filename,'r')
+        template = yaml.load(template_file)
+        file.close(template_file)
+
         if os.path.exists(user_filename):
-            self.game_data = yaml.load(open(user_filename, 'r'))
-        
+            if os.path.getsize(user_filename) == 0:
+                self.logger.error(  " ****************   CORRUPT DATA FILE REPLACING WITH CLEAN DATA  --- ****************")
+                os.remove(user_filename)
+                os.rename(user_filename+'.bak', user_filename)
+
+            user_filename_file = open(user_filename, 'r')
+            self.game_data = yaml.load(user_filename_file)
+            file.close(user_filename_file)
+
         if template:
             for key, value in template.iteritems():
                 if key not in self.game_data:
@@ -420,11 +480,19 @@ class GameController(object):
     def save_game_data(self, filename):
         """Writes the game data to *filename*.  See :meth:`load_game_data`."""
         if os.path.exists(filename):
-            os.remove(filename)
-        #stream = file(filename, 'w')
+            if os.path.exists(filename+'.bak'):
+                os.remove(filename+'.bak')
+            os.rename(filename, filename+'.bak')
+
         stream = open(filename, 'w')
         yaml.dump(self.game_data, stream)
         file.close(stream)
+        #now check for successful write, if not restore backup file
+        if os.path.getsize(filename) == 0:
+            self.logger.info(  " ****************   CORRUPT DATA FILE REPLACING WITH CLEAN DATA  --- restoring last copy ****************")
+            #remove bad file
+            os.remove(filename)
+            os.rename(filename+'.bak', filename)
 
     def enable_flippers(self, enable):
         #return True
@@ -435,10 +503,10 @@ class GameController(object):
             main_coil = self.coils[flipper+'Main']
             if self.coils.has_key(flipper+'Hold'): 
                 style = 'wpc'
-                self.logger.info("%sabling WPC style flipper" % "En" if enable else "Dis")
+                self.logger.info("%sabling WPC style flipper" % ("En" if enable else "Dis"))
                 hold_coil = self.coils[flipper+'Hold']
             else: 
-                self.logger.info("%sabling Stern style flipper" % "En" if enable else "Dis")
+                self.logger.info("%sabling Stern style flipper" % ("En" if enable else "Dis"))
                 style = 'stern'
             switch_num = self.switches[flipper].number
 
