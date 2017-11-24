@@ -1,4 +1,4 @@
-from procgame import dmd 
+from procgame import dmd
 from procgame.dmd.sdl2_displaymanager import sdl2_DisplayManager
 import sdl2
 """
@@ -45,7 +45,7 @@ class AssetManager(object):
     # screen = None
     # pygF = None
     total = ""
-    
+
     def value_for_key_path(self, keypath, default=None):
         return value_for_key(self.values,keypath, default)
 
@@ -68,7 +68,7 @@ class AssetManager(object):
         if not os.path.exists(asset_config_path):
             self.logger.warning('No asset configuration file found at %s' % path)
 
-            raise ValueError, "No asset configuration file found at '" + path + "'" 
+            raise ValueError, "No asset configuration file found at '" + path + "'"
 
         self.logger.info('asset configuration found at %s' % path)
         try:
@@ -84,8 +84,8 @@ class AssetManager(object):
         self.logger = logging.getLogger('game.assets')
         self.game = game
         self.dmd_path = game.dmd_path
-        
-        
+
+
         # self.screen=game.desktop.screen
         # pygame.font.init()
         # p = pygame.font.match_font('Arial')
@@ -144,7 +144,7 @@ class AssetManager(object):
         sdl2_DisplayManager.inst().draw_rect(self.rect_color, (self.prog_bar_x,self.prog_bar_y,self.prog_bar_width,self.prog_bar_height), False)
         percent = int (float(self.numLoaded + 1)/float(self.total) * self.prog_bar_width)
 
-        sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True) 
+        sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True)
 
         if (self.single_line):
             s = "Loading %s: [%06d] of [%06d]: %s" % (displayType, self.numLoaded+1,self.total, fname)
@@ -154,7 +154,7 @@ class AssetManager(object):
             s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
             tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
             sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
-    
+
             tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
             sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
 
@@ -168,7 +168,7 @@ class AssetManager(object):
                 if event.key.keysym.sym == sdl2.SDLK_ESCAPE:
                     self.game.end_run_loop()
                     sys.exit()
-   
+
         # pygame.display.flip()
 
     def clearScreen(self):
@@ -176,10 +176,10 @@ class AssetManager(object):
         pygame.display.flip()
 
 
-    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False):
+    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False, streaming_png=False, png_stream_cache=False):
         if(file==None):
             file=key + '.vga.dmd.zip'
-        
+
         self.updateProgressBar("Animations", file)
 
         tmp = None
@@ -188,7 +188,7 @@ class AssetManager(object):
             #print("quick loaded '%s'" % key)
         else:
             if(not streaming_load):
-                tmp = dmd.Animation().load(self.dmd_path + file , composite_op=composite_op)
+                tmp = dmd.Animation().load(self.dmd_path + file , composite_op=composite_op, use_streaming_mode = streaming_png, png_stream_cache=png_stream_cache)
             self.loaded_map[file] = key
 
         if(tmp is not None):
@@ -200,7 +200,7 @@ class AssetManager(object):
         if(streaming_load):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file, transparency_op=composite_op)
         else:
-            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque) 
+            self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque)
 
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
@@ -211,23 +211,23 @@ class AssetManager(object):
         l = logging.getLogger("PIL.PngImagePlugin")
         l.setLevel(logging.WARNING)
         l = logging.getLogger("game.assets")
-        l.setLevel(logging.WARNING)        
+        l.setLevel(logging.WARNING)
         l = logging.getLogger("game.sound")
-        l.setLevel(logging.WARNING)        
+        l.setLevel(logging.WARNING)
         l = logging.getLogger("game.dmdcache")
-        l.setLevel(logging.WARNING)        
+        l.setLevel(logging.WARNING)
         anims = self.value_for_key_path(keypath='Animations', default={}) or list()
         fonts = self.value_for_key_path(keypath='Fonts', default={}) or list()
         hfonts = value_for_key(fonts,'HDFonts',{}) or list()
         rfonts = value_for_key(fonts,'DMDFonts',{}) or list()
         fontstyles = value_for_key(fonts,'FontStyles',{}) or list()
-        lamps = self.value_for_key_path(keypath='LampShows', default={}) or list() 
-        rgbshows = self.value_for_key_path(keypath='RGBShows', default={}) or list() 
+        lamps = self.value_for_key_path(keypath='LampShows', default={}) or list()
+        rgbshows = self.value_for_key_path(keypath='RGBShows', default={}) or list()
         sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
         music = value_for_key(sounds,'Music',{}) or list()
-        effects = value_for_key(sounds,'Effects',{}) or list() 
+        effects = value_for_key(sounds,'Effects',{}) or list()
         voice = value_for_key(sounds,'Voice',{}) or list()
-        
+
         paths = self.value_for_key_path(keypath='AssetListFiles', default={}) or list()
         #if there was a list of files to load, then load those
         for path in paths:
@@ -235,21 +235,21 @@ class AssetManager(object):
             self.values = yaml.load(open(path, 'r'))
             anims += self.value_for_key_path(keypath='Animations', default={}) or list()
             fonts = self.value_for_key_path(keypath='Fonts') or list()
-            hfonts += value_for_key(fonts,'HDFonts',{}) 
+            hfonts += value_for_key(fonts,'HDFonts',{})
             rfonts += value_for_key(fonts,'DMDFonts',{}) or list()
             fontstyles += value_for_key(fonts,'FontStyles',{}) or list()
-            lamps += self.value_for_key_path(keypath='LampShows', default={}) or list() 
-            rgbshows += self.value_for_key_path(keypath='RGBShows', default={}) or list() 
+            lamps += self.value_for_key_path(keypath='LampShows', default={}) or list()
+            rgbshows += self.value_for_key_path(keypath='RGBShows', default={}) or list()
             sounds = self.value_for_key_path(keypath='Audio', default={}) or list()
             music += value_for_key(sounds,'Music',{}) or list()
-            effects += value_for_key(sounds,'Effects',{}) or list() 
+            effects += value_for_key(sounds,'Effects',{}) or list()
             voice += value_for_key(sounds,'Voice',{}) or list()
 
         # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
         self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
 
         try:
-            current = ""            
+            current = ""
             for l in lamps:
                 k  = value_for_key(l,'key')
                 fname = value_for_key(l,'file')
@@ -266,7 +266,7 @@ class AssetManager(object):
                     if tr.driver == None:
                         raise ValueError, "Name '%s' specified in lampshow does not match a driver in the machine yaml." % tr.name
 
-                self.numLoaded += 1            
+                self.numLoaded += 1
 
             for l in rgbshows:
                 k  = value_for_key(l,'key')
@@ -275,7 +275,7 @@ class AssetManager(object):
                 f = self.game.lampshow_path + fname
                 current = 'RGBshow: [%s]: %s, %s ' % (k, f, fname)
                 self.game.rgbshow_player.load(k, f)
-                self.numLoaded += 1            
+                self.numLoaded += 1
 
             for f in hfonts:
                 k  = value_for_key(f,'key')
@@ -307,8 +307,8 @@ class AssetManager(object):
                 lc = value_for_key(f, 'line_color')
                 lw = value_for_key(f, 'line_width')
                 k = value_for_key(f, 'key')
-                font_style = dmd.HDFontStyle( interior_color=ic, 
-                                        line_width=lw, 
+                font_style = dmd.HDFontStyle( interior_color=ic,
+                                        line_width=lw,
                                         line_color=lc )
                 self.fontstyles[k] = font_style
 
@@ -323,10 +323,12 @@ class AssetManager(object):
                 x  = value_for_key(anim, 'x_loc', 0)
                 y  = value_for_key(anim, 'y_loc', 0)
                 streaming_load  = value_for_key(anim, 'streamingMovie', False)
+                png_stream_cache  = value_for_key(anim, 'streamingPNG_Cached', False)
+                streaming_png  = value_for_key(anim, 'streamingPNG', png_stream_cache)
                 current = 'Animation: [%s]: %s' % (k, f)
                 # started = timeit.time.time()
                 started = timeit.time.time()
-                self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load)
+                self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load, streaming_png, png_stream_cache)
                 time_taken = timeit.time.time() - started
                 self.logger.info("loading visual asset took %.3f seconds" % time_taken)
         except:
@@ -363,6 +365,6 @@ class AssetManager(object):
 
 
 
-        # self.clearScreen()    
+        # self.clearScreen()
 
 
