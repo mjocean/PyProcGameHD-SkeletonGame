@@ -1,0 +1,69 @@
+font_path:
+    - C:\P-ROC\shared\dmd\
+    - ./assets/dmd/
+config_path:
+    - C:\P-ROC\shared\config\
+dmd_path: ./assets/dmd/
+sound_path: ./assets/sound/
+voice_dir: voice/ # i.e., this is assets/sound/voice/
+sfx_dir: sfx/
+music_dir: music/
+hdfont_path: ./assets/fonts/
+
+
+default_modes:  # these are the default provided modes by SkeletonGame; turn them off here.
+    # score_display: True
+    score_display: HD # if HD, the new score display is used: see sample/config/new_score_display.yaml
+    bonus_tally: True
+    osc_input: True
+    service_mode: True
+    ball_search: True   # indicates the game should use yaml tags for "smart" ball search
+pinproc_class: procgame.fakepinproc.FakePinPROC # comment out this line when using a real P-ROC.
+
+# all of this is for the hdDMD
+use_virtual_dmd_only: True          # don't try to talk to the real DMD (seriously, don't)
+dmd_grid_path: ./assets/dmd/        # where to find the dmdgrid32x32.png file
+dmd_dots_w: 224                     # the display width in virtual dots
+dmd_dots_h: 112                     # the display height in virtual donts
+dmd_dot_filter: True                # enable to virtual dot effect; false disables dot separation
+dmd_fullscreen: False               # Full-screen mode scales the contents to fit the full display; may not look right
+desktop_dmd_scale: 5                # the dmd scale is the multiplier per dot.  At 5 each dot is 5x5 pixels
+dmd_framerate: 30
+screen_position_x: 123              # an offset for where the window should be located on launch -- 1366x768 is me, so
+screen_position_y: 104              # 224*5x112*5 = 1120x560; the difference is 246x208 hence the offsets 123x104
+dmd_window_border: True             # show a window border?  In the machine, go without it, and with black wallpaper
+
+PYSDL2_DLL_PATH: c:\P-ROC\DLLs\ # where to find the sdl2.dll
+
+vp_game_map_file: /P-ROC/shared/vp_game_map.yaml  # relevant for Visual Pinball (only)
+
+keyboard_switch_map:                                # this is the mapping of keyboard keys to switch matrix keys
+    1: S81 # number key '1' maps the the trough1
+    2: S16 # '2' is trough 2
+    3: S17 # '3' is trough 3
+    x: S18 # the 'x' key is mapped to the outhole
+    s: S13 # the 's' key is mapped to the start button
+    6: S71 # 6 skillShotTarget 1
+    7: S72 # 7 skillShotTarget 2
+    8: S73 # 8 skillShotTarget 3
+    9: S74 # 9 skillShotTarget 4
+    0: S75 # 0 skillShotTarget 5
+    i: S46 # 'i' key maps to right target top
+    o: S47 # right target mid
+    p: S48 # right target bottom
+    t: S36 # center target left
+    y: S37 # center target middle
+    u: S38 # center target right
+    a: SD8 # SERVICE BUTTON
+    z: SD5 # EXIT BUTTON
+    v: SD7 # UP BUTTON
+    c: SD6 # DOWN BUTTON
+    d: S78 # shooter lane
+    q: S56 # rollover lane left
+    w: S57 # rollover lane middle
+    e: S58 # rollover lane right
+    1073742053: S11 # 303 is the pygame keyboard code for left shift, mapped to left flipper
+    1073742049: S12 # 304 is the pygame code for right shift, right flipper
+    47: S34 # 47 is forward slash and is the grip trigger
+    f: S14 #tilt
+    g: S21 # slam tilt
