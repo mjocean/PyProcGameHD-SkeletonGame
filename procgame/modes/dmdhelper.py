@@ -60,14 +60,20 @@ class DMDHelper(Mode):
             i = 1
             for line in msg:
                 if (line != ""):
-                    line = str(line)
+                    if type(line) is int:
+                        line = str(line)
+                    else:
+                        line = line.decode('ascii', 'ignore')
                     tL = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height*i/(num_lines+1), font, "center", vert_justify="center", opaque=False, width=self.game.dmd.width, height=100,line_color=font_style.line_color, line_width=font_style.line_width, interior_color=font_style.interior_color,fill_color=font_style.fill_color).set_text(line, blink_frames=flashing)
                     t_layers.append(tL)
                 i = i + 1
             t = dmd.GroupedLayer(self.game.dmd.width, self.game.dmd.height, t_layers)
         else:
             if(msg is not None):
-                msg = str(msg)
+                if type(msg) is int:
+                    msg = str(msg)
+                else:
+                    msg = msg.decode('ascii', 'ignore')                
             t = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/2, font, "center",  vert_justify="center",opaque=False, width=self.game.dmd.width, height=100,line_color=font_style.line_color, line_width=font_style.line_width, interior_color=font_style.interior_color,fill_color=font_style.fill_color).set_text(msg, blink_frames=flashing)
 
         if(background_layer is None):

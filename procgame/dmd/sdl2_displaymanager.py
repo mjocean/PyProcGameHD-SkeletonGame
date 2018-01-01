@@ -87,7 +87,7 @@ class FontManagerExtended(sdl2.ext.FontManager):
 
         if(font is None):
             raise KeyError("Font %s not loaded" % font)
-        text = sdl2.ext.compat.byteify(text, "utf-8")
+        text = sdl2.ext.compat.byteify(text.decode('ascii', 'ignore'), "utf-8")
 
         # render the outline
         sdl2.sdlttf.TTF_SetFontOutline(font, border_width)           
@@ -95,7 +95,7 @@ class FontManagerExtended(sdl2.ext.FontManager):
         #     sf = sdl2.sdlttf.TTF_RenderUTF8_Blended_Wrapped(font, text, border_color,
         #                                                    width)
         # elif bg_color == sdl2.pixels.SDL_Color(0, 0, 0):
-        sf = sdl2.sdlttf.TTF_RenderUTF8_Blended(font, text, border_color)
+        sf = sdl2.sdlttf.TTF_RenderUTF8_Blended(font, text.decode('ascii', 'ignore'), border_color)        
         # sf = sdl2.sdlttf.TTF_RenderUTF8_Solid(font, text, border_color)
         # else:
         #     sf = sdl2.sdlttf.TTF_RenderUTF8_Shaded(font, text, border_color, bg_color)
@@ -109,7 +109,7 @@ class FontManagerExtended(sdl2.ext.FontManager):
         #     sf2 = sdl2.sdlttf.TTF_RenderUTF8_Blended_Wrapped(font, text, color,
         #                                                    width)
         # if bg_color == sdl2.pixels.SDL_Color(0, 0, 0):
-        sf2 = sdl2.sdlttf.TTF_RenderUTF8_Blended(font, text, color)
+        sf2 = sdl2.sdlttf.TTF_RenderUTF8_Blended(font, text.decode('ascii', 'ignore'), color)
         # sf2 = sdl2.sdlttf.TTF_RenderUTF8_Solid(font, text, color)
         # else:
         #     sf2 = sdl2.sdlttf.TTF_RenderUTF8_Shaded(font, text, color, sdl2.pixels.SDL_Color(0,0,0))
@@ -199,7 +199,7 @@ class sdl2_DisplayManager(object):
         if(sdl_font is None):
             raise ValueError, "sdl2_DisplayManager: specified font not found."
 
-        text = sdl2.ext.compat.byteify(text, "utf-8")
+        text = sdl2.ext.compat.byteify(text.decode('ascii', 'ignore'), "utf-8")
         w = c_int()
         h = c_int()
         ret = sdl2.sdlttf.TTF_SizeUTF8(sdl_font, text, byref(w), byref(h))
