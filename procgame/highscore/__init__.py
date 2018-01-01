@@ -24,7 +24,7 @@ def generate_highscore_frames(categories, width, height):
     frames = list()
     for category in categories:
         for index, score in enumerate(category.scores):
-            score_str = locale.format("%d", score.score, True) # Add commas to the score.
+            score_str = "{:,}".format(score) # Add commas to the score.
             if score.score == 1:
                 score_str += category.score_suffix_singular
             else:

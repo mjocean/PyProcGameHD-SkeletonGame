@@ -172,7 +172,7 @@ class ScoreDisplayHD(Mode):
         if score == 0:
             return '00'
         else:
-            return locale.format("%d", score, True)
+            return "{:,}".format(score)
     
     def update_layer(self):
         """Called by the layer to update the score layer for the present game state."""

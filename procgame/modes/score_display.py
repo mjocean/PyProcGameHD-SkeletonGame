@@ -210,7 +210,7 @@ class ScoreDisplay(Mode):
         if score == 0:
             return '00'
         else:
-            return locale.format("%d", score, True)
+            return "{:,}".format(score) 
     
     def font_for_score_single(self, score):
         """Returns the font to be used for displaying the given numeric score value in a single-player game."""
