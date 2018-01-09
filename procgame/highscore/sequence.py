@@ -8,16 +8,16 @@ class EntryPrompt:
 	"""Used by :class:`HighScoreLogic` subclasses' :meth:`HighScoreLogic.prompts` methods
 	to communicate which scores need to be prompted for.
 	"""
-	
+
 	key = None
 	"""Object that will be used to identify this prompt when :meth:`HighScoreLogic.store_initials` is called."""
-	
+
 	left = None
 	"""String or array of strings to be displayed on the left side of :class:`InitialEntryMode`."""
-	
+
 	right = None
 	"""String or array of strings to be displayed on the right side of :class:`InitialEntryMode`."""
-	
+
 	def __init__(self, key=None, left=None, right=None):
 		self.key = key
 		self.left = left
@@ -37,26 +37,26 @@ class HighScoreLogic:
 
 class HighScore:
 	"""Model class.
-	
+
 	:attr:`score`, :attr:`inits` and :attr:`date` are persisted via the dictionary with
 	:meth:`from_dict` and :meth:`to_dict`.  The remaining attributes are used to maintain state.
 	"""
 
 	score = 0
 	"""Numeric high score value."""
-	
+
 	inits = None
 	"""Player's initials."""
-	
+
 	date = None
 	"""String date representation of this score, using :func:`time.asctime`."""
-	
+
 	key = None
 	"""Object value used to uniquely identify this score."""
-	
+
 	name = None
 	"""Player's name, such as `Player 1`."""
-	
+
 	title = None
 	"""Title for this score, such as `Grand Champion`."""
 
@@ -66,18 +66,18 @@ class HighScore:
 		self.name = name
 		self.key = key
 		self.date = time.asctime()
-	
+
 	def __repr__(self):
 		return '<%s score=%d inits=%s>' % (self.__class__.__name__, self.score, self.inits)
 
-	def from_dict(self, src):
+	@staticmethod
+	def from_dict(src):
 		"""Populate the high score value from a dictionary.
 		Requires `score` and `inits` keys, may include `date`."""
-		self.score = src['score']
-		self.inits = src['inits']
+		s = HighScore(src['score'],src['inits'])
 		if 'date' in src:
-			self.date = src['date']
-		return self
+			s.date = src['date']
+		return s
 
 	def to_dict(self):
 		"""Returns a dictionary representation of this high score,
@@ -110,7 +110,7 @@ class EntrySequenceManager(Mode):
 
 	logic = None
 	"""Set this attribute to an instance of :class:`HighScoreLogic`."""
-	
+
 	ready_handler = None
 	"""Method taking two objects: this class instance and the :class:`EntryPrompt` to be shown next.
 	The implementor must call :meth:`prompt` in order to present the initials entry mode, otherwise
@@ -137,7 +137,7 @@ class EntrySequenceManager(Mode):
 		else:
 			if self.finished_handler != None:
 				self.finished_handler(mode=self)
-	
+
 	def prompt(self):
 		"""To be called externally if using the :attr:`ready_handler`, once that handler has been called.
 		Presents the initials entry mode."""

@@ -1142,10 +1142,10 @@ class LEDcontroller(object):
         current_percent = (midpoint_time - fadestart) / (fadeend - fadestart)
 
         if type(orig_color) is not list:
-            orig_color = self.convert_hex_to_list(orig_color)
+            orig_color = LEDcontroller.convert_hex_to_list(orig_color)
 
         if type(dest_color) is not list:
-            dest_color = self.convert_hex_to_list(dest_color)
+            dest_color = LEDcontroller.convert_hex_to_list(dest_color)
 
         # create a new color dictionary that represents where the current color
         # should be at this point in the fade
@@ -1215,7 +1215,7 @@ class LEDcontroller(object):
                                                item['priority'])
                     else:
                         if type(item['color']) is not list:
-                            item['color'] = self.convert_hex_to_list(item\
+                            item['color'] = LEDcontroller.convert_hex_to_list(item\
                                                                      ['color'])
 
                         # Uncomment the comment block below if you want to log
@@ -1243,7 +1243,7 @@ class LEDcontroller(object):
                                                item['fadeend'])
                     else:
                         if type(item['dest_color']) is not list:
-                            item['dest_color'] = self.convert_hex_to_list(
+                            item['dest_color'] = LEDcontroller.convert_hex_to_list(
                                 item['dest_color'])
 
                         # Calculate the fade duration:
@@ -1271,7 +1271,8 @@ class LEDcontroller(object):
         if self.update_list:
             self._do_update()
 
-    def convert_hex_to_list(self, inputstring):
+    @staticmethod
+    def convert_hex_to_list(inputstring):
         """Takes a string input of hex numbers and returns a list of integers
 
         Parameters:
@@ -1503,7 +1504,7 @@ class LEDcontroller(object):
         wants with LEDs and you don't have to worry about a higher priority
         mode clearing out an LED and messing up the lower priority mode's
         status.
-        
+
         The ability for this enable method to also keep track of the priority
         that a LED is enabled is the reason you'd want to use this method
         versus calling :meth:`leds.color` directly. If you do use

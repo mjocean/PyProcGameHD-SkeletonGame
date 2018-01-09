@@ -18,23 +18,23 @@ class HighScoreCategory:
 	score_for_player = None
 	"""Method used to fetch the high score *score* value for a given :class:`~procgame.game.Player`.
 	The default value is::
-	
+
 	    lambda player: player.score
-	
+
 	"""
 
 	titles = ['Grand Champion', 'High Score #1', 'High Score #2', 'High Score #3', 'High Score #4']
 	"""There must be a title for each high score slot desired for this category."""
-	
+
 	def __init__(self):
 		self.score_for_player = lambda player: player.score
 
 	def load_from_game(self, game):
 		"""Loads :attr:`scores` from *game* using :attr:`game_data_key`."""
 		if self.game_data_key in game.game_data:
-			self.scores = list()
+			self.scores = []
 			for d in game.game_data[self.game_data_key]:
-				self.scores.append(HighScore().from_dict(d))
+				self.scores.append(HighScore.from_dict(d))
 		else:
 			game.logger.warning('HighScoreCategory.load_from_game(): game_data_key %s not found in game_data.', self.game_data_key)
 
@@ -48,7 +48,7 @@ class HighScoreCategory:
 
 class CategoryDrivenDataHelper:
 	"""Utility class used by :class:`CategoryLogic`."""
-	
+
 	game = None
 
 	categories = None
@@ -74,7 +74,7 @@ class CategoryDrivenDataHelper:
 		category.scores = category.scores[0:len(category.titles)]
 
 	def prompts(self):
-		prompts = list()
+		prompts = []
 		# Create keyed_prompts:
 		keyed_prompts = {}
 		for category in self.categories:
@@ -102,8 +102,8 @@ class CategoryDrivenDataHelper:
 
 class CategoryLogic(HighScoreLogic):
 	"""Subclass of :class:`HighScoreLogic`.  Implements a variable number of scoreboards using categories.
-	
-	*categories* is a list of :class:`HighScoreCategory` instances which will be checked for 
+
+	*categories* is a list of :class:`HighScoreCategory` instances which will be checked for
 	qualifying high scores.
 	"""
 

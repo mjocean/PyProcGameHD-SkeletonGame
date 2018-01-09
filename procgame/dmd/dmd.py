@@ -9,14 +9,14 @@ from procgame.dmd import VgaDMD
 
 class Frame(object):
     """DMD frame/bitmap.
-    
+
     """
-    
+
     width = 0
     """Width of the frame in dots."""
     height = 0
     """Height of the frame in dots."""
-    
+
     pySurface = None
     """ the pygame surface that backs the frame """
 
@@ -30,10 +30,10 @@ class Frame(object):
         if(from_surface is None):
             self.pySurface = sdl2_DisplayManager.inst().new_texture(width, height) #pygame.surface.Surface((width, height))
             #self.clear() -- don't need this, the new_texture function does this for us.
-        else: 
+        else:
             self.pySurface = from_surface
 
-        self.x_offset = 4 #bytes_per_pixel 
+        self.x_offset = 4 #bytes_per_pixel
         self.y_offset = self.width*4 # every y_offset Bytes is the next line
         self.font_dots = []
 
@@ -41,7 +41,7 @@ class Frame(object):
         """Static method which performs some type checking before calling :meth:`pinproc.DMDBuffer.copy_to_rect`."""
 
         # print "copy_rect(dst_x=%d, dst_y=%d, src_x=%d, src_y=%d, width=%d, height=%d)" % (dst_x, dst_y, src_x, src_y, width, height)
-        
+
         # src_rect = pygame.Rect(int(src_x),int(src_y),int(width),int(height))
         # dst_rect = pygame.Rect(int(dst_x),int(dst_y),int(width),int(height))
 
@@ -53,10 +53,10 @@ class Frame(object):
         if(dest_rect is None):
             dest_rect = (int(dst_x),int(dst_y),int(width),int(height))
 
-        # """ 1.8.0: BLEND_ADD, BLEND_SUB, BLEND_MULT, BLEND_MIN, BLEND_MAX 
-        #  in 1.8.1: BLEND_RGBA_ADD, BLEND_RGBA_SUB, BLEND_RGBA_MULT, BLEND_RGBA_MIN, 
-        #             BLEND_RGBA_MAX BLEND_RGB_ADD, BLEND_RGB_SUB, BLEND_RGB_MULT, 
-        #             BLEND_RGB_MIN, BLEND_RGB_MAX 
+        # """ 1.8.0: BLEND_ADD, BLEND_SUB, BLEND_MULT, BLEND_MIN, BLEND_MAX
+        #  in 1.8.1: BLEND_RGBA_ADD, BLEND_RGBA_SUB, BLEND_RGBA_MULT, BLEND_RGBA_MIN,
+        #             BLEND_RGBA_MAX BLEND_RGB_ADD, BLEND_RGB_SUB, BLEND_RGB_MULT,
+        #             BLEND_RGB_MIN, BLEND_RGB_MAX
         # """
         # if (op=="copy"):
         #     special_flags = 0
@@ -104,7 +104,7 @@ class Frame(object):
         # src.pySurface.set_colorkey(None)
 
     copy_rect = staticmethod(copy_rect)
-    
+
     # def color_replacement(self, old_color, new_color):
     #   dst = self.pySurface.copy()
     #   dst.fill(new_color)
@@ -119,18 +119,18 @@ class Frame(object):
         subframe = Frame(width, height)
         Frame.copy_rect(subframe, 0, 0, self, x, y, width, height, 'copy')
         return subframe
-    
+
     def copy(self):
         """Returns a copy of itself."""
         # frame = Frame(self.width, self.height, from_surface=self.pySurface.copy())
         #frame.pySurface.blit(self.pySurface, (0,0,self.width,self.height), (0,0,self.width,self.height), special_flags = 0)
-        
+
         frame = Frame(self.width, self.height)
         sdl2_DisplayManager.inst().blit(source_tx=self.pySurface, dest_tx=frame.pySurface, dest=(0,0,self.width,self.height), area=(0,0,self.width,self.height), special_flags = 0)
 
         #frame.set_data(self.get_data())
         return frame
-    
+
     def tint(self, r,g,b):
         """ returns a copy of a Frame, tinted with the set R, G, B amounts.  Useful for cheap effects """
         frame = Frame(self.width, self.height)
@@ -148,8 +148,8 @@ class Frame(object):
         # raise ValueError, "Scale not yet programmed..."
 
         if(new_w is None):
-            new_w = int(percentage * self.width)
-            new_h = int(percentage * self.height)
+            new_w = max(int(percentage * self.width),1)
+            new_h = max(int(percentage * self.height),1)
 
         dstrect = (0, 0, int(new_w), int(new_h))
         self.width = new_w
@@ -159,7 +159,7 @@ class Frame(object):
 
         sdl2_DisplayManager.inst().roto_blit(self.pySurface, F.pySurface, dstrect, None)
 
-        del self.pySurface 
+        del self.pySurface
 
         self.pySurface = F.pySurface
 
@@ -173,10 +173,10 @@ class Frame(object):
         # self.font_dots = []
 
     def rotozoom(self,rotation=0, scale=1, origin=None, flip=0):
-        """ Returns a rotated and possibly scaled version of the original frame 
+        """ Returns a rotated and possibly scaled version of the original frame
             flip == 0 --> no flip
             flip == 1 --> flips horiz
-            flip == 2 --> flips vert 
+            flip == 2 --> flips vert
         """
         # resizes a frame...
         (sw, sh) = (self.width*scale, self.height*scale)
@@ -212,12 +212,12 @@ class Frame(object):
         #   output += "\n"
         # return output
         raise ValueError, "Unsupported method Ascii"
-    
+
     def create_with_text(lines, palette = {' ':0, '*':15}):
         """Create a frame based on text.
-        
+
         This class method can be used to generate small sprites within the game's source code::
-        
+
             frame = Frame.create_with_text(lines=[ \\
                 '*+++*', \\
                 ' *+* ', \\
@@ -240,7 +240,7 @@ class Frame(object):
         frames = []
         width = self.width / num_cols
         height = self.height / num_rows
-    
+
         # Use nested loops to step through each column of each row, creating a new frame at each iteration and copying in the appropriate data.
         for row_index in range(0,num_rows):
             for col_index in range(0,num_cols):
@@ -271,13 +271,13 @@ class Frame(object):
         sdl2_DisplayManager.inst().fill((int(x),int(y),int(w),int(h)), c)
 
         sdl2_DisplayManager.inst().switch_target(old)
-        
+
         # r = pygame.Rect(int(x),int(y),int(w),int(h))
         # self.pySurface.fill(c,r)
 
     def set_alpha(self,value=255):
         print "SETTING ALPHA VALUE TO : " + str(value)
-        #self.pySurface.convert_alpha()  
+        #self.pySurface.convert_alpha()
         #self.pySurface.set_alpha(value)
         sdl2.SDL_SetTextureAlphaMod(self.pySurface.texture,value)
 
@@ -291,10 +291,10 @@ class Frame(object):
         #     self.pySurface = surf.convert()
         # except Exception as e:
         #     self.pySurface = surf
-        
+
 
     def build_surface_from_8bit_dmd_string(self, str_data, composite_op=None):
-        
+
         self.eight_to_RGB_map = VgaDMD.get_palette_ch()
         self.font_dots = str_data
         x = 0
@@ -302,7 +302,7 @@ class Frame(object):
         d = ""
         for dot in str_data:
             # get the Byte from the frame data
-            dot = ord(dot) 
+            dot = ord(dot)
             # convert it to the correct RGB pallette color
             (r,g,b) = self.eight_to_RGB_map[dot]
 
@@ -317,12 +317,12 @@ class Frame(object):
             # x += 1
             # if x == self.width:
             #   x = 0
-            #   y += 1 
+            #   y += 1
         #self.pySurface = pygame.image.fromstring(d,(self.width,self.height),'RGB').convert()
 
         # surf = HD_load_file(path)
         self.pySurface = sdl2_DisplayManager.inst().make_texture_from_imagebits(bits=d, width=self.width, height=self.height, mode='RGB', composite_op=composite_op)
-        
+
 
     def get_surface_string(self):
         # convert every pixel to 8 bit mapping
@@ -336,12 +336,12 @@ class Frame(object):
     #   ar = frame_string
     #   del ar
         #self.pySurface = pygame.image.fromstring(frame_string,(self.width,self.height),'P')
-        
+
         # x = 0
         # y = 0
         # for dot in frame_string:
         #   # get the Byte from the frame data
-        #   dot = ord(dot) 
+        #   dot = ord(dot)
         #   # convert it to the correct RGB pallette color
         #   (r,g,b) = self.eight_to_RGB_map[dot]
 
@@ -355,7 +355,7 @@ class Frame(object):
         #   x += 1
         #   if x == self.width:
         #       x = 0
-        #       y += 1 
+        #       y += 1
 
 
 class Layer(object):
@@ -364,13 +364,13 @@ class Layer(object):
     Subclasses override :meth:`next_frame` to provide a frame for the current moment in time.
     Handles compositing of provided frames and applying transitions within a :class:`DisplayController` context.
     """
-    
+
     opaque = False
-    """Determines whether layers below this one will be rendered.  
-    If `True`, the :class:`DisplayController` will not render any layers after this one 
+    """Determines whether layers below this one will be rendered.
+    If `True`, the :class:`DisplayController` will not render any layers after this one
     (such as from modes with lower priorities -- see :class:`DisplayController` for more information).
     """
-    
+
     target_x = 0
     """Base `x` component of the coordinates at which this layer will be composited upon a target buffer."""
     target_y = 0
@@ -397,31 +397,41 @@ class Layer(object):
         self.set_target_position(0, 0)
         self.blendmode = None
         self.alpha = None
+        self.hw_scale = None
 
     def get_width(self):
+        s = 1
+        if(self.hw_scale is not None):
+            s = self.hw_scale
+
         if(hasattr(self,'width')):
-            return self.width
+            return int(self.width*s)
         elif(not hasattr(self, 'frames') or self.frames is None):
-            return self.frame.width
+            return int(self.frame.width*s)
         else:
-            return max([f.width for f in self.frames])
+            return int(max([f.width for f in self.frames])*s)
 
     def get_height(self):
+        s = 1
+        if(self.hw_scale is not None):
+            s = self.hw_scale
         if(hasattr(self,'height')):
-            return self.height
+            return int(self.height*s)
         elif(not hasattr(self, 'frames') or self.frames is None):
-            return self.frame.height
+            return int(self.frame.height*s)
         else:
-            return max([f.height for f in self.frames])
+            return int(max([f.height for f in self.frames])*s)
 
 
     def scale(self, amount):
+        """ this type of scaling modifies the frames directly """
         if(not hasattr(self, 'frames') or self.frames is None):
             self.frame.scale(amount)
         else:
             for f in self.frames: f.scale(amount)
-            
+
     def rotozoom(self,rotation=0, scale=1):
+        """ this type of scale/zoom modifies the frames directly """
         if(self.frames is None):
             self.frame.rotozoom(rotation, scale)
         else:
@@ -431,14 +441,22 @@ class Layer(object):
         # To be overridden
         pass
 
+    def set_scale(self, amount):
+        """ this type of scaling keeps the original frames,
+            but blits a different size at the last minute
+        """
+        self.hw_scale = amount
+
     def set_target_position(self, x, y):
         """Setter for :attr:`target_x` and :attr:`target_y`."""
         self.target_x = x
         self.target_y = y
+
     def next_frame(self):
         """Returns an instance of a Frame object to be shown, or None if there is no frame.
         The default implementation returns ``None``; subclasses should implement this method."""
         return None
+
     def composite_next(self, target):
         """Composites the next frame of this layer onto the given target buffer.
         Called by :meth:`DisplayController.update`.
@@ -448,7 +466,12 @@ class Layer(object):
         if src != None:
             if self.transition != None:
                 src = self.transition.next_frame(from_frame=target, to_frame=src)
-            Frame.copy_rect(dst=target, dst_x=self.target_x+self.target_x_offset, dst_y=self.target_y+self.target_y_offset, src=src, src_x=0, src_y=0, width=src.width, height=src.height, op=self.composite_op, blendmode=self.blendmode, alpha=self.alpha)
+
+            if(self.hw_scale is None):
+                Frame.copy_rect(dst=target, dst_x=self.target_x+self.target_x_offset, dst_y=self.target_y+self.target_y_offset, src=src, src_x=0, src_y=0, width=src.width, height=src.height, op=self.composite_op, blendmode=self.blendmode, alpha=self.alpha)
+            else:
+                dst_rect = [self.target_x+self.target_x_offset, self.target_y+self.target_y_offset, int(src.width*self.hw_scale), int(src.height*self.hw_scale)]
+                Frame.copy_rect(dst=target, dst_x=0, dst_y=0, src=src, src_x=0, src_y=0, width=src.width, height=src.height, op=self.composite_op, blendmode=self.blendmode, alpha=self.alpha, dest_rect=dst_rect)
         return src
 
 
@@ -467,7 +490,7 @@ def main():
 
     f = Frame(20,20,from_surface=sprite)
     f.x_offset=400
-    
+
     sdl2_DisplayManager.inst().screen_blit(source_tx=f.pySurface)
     sdl2_DisplayManager.inst().flip()
     import sdl2

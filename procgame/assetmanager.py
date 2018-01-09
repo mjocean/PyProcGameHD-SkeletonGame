@@ -176,7 +176,7 @@ class AssetManager(object):
         pygame.display.flip()
 
 
-    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False, streaming_png=False, png_stream_cache=False):
+    def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False, streaming_png=False, png_stream_cache=False, custom_sequence=None, scale=None):
         if(file==None):
             file=key + '.vga.dmd.zip'
 
@@ -201,6 +201,12 @@ class AssetManager(object):
             self.animations[key] = dmd.MovieLayer(opaque, hold=holdLastFrame, repeat=repeatAnim, frame_time=frametime, movie_file_path=self.dmd_path + file, transparency_op=composite_op)
         else:
             self.animations[key] = dmd.AnimatedLayer(frames=tmp.frames, frame_time=frametime, repeat=repeatAnim, hold=holdLastFrame, opaque = opaque)
+
+        if(custom_sequence is not None):
+            self.animations[key].play_sequence(sequence=custom_sequence)
+
+        if(scale is not None):
+            self.animations[key].set_scale(scale)
 
         self.animations[key].set_target_position(x_loc, y_loc)
         # if composite_op != None:
@@ -325,10 +331,12 @@ class AssetManager(object):
                 streaming_load  = value_for_key(anim, 'streamingMovie', False)
                 png_stream_cache  = value_for_key(anim, 'streamingPNG_Cached', False)
                 streaming_png  = value_for_key(anim, 'streamingPNG', png_stream_cache)
+                custom_sequence  = value_for_key(anim, 'sequence', None)
+                scaling = value_for_key(anim, 'scale', None)
                 current = 'Animation: [%s]: %s' % (k, f)
                 # started = timeit.time.time()
                 started = timeit.time.time()
-                self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load, streaming_png, png_stream_cache)
+                self.loadIntoCache(k,ft,f,r,h,o,c,x,y,streaming_load, streaming_png, png_stream_cache, custom_sequence, scaling)
                 time_taken = timeit.time.time() - started
                 self.logger.info("loading visual asset took %.3f seconds" % time_taken)
         except:

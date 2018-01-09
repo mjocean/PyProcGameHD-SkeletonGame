@@ -15,40 +15,40 @@ class PDLED(object):
         self.base_reg_addr = 0x01000000 | (board_addr & 0x3F) << 16
         self.fade_time = 0
         print ("Creating PDLED board: %d" % (board_addr))
-    
+
     def write_fade_time(self, time):
         if time != self.fade_time:
             self.fade_time = time
-            data = self.base_reg_addr | (3 << 8) | (time & 0xFF)    
+            data = self.base_reg_addr | (3 << 8) | (time & 0xFF)
             self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
-            data = self.base_reg_addr | (4 << 8) | ((time >> 8) & 0xFF) 
+            data = self.base_reg_addr | (4 << 8) | ((time >> 8) & 0xFF)
             self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
 
     def write_color(self, index, color):
         self.write_addr(index)
-        data = self.base_reg_addr | (1 << 8) | (color & 0xFF)   
+        data = self.base_reg_addr | (1 << 8) | (color & 0xFF)
         self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
 
     def write_fade_color(self, index, color):
         self.write_addr(index)
-        data = self.base_reg_addr | (2 << 8) | (color & 0xFF)   
+        data = self.base_reg_addr | (2 << 8) | (color & 0xFF)
         self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
 
     def write_addr(self, addr):
-        data = self.base_reg_addr | (addr & 0xFF)   
+        data = self.base_reg_addr | (addr & 0xFF)
         self.proc.write_data(proc_output_module, proc_pdb_bus_addr, data)
 
 class LED(GameItem):
     """Represents an LED LED in a pinball machine.
-    
+
     Subclass of :class:`GameItem`.
     """
-    
+
     default_pulse_time = 30
     """Default number of milliseconds to pulse this driver.  See :meth:`pulse`."""
     last_time_changed = 0
     """The last :class:`time` that this driver's state was modified."""
-    
+
     def __init__(self, game, name, number):
         GameItem.__init__(self, game, name, number)
         self.logger = logging.getLogger('game.LED')
@@ -139,7 +139,7 @@ class LED(GameItem):
                 self.current_color[i] = color[i]
 
     def schedule(self, schedule, cycle_seconds=0, now=True, use_color=None):
-        """ all driver based gameitems are expected to support the `schedule()` 
+        """ all driver based gameitems are expected to support the `schedule()`
             command.  This adds compatibility with the schedule command for pdLED
             based LEDs.  This is not an optimal way to use pdLEDs, however this
             code is meant to be a stop gap measure """
@@ -153,7 +153,7 @@ class LED(GameItem):
                 requested_color = "FFFFFF"
         else:
             requested_color = use_color
-            
+
         my_string = str(bin(schedule)[2:].zfill(32))
         #my_string = str(bin(int(schedule, 16))[2:].zfill(32))
         self.logger.warning(my_string)
@@ -168,7 +168,7 @@ class LED(GameItem):
                     time_of_slice =  int(slices*1000/32)
                     script.append({"color": the_color, "time": time_of_slice})
                     #script += step
-        
+
                 if int(b) == 0 :
                     the_color="000000"
                 else:
@@ -176,10 +176,10 @@ class LED(GameItem):
                 last = b
                 slices = 1
                 #start new element
-        
+
             else:
                 slices +=1
-                
+
         #process last chunk
         time_of_slice =  int(slices*1000/32)
         script.append({"color":the_color, "time":time_of_slice})
@@ -187,7 +187,7 @@ class LED(GameItem):
         self.logger.info(script)
         self.game.LEDs.run_script(self.name,script)
         #self.LEDs.run_script(lamp_name,self.led_scripts[script])
-        
+
     def set_fade_rate(self, fadetime):
         """Sets the default fade rate of the board this LED is on.
 
@@ -206,6 +206,9 @@ class LED(GameItem):
         """
 
         fadetime = int(fadetime/4)
+
+        if type(color) is not list:
+            color = LEDcontroller.convert_hex_to_list(color)
 
         # If the number of colors is the same or greater than the number of LED
         # outputs:
@@ -277,7 +280,7 @@ class Switch(object):
         else:
             self.sw_type = 'proc'
             self.sw_number = int(number_str)
-    
+
     def proc_num(self):
         return self.sw_number
 
@@ -296,14 +299,14 @@ class Coil(object):
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
             (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(number_str, self.pdb.aliases)
-        else: 
+        else:
             coil_type = 'unknown'
 
-    
+
     def bank(self):
-        if self.coil_type == 'dedicated': 
+        if self.coil_type == 'dedicated':
             return self.banknum
-        elif self.coil_type == 'pdb': 
+        elif self.coil_type == 'pdb':
             return self.boardnum*2 + self.banknum
         else:
             return -1
@@ -312,7 +315,7 @@ class Coil(object):
 
     def is_direct_coil(self, string):
         if len(string) < 2 or len(string) > 3: return False
-        if not string[0] == 'C': return False 
+        if not string[0] == 'C': return False
         if not string[1:].isdigit(): return False
         return True
 
@@ -353,7 +356,7 @@ class Lamp(object):
 
     def is_direct_lamp(self, string):
         if len(string) < 2 or len(string) > 3: return False
-        if not string[0] == 'L': return False 
+        if not string[0] == 'L': return False
         if not string[1:].isdigit(): return False
         return True
 
@@ -386,7 +389,7 @@ class PDBConfig(object):
     proc = None
     aliases = None # set in __init__
     """Loaded from ``PRDriverAliases`` section of config in :meth:`__init__`."""
-    
+
     def __init__(self, proc, config):
 
         self.logger = logging.getLogger('game.pdb')
@@ -402,7 +405,7 @@ class PDBConfig(object):
         lamp_source_bank_list = []
         lamp_list = []
         lamp_list_for_index = []
-        
+
         self.aliases = []
         if 'PRDriverAliases' in config:
             for alias_dict in config['PRDriverAliases']:
@@ -424,24 +427,24 @@ class PDBConfig(object):
 
             # Catalog PDB banks
             # Dedicated lamps don't use PDB banks.  They use P-ROC direct
-            # driver pins.  
+            # driver pins.
             if lamp.lamp_type == 'dedicated':
                 pass
 
             elif lamp.lamp_type == 'pdb':
                 if lamp.source_bank() not in lamp_source_bank_list:
                     lamp_source_bank_list.append(lamp.source_bank())
-    
-    
+
+
                 # Create dicts of unique sink banks.  The source index is needed when
                 # setting up the driver groups.
                 lamp_dict = {'source_index': lamp_source_bank_list.index(lamp.source_bank()), 'sink_bank': lamp.sink_bank(), 'source_output': lamp.source_output()}
-    
+
                 # lamp_dict_for_index.  This will be used later when the p-roc numbers
                 # are requested.  The requestor won't know the source_index, but it will
                 # know the source board.  This is why two separate lists are needed.
                 lamp_dict_for_index = {'source_board': lamp.source_board(), 'sink_bank': lamp.sink_bank(), 'source_output': lamp.source_output()}
-    
+
                 if lamp_dict not in lamp_list:
                     lamp_list.append(lamp_dict)
                     lamp_list_for_index.append(lamp_dict_for_index)
@@ -478,7 +481,7 @@ class PDBConfig(object):
         # set up automatically by this code.
 
         for i,lamp_dict in enumerate(lamp_list):
-            # If the bank is 16 or higher, the P-ROC can't control it directly. 
+            # If the bank is 16 or higher, the P-ROC can't control it directly.
             # SW can't really control lamp matrixes either (need microsecond
             # resolution).  Instead of doing crazy logic here for a case that
             # probably won't happen, just ignore these banks.
@@ -497,7 +500,7 @@ class PDBConfig(object):
                                 True,
                                 True)
                 group_ctr += 1
-    
+
 
         for coil_bank in coil_bank_list:
             # If the bank is 16 or higher, the P-ROC can't control it directly. SW
@@ -521,7 +524,7 @@ class PDBConfig(object):
                                 True,
                                 True)
                 group_ctr += 1
-        
+
         for i in range(group_ctr, 26):
             self.logger.info("Driver group %02d: disabled", i)
             proc.driver_update_group_config(i,
@@ -533,7 +536,7 @@ class PDBConfig(object):
                             True,
                             False,
                             True)
-        
+
         # Make sure there are two indexes.  If not, fill them in.
         while len(lamp_source_bank_list) < 2: lamp_source_bank_list.append(0)
 
@@ -555,7 +558,7 @@ class PDBConfig(object):
                         'patterOffTime': 0,
                         'patterEnable': False,
                         'futureEnable': False}
-    
+
             proc.driver_update_state(state)
 
 
@@ -577,7 +580,7 @@ class PDBConfig(object):
 
 
     def configure_globals(self, proc, lamp_source_bank_list, enable=True):
-        
+
         if enable: self.logger.info("Configuring PDB Driver Globals:  polarity = %s  matrix column index 0 = %d  matrix column index 1 = %d", True, lamp_source_bank_list[0], lamp_source_bank_list[1]);
         proc.driver_update_global_config(enable, # Don't enable outputs yet
                         True,  # Polarity
@@ -607,7 +610,7 @@ class PDBConfig(object):
                         False, # Reset watchdog trigger
                         self.use_watchdog, # Enable watchdog
                         self.watchdog_time)
-            
+
     # Return the P-ROC number for the requested driver string.
     # This method uses the driver string to look in the indexes list that
     # was set up when the PDBs were configured.  The resulting P-ROC index * 3
@@ -625,7 +628,7 @@ class PDBConfig(object):
         if section == 'PRLamps':
             lamp = Lamp(self, number_str)
             if lamp.lamp_type == 'unknown': return (-1)
-            elif lamp.lamp_type == 'dedicated': 
+            elif lamp.lamp_type == 'dedicated':
                 return lamp.dedicated_output()
 
             lamp_dict_for_index = {'source_board': lamp.source_board(), 'sink_bank': lamp.sink_bank(), 'source_output': lamp.source_output()}

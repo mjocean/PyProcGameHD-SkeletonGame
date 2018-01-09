@@ -20,7 +20,7 @@ except Exception, e:
 from procgame.events import EventManager
 
 try:
-    from ..dmd import sdl2_displaymanager  
+    from ..dmd import sdl2_displaymanager
     from ..dmd.sdl2_displaymanager import *
     import sdl2.ext
     import pygame
@@ -32,10 +32,10 @@ except ImportError:
 class Desktop():
     """The :class:`Desktop` class helps manage interaction with the desktop, providing both a windowed
     representation of the DMD, as well as translating keyboard input into pyprocgame events."""
-    
+
     exit_event_type = 99
     """Event type sent when Ctrl-C is received."""
-    
+
     key_map = {}
 
     dots_w = 128
@@ -73,12 +73,12 @@ class Desktop():
         if(self.use_rgb_dmd_device):
             if(serial is None):
                 raise ValueError, "RGBDMD: config.yaml specified rgb_dmd enabled, but requird pySerial library not installed/found."
-            self.serialPort = serial.Serial(port=self.serial_port_number, baudrate=2500000)  
+            self.serialPort = serial.Serial(port=self.serial_port_number, baudrate=2500000)
             self.magic_cookie = bytearray([0xBA,0x11,0x00,0x03,  0x04,  0x00,  0x00,0x00])
 
             self.serialPort.write(self.magic_cookie);
 
-            self.draw = self.draw_to_rgb_dmd            
+            self.draw = self.draw_to_rgb_dmd
             return
 
         if(self.dot_filter==True):
@@ -115,11 +115,11 @@ class Desktop():
             sdl2.SDL_SetRenderTarget(sdl2_DisplayManager.inst().texture_renderer.renderer, bk) # revert back
         else:
             self.draw = self.draw_no_dot_effect
-    
+
     def add_key_map(self, key, switch_number):
         """Maps the given *key* to *switch_number*, where *key* is one of the key constants in :mod:`pygame.locals`."""
         self.key_map[key] = switch_number
-    
+
     def clear_key_map(self):
         """Empties the key map."""
         self.key_map = {}
@@ -158,13 +158,13 @@ class Desktop():
         e = self.key_events
         self.key_events = []
         return e
-    
-    
+
+
     event_listeners = {}
-    
+
     def event_name_for_pygame_event_type(self, event_type):
         return 'pygame(%s)' % (event_type)
-    
+
     screen = None
     """:class:`pygame.Surface` object representing the screen's surface."""
 
@@ -181,7 +181,7 @@ class Desktop():
         if(self.window_border is False):
             flags = flags | sdl2.SDL_WINDOW_BORDERLESS
 
-        sdl2_DisplayManager.Init(self.dots_w, self.dots_h, self.screen_scale,  "PyProcGameHD.  [CTRL-C to exit]", self.screen_position_x,self.screen_position_y, flags, self.dmd_soften)
+        sdl2_DisplayManager.Init(self.dots_w, self.dots_h, self.screen_scale,  "SkeletonGame/PyProcGameHD  [ESC to exit]", self.screen_position_x,self.screen_position_y, flags, self.dmd_soften)
         sdl2_DisplayManager.inst().fonts_init(None,"Courier")
 
     def draw(self, frame):
@@ -216,14 +216,14 @@ class Desktop():
         sdl2_DisplayManager.inst().flip()
 
         bucket = sdl2_DisplayManager.inst().make_bits_from_texture(frame.pySurface, 128, 32)
-        
+
         self.serialPort.write(self.magic_cookie);
         s = bytearray([])
         i = 0
 
         while(i < 128*32*4):
             # print("pixel %i: %s, %s, %s, %s" % (i/4, bucket[i], bucket[i+1], bucket[i+2], bucket[i+3]))
-            
+
             s.append(bucket[i])
             s.append(bucket[i+1])
             s.append(bucket[i+2])
@@ -232,7 +232,7 @@ class Desktop():
 
             i+=4
         # print (s)
-        self.serialPort.write(s)            
+        self.serialPort.write(s)
 
         del bucket
         # print(type(b))

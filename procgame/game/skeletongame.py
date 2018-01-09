@@ -122,12 +122,22 @@ class SkeletonGame(BasicGame):
             if not machine_type:
                 raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
 
-            # try:
-            super(SkeletonGame, self).__init__(machine_type)
-            # except IOError, e:
-            #     self.log("Error connecting to P-ROC -- running virtual mode")
-            #     config.values['pinproc_class'] = 'procgame.fakepinproc.FakePinPROC'
-            #     super(SkeletonGame, self).__init__(machine_type)
+            try:
+                super(SkeletonGame, self).__init__(machine_type)
+            except IOError, e:
+                self.log("Error connecting to P-ROC -- running virtual mode")
+                sdl2_DisplayManager.inst().clear((0,0,0,0))
+                s = "Hardware connection failed."
+                tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=(255,128,0,0), bg_color=None)
+                sdl2_DisplayManager.inst().screen_blit(tx, x=260, y=150, expand_to_fill=False)
+                s = "Ensure boards have power and USB cable is secure."
+                tx2 = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=(255,128,0,0), bg_color=None)
+                sdl2_DisplayManager.inst().screen_blit(tx2, x=160, y=300, expand_to_fill=False)
+                sdl2_DisplayManager.inst().flip()
+                from time import sleep
+                sleep(15)
+                exit(-1)
+
 
             self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
             self.dmd_height = config.value_for_key_path('dmd_dots_h', 240)
@@ -189,7 +199,7 @@ class SkeletonGame(BasicGame):
             # create a lamp controller for lampshows
             self.lampctrl = lamps.LampController(self)
 
-            ### the rgb show player is a player for rgb lamps 
+            ### the rgb show player is a player for rgb lamps
             self.rgbshow_player = RgbShowPlayer(game=self, priority=50)
             self.modes.add(self.rgbshow_player)
             self.rgbshow_player.reset()
@@ -621,7 +631,7 @@ class SkeletonGame(BasicGame):
             #We are still processing an event
             self.logger.error("Trying to notify modes about new event [%s] while [%s] is still being processed!!" % (event, self.event))
 
-            self.sg_event_queue.append(SGEvent(event,args,event_complete_fn,only_active_modes))            
+            self.sg_event_queue.append(SGEvent(event,args,event_complete_fn,only_active_modes))
             return
 
         delay = 0
@@ -654,7 +664,7 @@ class SkeletonGame(BasicGame):
             will be notified in priority order and notifications happen within this run_loop cycle -- that is,
             the next mode will be notified immediately after the previous mode has executed its event
             handler method. Modes should not respond to notifications by returning a
-            number of seconds required to complete the handling of this event, because it will be ignored.  
+            number of seconds required to complete the handling of this event, because it will be ignored.
 
             Setting the only_active_modes=False will notify _all_ known modes, not just active
             modes.  This will be of _very_ limited utility, however is useful for events such as
@@ -772,7 +782,6 @@ class SkeletonGame(BasicGame):
         self.modes.add(self.switchmonitor)
 
     def start_attract_mode(self):
-        self.attract_mode.reset()
         self.modes.add(self.attract_mode) # plays the attract mode and kicks off the game
 
 
@@ -1289,6 +1298,10 @@ class SkeletonGame(BasicGame):
         for lamp in self.lamps:
             lamp.disable()
 
+        # turn off all the LEDs, too
+        for lamp in self.leds:
+            lamp.disable()
+
     def create_player(self, name):
         # do NOT call the super class, we replace the
         # player with our own 'advancedPlayerRecord'
@@ -1335,7 +1348,7 @@ class SGEvent(object):
         self.args = evt_args
         self.on_complete_fn = on_complete_fn
         self.only_active_modes = only_active_modes
-            
+
 class AdvPlayer(Player):
     """Represents a player in the game.
     The game maintains a collection of players in :attr:`GameController.players`."""

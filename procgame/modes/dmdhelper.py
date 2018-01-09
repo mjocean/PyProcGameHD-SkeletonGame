@@ -14,7 +14,7 @@ import yaml
 class DMDHelper(Mode):
     """A mode that displays a message to the player on the DMD"""
     msgfont = None
-    
+
     def __init__(self, game):
         super(DMDHelper, self).__init__(game=game, priority=12)
         self.logger = logging.getLogger('dmdhelper')
@@ -29,7 +29,7 @@ class DMDHelper(Mode):
             self.game.status_font_style = None
 
         if('status_bg' not in self.game.animations or self.game.animations['status_bg'] is None):
-            t2 = dmd.SolidLayer(int(self.game.dmd_width*.8), int(self.game.dmd_height*.5), (255,196,0,255))                
+            t2 = dmd.SolidLayer(int(self.game.dmd_width*.8), int(self.game.dmd_height*.5), (255,196,0,255))
             self.game.animations['status_bg'] = dmd.GroupedLayer(int(self.game.dmd_width*.8), int(self.game.dmd_height*.5),[t2]) #,t1
             self.game.animations['status_bg'].set_target_position(int(self.game.dmd_width*.1),int(self.game.dmd_height*.25))
 
@@ -37,7 +37,7 @@ class DMDHelper(Mode):
 
     def msg_over(self):
         self.layer = None
-    
+
     def genMsgFrame(self, msg, background_layer=None, font_style=None, font_key=None, opaque=False, flashing=False):
         if(font_style is None):
             if 'default' in self.game.fontstyles:
@@ -46,7 +46,7 @@ class DMDHelper(Mode):
                 font_style = dmd.HDFontStyle()
         elif(isinstance(font_style,basestring)):
             font_style = self.game.fontstyles[font_style]
-        
+
         if(font_key is None):
             font = self.msgfont
         elif(type(font_key) is str):
@@ -76,7 +76,7 @@ class DMDHelper(Mode):
         else:
             t.opaque = opaque
             t.composite_op = "blacksrc"
-            # t = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/4, self.msgfont, "center", opaque=False).set_text(msg)    
+            # t = dmd.HDTextLayer(self.game.dmd.width/2, self.game.dmd.height/4, self.msgfont, "center", opaque=False).set_text(msg)
             # t = TransitionLayer(layerA=None, layerB=txt, transitionType=Transition.TYPE_CROSSFADE, transitionParameter=None)
 
             if(isinstance(background_layer, list)):
@@ -102,8 +102,8 @@ class DMDHelper(Mode):
     def showMessage(self, msg, background_layer=None, font_style=None, opaque=False, duration=2.0, font_key=None, flashing=False):
         self.layer = self.genMsgFrame(msg, background_layer=background_layer, font_style=font_style, opaque=opaque, font_key=font_key, flashing=flashing)
         self.message = msg
-                
-        #cancel any old outstanding timers 
+
+        #cancel any old outstanding timers
         self.cancel_delayed(name=self.timer_name)
 
         #create a new timer
@@ -144,7 +144,7 @@ class DMDHelper(Mode):
             Fallback values are different for_text (centered) vs. other types of
             content (top left -- 0,0)
         """
-        
+
         if(for_text):
             fallback = 0.5
         else:
@@ -168,7 +168,7 @@ class DMDHelper(Mode):
             if(required):
                 raise ValueError, "Cannot find required Font tag in yaml segment [%s]" % (yaml_struct)
             else:
-                f = None 
+                f = None
         else:
             if(fname not in self.game.fonts):
                 self.logger.error("yaml refers to a font '%s' that does not exist.  Please check the assetList to ensure this font is present" % fname)
@@ -184,8 +184,8 @@ class DMDHelper(Mode):
             lc = value_for_key(font_style, 'line_color')
             lw = value_for_key(font_style, 'line_width')
             # k = value_for_key(font_style, 'key')
-            font_style = dmd.HDFontStyle( interior_color=ic, 
-                                    line_width=lw, 
+            font_style = dmd.HDFontStyle( interior_color=ic,
+                                    line_width=lw,
                                     line_color=lc )
             #self.fontstyles[k] = font_style
 
@@ -198,7 +198,7 @@ class DMDHelper(Mode):
         return f, font_style
 
     def generateTextLayerFromYaml(self, yaml_struct):
-        """ parses a text descriptor format yaml and generates a text layer to be filled with text via set_text() 
+        """ parses a text descriptor format yaml and generates a text layer to be filled with text via set_text()
               For now, the score_display.yaml example(s) should suffice; better documentation forthcoming
         """
         enabled = value_for_key(yaml_struct, 'enabled', True)
@@ -209,13 +209,24 @@ class DMDHelper(Mode):
         (x,y,hj,vj) = self.__parse_position_data(yaml_struct, for_text=True)
         opaque = value_for_key(yaml_struct, 'opaque', False)
 
+        interior = value_for_key(yaml_struct, 'interior', None)
+
         # create the layer -- it matters if we have an HD font or not...
         if(isinstance(f,HDFont)):
-            tL = dmd.HDTextLayer(x=x, y=y, font=f, justify=hj, vert_justify=vj, opaque=opaque, width=None, height=None)
-            tL.style = font_style            
+            if(interior is not None):
+                tL = dmd.AnimatedHDTextLayer(x=x, y=y,
+                        font=f, justify=hj, vert_justify=vj,
+                        fill_anim=self.game.animations[interior],
+                        width=self.game.dmd.width, height=self.game.dmd.height,
+                        line_color=font_style.line_color, line_width=font_style.line_width)
+
+            else:
+                tL = dmd.HDTextLayer(x=x, y=y, font=f, justify=hj, vert_justify=vj, opaque=opaque, width=None, height=None)
+
+            tL.style = font_style
         else:
-            tL = dmd.TextLayer(x=x, y=y, font=f, justify=hj, opaque=opaque, width=None, height=None, fill_color=None) 
-              
+            tL = dmd.TextLayer(x=x, y=y, font=f, justify=hj, opaque=opaque, width=None, height=None, fill_color=None)
+
         tL.enabled = value_for_key(yaml_struct,"visible",True)
 
         return tL
@@ -223,7 +234,7 @@ class DMDHelper(Mode):
 
     def genLayerFromYAML(self, yamlStruct):
         """ a helper that parses the 'attract sequence' format -- an augmented version
-            of the yaml serialized layer format, however also includes coordination 
+            of the yaml serialized layer format, however also includes coordination
             of lampshows and sound playback """
 
         duration = None
@@ -257,8 +268,7 @@ class DMDHelper(Mode):
 
                 # duration = entry_ct*duration
                 lyrTmp = dmd.ScoresLayer(self.game, fields, fnt, font_style, background, duration)
-                duration = lyrTmp.regenerate()
-
+                duration = lyrTmp.get_duration()
             elif('LastScores' in yamlStruct):
                 v = yamlStruct['LastScores']
 
@@ -327,7 +337,7 @@ class DMDHelper(Mode):
                     rndmLayers.append(self.genMsgFrame(completeText, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style))
 
                 if(len(rndmLayers) > 0):
-                    lyrTmp = RandomizedLayer(layers=rndmLayers)            
+                    lyrTmp = RandomizedLayer(layers=rndmLayers)
             else:
                 lyrTmp = self.generateLayerFromYaml(yamlStruct) # not sure what this is, let the other method parse it
                 v = yamlStruct[yamlStruct.keys()[0]]    # but we reach in and grab it to pull duration, lampshow and sound.
@@ -367,19 +377,19 @@ class DMDHelper(Mode):
                     self.logger.warning("Processing YAML, Combo section contains no 'Text' tag.  Consider using Animation instead.")
 
                 new_layer = self.genMsgFrame(msg, value_for_key(v,'Animation'), font_key=fnt, font_style=font_style)
-                
+
             elif ('Animation' in yaml_struct):
                 v = yaml_struct['Animation']
-                
+
                 new_layer = self.game.animations[value_for_key(v,'Name', value_for_key(v,'Animation'), exception_on_miss=True)]
                 new_layer.reset()
-                
+
                 if(value_for_key(v,'duration') is None): # no value found, set it so it will be later.
                     v['duration'] = new_layer.duration()
 
-            elif('sequence_layer' in yaml_struct):                
+            elif('sequence_layer' in yaml_struct):
                 v = yaml_struct['sequence_layer']
-                
+
                 new_layer = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
                 repeat = value_for_key(v, 'repeat', True)
 
@@ -396,7 +406,7 @@ class DMDHelper(Mode):
                     new_layer.append(l,d)
                 #sl.set_target_position(x, y)
                 new_layer.hold = not repeat
-            
+
             elif('panning_layer' in yaml_struct):
                 v = yaml_struct['panning_layer']
 
@@ -459,7 +469,7 @@ class DMDHelper(Mode):
                 hold_last_frame = value_for_key(v, 'hold_last_frame', source_layer.hold)
 
                 frame_list = value_for_key(v, 'frame_list', {})
-                
+
                 if(len(frame_list)==0):
                     new_layer = source_layer
                 else:
@@ -476,12 +486,12 @@ class DMDHelper(Mode):
                 v = yaml_struct['text_layer']
 
                 new_layer = self.generateTextLayerFromYaml(v)
-                txt = value_for_key(v,'Text', exception_on_miss=True) 
+                txt = value_for_key(v,'Text', exception_on_miss=True)
 
                 w = self.__parse_relative_num(v, 'width', self.game.dmd.width, default=None)
                 h = self.__parse_relative_num(v, 'height', self.game.dmd.height, default=None)
 
-                blink_frames = value_for_key(v,'blink_frames', None) 
+                blink_frames = value_for_key(v,'blink_frames', None)
 
                 new_layer.set_text(txt, blink_frames=blink_frames)
 

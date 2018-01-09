@@ -7,7 +7,7 @@ import sys
 from procgame.game import Mode
 from procgame.game.advancedmode import AdvancedMode
 
-class RgbShowPlayer(AdvancedMode):  
+class RgbShowPlayer(AdvancedMode):
     def __init__(self, game, priority=3):
         super(RgbShowPlayer, self).__init__(game, priority, mode_type=AdvancedMode.System)
         self.logger = logging.getLogger("RgbShowPlayer")
@@ -26,7 +26,7 @@ class RgbShowPlayer(AdvancedMode):
 
         if(cleanup):
             self.shows[key].restart()
-        
+
         self.shows[key].stop()
         self.cancel_delayed(name=key)
         self.active_shows.remove(key)
@@ -35,7 +35,7 @@ class RgbShowPlayer(AdvancedMode):
         for key in self.active_shows:
             self.shows[key].stop()
             self.cancel_delayed(name=key)
-        
+
         self.active_shows = []
 
     def restart(self, key):
@@ -45,9 +45,11 @@ class RgbShowPlayer(AdvancedMode):
 
         self.shows[key].restart()
 
-    def play_show(self, key, repeat=None, callback=None, save_state=True):
-        """ plays an RgbShow -- if non-repeating, the callback function will be called on completion
-            use repeat to override the behavior described in the show file 
+    def play_show(self, key, repeat=None, save_state=True, time=None):
+        """ plays an RgbShow --
+            use repeat to override the behavior described in the show file
+            if time is None, the value in the file is used; if none in the file
+            the default time (timestep) is 33ms per update
         """
         if(key not in self.shows):
             self.logger.info("suppressing request to play unknown show: %s" % key)
@@ -66,6 +68,8 @@ class RgbShowPlayer(AdvancedMode):
         self.active_shows.append(key)
         if(repeat is not None):
             self.shows[key].repeat = repeat
+        if(time is not None):
+            self.shows[key].time = time
         self.shows[key].restart()
         # self.shows[key].debug_show()
         self.__update_show(key)
@@ -74,7 +78,7 @@ class RgbShowPlayer(AdvancedMode):
         """ saves the current state of the devices used in the show 'key'
             so they can be restored at the conclusion of playback.  If the
             device already has a saved state, we assume it's already in use
-            by another show (and the state was stored at that time), so when 
+            by another show (and the state was stored at that time), so when
             playback of this new show finishes that state should be restored.
         """
         if(key not in self.shows):
@@ -83,17 +87,21 @@ class RgbShowPlayer(AdvancedMode):
         device_list = self.shows[key].get_device_list()
         for device in device_list:
             if(device.name not in self.prior_lamp_states):
-                if(not callable(device.state)):
-                    state = device.state
-                else:
-                    state = device.state()
-                if state['outputDriveTime'] == 0: # only store indef schedules
-                    sched = state['timeslots']
-                else:
-                    sched = 0x0
-                r = {'device':device, 'schedule':sched}
-                if(hasattr(device,'color')):
-                    r['color']=device.color
+                if(hasattr(device, 'state')):
+                    if(not callable(device.state)):
+                        state = device.state
+                    else:
+                        state = device.state()
+                    if state['outputDriveTime'] == 0: # only store indef schedules
+                        sched = state['timeslots']
+                    else:
+                        sched = 0x0
+                    r = {'device':device, 'schedule':sched}
+                    if(hasattr(device,'color')):
+                        r['color']=device.color
+                else: # looks PD-LEDs don't have a state attr... :|
+                    sched = None
+                    r = {'device':device, 'schedule':None, 'color':device.current_color}
                 # self.logger.info("saving state for device '%s' (%x)" %  (device.name,sched))
 
                 self.prior_lamp_states[device.name] = r
@@ -101,7 +109,7 @@ class RgbShowPlayer(AdvancedMode):
     def restore_state(self, key):
         """ this method is used when a show (identified by key) has finished,
             so that lamps can be restored to their state prior to the playback
-            of this show. 
+            of this show.
         """
         if(key not in self.shows):
             self.logger.info("suppressing request to restore_state for unknown show: %s" % key)
@@ -109,21 +117,26 @@ class RgbShowPlayer(AdvancedMode):
         device_list = self.shows[key].get_device_list()
 
         for device in device_list:
-            # make sure device isn't in use in another show! 
+            # make sure device isn't in use in another show!
             if(self.is_device_in_use(device.name, exclude=key)):
                 self.logger.info("Not restoring state for device '%s' because it's still in use elsewhere" % device.name)
                 pass
             elif(device.name in self.prior_lamp_states):
                 # self.logger.info("restoring state for device '%s'" %  device.name)
                 r = self.prior_lamp_states[device.name]
-                if('color' in r):
-                    device.set_color(r['color'])
-                device.schedule(r['schedule'])
+                if(r['schedule'] is not None):
+                    if('color' in r):
+                        device.set_color(r['color'])
+                    device.schedule(r['schedule'])
+                else: # pdLED dosn't call it set_color...
+                    if('color' in r):
+                        device.color(r['color'])
+
                 if(key not in self.active_shows):
                     del self.prior_lamp_states[device.name]
-                
+
     def is_device_in_use(self, name, exclude=None):
-        show_list = self.active_shows[:] 
+        show_list = self.active_shows[:]
         if exclude is not None and exclude in show_list:
             show_list.remove(exclude)
         for s in show_list:
@@ -147,7 +160,7 @@ class RgbShowPlayer(AdvancedMode):
                 delay=(self.shows[key].time)/1000.0, # delay is in seconds...
                 handler=self.__update_show,
                 param=key)
-        else: 
+        else:
             self.logger.info("Show '%s' is done." % key)
             self.active_shows.remove(key)
             if(len(self.active_shows)==0):
@@ -196,7 +209,7 @@ class RgbShow(object):
                     c = [v >> 16, (v & 0x00ff00) >> 8 , v & 0x0000ff]
                     self.color_map[k] = {'color': c, 'fade': True}
                 elif(t.find('=>')>=0):
-                    # IMMEDIATE COLOR CHANGE 
+                    # IMMEDIATE COLOR CHANGE
                     v = t[t.find("=>")+2:].lstrip().rstrip()
                     if(v=='None'):
                         self.color_map[k] = None
@@ -231,7 +244,7 @@ class RgbShow(object):
                 self.tracks.append(t)
                 self.length = t.length
 
-        f.close()        
+        f.close()
 
     def debug_show(self):
         self.logger.info("Show Parameters:")
@@ -267,17 +280,17 @@ class RgbShow(object):
         else:
             # if(self.now >= self.length):
             # show is done playing through once, but is it *done*
-            if(self.callback is not None and not self.callback_fired):
-                self.logger.info("show '%s' is done; calling callback" % self.key)
-                self.callback(self.callback_param)
-                self.callback_fired = True
-
             if(self.repeat):
                 self.now = 0
                 self.callback_fired = False
                 return True
 
-            if(self.hold): 
+            elif(self.callback is not None and not self.callback_fired):
+                self.logger.info("show '%s' is done; calling callback" % self.key)
+                self.callback(self.callback_param)
+                self.callback_fired = True
+
+            if(self.hold):
                 # reset back to the last frame
                 self.now = self.length-1
                 return True
@@ -299,6 +312,7 @@ class RgbShow(object):
         return devices
 
     def set_callback(self, callback_fn, callback_param):
+        """ WARNING: Calling this manually will break save/restore state functionality """
         self.callback = callback_fn;
         self.callback_fired = False
         self.callback_param = callback_param
@@ -316,7 +330,8 @@ class RgbTrack(object):
             cmd = self.data[now]
             if(cmd is not None):
                 cmd.process_command()
-                self.device.enable()
+                if(self.device_type=="rgb"):
+                    self.device.enable() # hack for wsRGB only
 
     def __init__(self, line, color_map, show):
         self.logger = logging.getLogger("rgbTrack")
@@ -324,6 +339,8 @@ class RgbTrack(object):
         self.device = None
         self.fn = None
         self.enabled = True # a track may be disabled if it's device is in use by another playing show
+
+        self.time = show.time
 
         #print line
         line_re = re.compile('\s*(?P<type>\S+\:)?\s*(?P<name>\S+)\s*\| (?P<data>.*)$')
@@ -350,6 +367,7 @@ class RgbTrack(object):
             else:
                 raise ValueError, "RGB Track created for unknown device named '%s'" % self.name
 
+        color_as_list = False
         if(device_type == "lamp"):
             fn = show.game.lamps[self.name].set_color
         elif(device_type == "led"):
@@ -362,7 +380,7 @@ class RgbTrack(object):
         self.device_type = device_type
 
         data = m.group('data')
-      
+
         self.data = [None]* len(data)
 
         last_color = None
@@ -371,7 +389,7 @@ class RgbTrack(object):
 
         for i in range(0,len(data),1):
             this_color = data[i]
-    
+
             if(this_color!=last_color):
                 # end prev run, start new run
                 if(last_color is not None):
@@ -380,9 +398,9 @@ class RgbTrack(object):
                     if(cdata is None):
                         c = None
                     elif(cdata['fade']):
-                        c = RgbCommand(self.name, fn, cdata['color'], last_run_length*show.time)
+                        c = RgbCommand(self.name, fn, cdata['color'], last_run_length,show)
                     else:
-                        c = RgbCommand(self.name, fn, cdata['color'], 0)
+                        c = RgbCommand(self.name, fn, cdata['color'], 0, show)
                     self.data[last_run_starts] = c
                 # start new run
                 last_run_length = 0
@@ -393,10 +411,10 @@ class RgbTrack(object):
                     if(cdata is None):
                         c = None
                     elif(cdata['fade']):
-                        c = RgbCommand(self.name, fn, cdata['color'], last_run_length*show.time)
+                        c = RgbCommand(self.name, fn, cdata['color'], last_run_length,show)
                     else:
-                        c = RgbCommand(self.name, fn, cdata['color'], 0)
-                    self.data[last_run_starts] = c                    
+                        c = RgbCommand(self.name, fn, cdata['color'], 0, show)
+                    self.data[last_run_starts] = c
             else:
                 # continuing run
                 last_run_length += 1
@@ -404,15 +422,16 @@ class RgbTrack(object):
         self.length = len(data)
 
 class RgbCommand(object):
-    def __init__(self, name, fn, new_color, transition_time):
+    def __init__(self, name, fn, new_color, transition_time, show_for_time):
         self.new_color = new_color
         self.time = transition_time
+        self.show_for_time = show_for_time
         self.name = name
         self.fn = fn
 
     def __str__(self):
-        return "[name=%s color='%s';time='%s']" % (self.name, self.new_color, self.time)
+        return "[name=%s color='%s';time='%s']" % (self.name, self.new_color, self.time*self.show_for_time.time)
 
     def process_command(self):
         # print(" doing  %s" % str(self))
-        self.fn(self.new_color, self.time)
+        self.fn(self.new_color, self.time*self.show_for_time.time)
