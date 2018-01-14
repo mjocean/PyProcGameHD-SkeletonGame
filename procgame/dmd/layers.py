@@ -383,7 +383,7 @@ class FrameQueueLayer(Layer):
             if self.repeat:
                 f = self.frames[0]
                 del self.frames[0]
-                self.frames += [f]
+                self.frames.append(f)
             else:
                 del self.frames[0] # Pop off the frame if there are others
         if self.frame_time_counter == 0:
@@ -740,7 +740,9 @@ class ScriptedLayer(Layer):
         """ calls regenerate on layers that support it """
         for layer_item in self.script:
            if layer_item['layer'] != None and hasattr(layer_item['layer'],'regenerate'):
-               layer_item['layer'].regenerate()
+               duration = layer_item['layer'].regenerate()
+               layer_item['seconds'] = duration
+        return self.duration()
 
 class ScriptlessLayer(ScriptedLayer):
     """ displays a set of layers but builds the script internally via helper methods
@@ -808,6 +810,78 @@ class ScoresLayer(ScriptlessLayer):
 
     def reset(self):
         super(ScoresLayer,self).reset()
+
+
+class LastScoresLayer(ScriptlessLayer):
+    """
+    a layer that shows the previous scores of the game that was just completed """
+
+    def __init__(self, game, multiple_screens, fnt, font_style, background, duration):
+        super(LastScoresLayer, self).__init__(game.dmd.width, game.dmd.height)
+        self.multiple_screens = multiple_screens
+        self.fnt = fnt
+        self.font_style = font_style
+        self.game = game
+        self.duration = duration
+        self.background = background
+
+    def regenerate(self):
+        self.script = []
+
+        last_score_count = len(self.game.old_players)
+
+        if(last_score_count==0):
+            self.game.old_players = []
+            p = self.game.create_player("Player 1")
+            self.game.old_players.append(p)
+            last_score_count = 1
+
+        if(self.multiple_screens):
+            self.append(self.game.dmdHelper.genMsgFrame(["Last Game","Final Scores"], self.background, font_key=self.fnt, font_style=self.font_style), self.duration)
+
+            for player in self.game.old_players:
+                lT = self.game.dmdHelper.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], self.background,  font_key=self.fnt, font_style=self.font_style)
+                self.append(lT, self.duration)
+
+            duration = (last_score_count+1)*self.duration
+        else:
+            duration = self.duration
+            lyrTmp = GroupedLayer(self.game.dmd.width,self.game.dmd.height)
+            lyrTmp.opaque = True
+
+            if self.background != None:
+                lyrTmp.layers.append(self.game.animations[self.background])
+            spacing = self.game.dmd.height/7   #was 7 before steamwreck
+            offset = spacing
+            title = HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[self.fnt], 'center', fontstyle=self.font_style).set_text('FINAL RESULTS LAST GAME')
+            title.opaque = False
+            lyrTmp.layers.append(title)
+            #print 'now go get scores for each player in last game'
+            for p in self.game.old_players:
+                offset += spacing
+                layer = HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[self.fnt], 'center', opaque = False)
+                layer.style = self.font_style
+                #print 'created the layer, now set text'
+                layer.set_text("{0:<18}    {1:>18}".format(p.name, self.game.score_display.format_score(p.score)))
+                lyrTmp.layers.append(layer)
+            self.append(lyrTmp, self.duration)
+        return duration
+
+    def get_duration(self):
+        last_score_count = len(self.game.old_players)
+
+        if(last_score_count==0):
+            return 0
+
+        if(self.multiple_screens):
+            duration = (last_score_count+1)*self.duration
+        else:
+            duration = self.duration
+        return duration
+
+    def reset(self):
+        super(LastScoresLayer,self).reset()
+
 
 class GroupedLayer(Layer):
     """:class:`.Layer` subclass that composites several sublayers (members of its :attr:`layers` list attribute) together."""

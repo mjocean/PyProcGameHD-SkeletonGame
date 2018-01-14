@@ -5,28 +5,31 @@ from ..dmd import TransitionLayer, Transition, RandomizedLayer
 from ..dmd import HDFont, HDFontStyle
 import yaml
 from procgame.yaml_helper import value_for_key
+import logging
 
 class Attract(Mode):
     """A mode that runs whenever the attract show is in progress."""
     def __init__(self, game, yaml_file='config/attract.yaml', start_button_lamp= None):
         super(Attract, self).__init__(game=game, priority=9)
 
+        self.logger = logging.getLogger('attract')
 
         self.shows = []
         self.show = 0
         self.sound_keys = []
         self.sound_num = 0
         self.start_button_lamp = start_button_lamp
+        self.first_showing = True
 
         sl = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
 
         try:
             values = yaml.load(open(yaml_file, 'r'))
         except yaml.scanner.ScannerError, e:
-            self.game.log('Attract mode: Error loading yaml file from %s; the file has a syntax error in it!\nDetails: %s' % (yaml_file, e))
+            self.logger.debug('Attract mode: Error loading yaml file from %s; the file has a syntax error in it!\nDetails: %s' % (yaml_file, e))
             raise
         except Exception, e:
-            self.game.log('Attract mode: Error loading yaml file from %s: %s' % (yaml_file, e))
+            self.logger.debug('Attract mode: Error loading yaml file from %s: %s' % (yaml_file, e))
             raise
 
         if "Sequence" in values:
@@ -65,19 +68,34 @@ class Attract(Mode):
     def reset(self):
         self.game.sound.fadeout_music()
         self.show = 0
+        self.sound_num = 0
+
         if(self.start_button_lamp is not None):
             self.start_button_lamp.disable()
 
         if(self.layer is not None):
             self.layer.reset()
             self.layer.regenerate()
+
         pass
 
     def sw_flipperLwL_active_for_50ms(self, sw):
+        if(isinstance(self.layer.script[self.layer.script_index]['layer'],dmd.ScoresLayer)
+            or isinstance(self.layer.script[self.layer.script_index]['layer'],dmd.LastScoresLayer)):
+            sl = self.layer.script[self.layer.script_index]['layer']
+            if(sl.script_index > 1):
+                sl.force_next(False)
+                return
         self.layer.force_next(False)
         return False
 
     def sw_flipperLwR_active_for_50ms(self, sw):
+        if(isinstance(self.layer.script[self.layer.script_index]['layer'],dmd.ScoresLayer)
+            or isinstance(self.layer.script[self.layer.script_index]['layer'],dmd.LastScoresLayer)):
+            sl = self.layer.script[self.layer.script_index]['layer']
+            if(sl.script_index < len(sl.script)-1):
+                sl.force_next(True)
+                return
         self.layer.force_next(True)
         return False
 
@@ -85,11 +103,11 @@ class Attract(Mode):
     #     next_segment = self.segments[self.layer.script_index]
     #     if(next_segment.music is not None):
     #         self.stop_sounds()
-        
+
     #     if(next_segment.show is not None):
-    #         self.game.log("Attract: Playing next lampshow: %s" % lampshow_key)
+    #         self.logger.debug("Attract: Playing next lampshow: %s" % lampshow_key)
     #         self.game.lampctrl.play_show(lampshow_key, repeat=True)
-            
+
 
     def next_both(self):
         self.next_show()
@@ -101,7 +119,7 @@ class Attract(Mode):
 
         lampshow_key = self.shows[self.layer.script_index]
 
-        self.game.log("Attract: Playing next lampshow: %s" % lampshow_key)
+        self.logger.debug("Attract: Playing next lampshow: %s" % lampshow_key)
         self.game.lampctrl.play_show(lampshow_key,  repeat=True)
 
     def next_sound(self):
@@ -110,7 +128,7 @@ class Attract(Mode):
 
         self.stop_sounds()
 
-        self.game.log("Attract: Playing next sound: %s" % sound_key)
+        self.logger.debug("Attract: Playing next sound: %s" % sound_key)
 
         if(sound_key in self.game.sound.music):
             if(self.game.user_settings['Machine (Standard)']['Attract Mode Music']=='On'):
@@ -124,7 +142,7 @@ class Attract(Mode):
             no lampshow listed.  The old lampshow will continue *but* we need to
             stop the last song, if still playing """
 
-        # self.game.log("Attract: stopping audio")
+        # self.logger.debug("Attract: stopping audio")
         self.game.sound.fadeout_music() # stop old music if music is already playing
         # would be wise to stop previous sound, too
         # self.game.sound.stop(last_sound_key) # what _is_ the last sound key..?
@@ -133,6 +151,12 @@ class Attract(Mode):
         self.reset()
         if(self.start_button_lamp is not None):
             self.start_button_lamp.schedule(schedule=0xffff0000, cycle_seconds=0, now=False)
+
+        if(isinstance(self.layer.script[0]['layer'],dmd.LastScoresLayer)):
+            if(self.first_showing):
+                self.first_showing = False
+                # self.logger.debug("skipping scores layer for first showing")
+                self.layer.force_next(True)
         pass
 
     def mode_stopped(self):

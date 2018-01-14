@@ -435,7 +435,6 @@ class Animation(object):
     def load_single_frame(self, idx):
         ## ONLY USE THIS FROM STREAMING LOAD!!
         path = self.filenames[idx]
-        print("loading %s" % path)
 
         tx = sdl2_DisplayManager.inst().load_texture(path, self.composite_op)
         (self.width,self.height) = tx._size

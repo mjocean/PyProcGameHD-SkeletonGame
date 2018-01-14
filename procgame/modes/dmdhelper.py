@@ -278,43 +278,12 @@ class DMDHelper(Mode):
 
                 (fnt, font_style) = self.parse_font_data(v, required=False)
 
-                last_score_count = len(self.game.old_players)
-
-                if(last_score_count==0):
-                    return None
-
                 background = value_for_key(v,'Background', value_for_key(v,'Animation'))
 
                 multiple_screens = value_for_key(v, 'multiple_screens', False)
 
-                if(multiple_screens):
-                    lyrTmp = dmd.ScriptlessLayer(self.game.dmd.width,self.game.dmd.height)
-                    lyrTmp.append(self.genMsgFrame(["Last Game","Final Scores"], background, font_key=fnt, font_style=font_style), duration)
-
-                    for player in self.game.old_players:
-                        lT = self.genMsgFrame([player.name, self.game.score_display.format_score(player.score)], background,  font_key=fnt, font_style=font_style)
-                        lyrTmp.append(lT, duration)
-
-                    duration = (last_score_count+1)*duration
-                else:
-                    lyrTmp = dmd.GroupedLayer(self.game.dmd.width,self.game.dmd.height)
-                    lyrTmp.opaque = True
-
-                    if background != None:
-                        lyrTmp.layers += [self.game.animations[background]]
-                    spacing = self.game.dmd.height/7   #was 7 before steamwreck
-                    offset = spacing
-                    title = dmd.HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[fnt], 'center', fontstyle=font_style).set_text('FINAL RESULTS LAST GAME')
-                    title.opaque = False
-                    lyrTmp.layers += [title]
-                    #print 'now go get scores for each player in last game'
-                    for p in self.game.old_players:
-                        offset += spacing
-                        layer = dmd.HDTextLayer(self.game.dmd.width/2, offset, self.game.fonts[fnt], 'center', opaque = False)
-                        layer.style = font_style
-                        #print 'created the layer, now set text'
-                        layer.set_text("{0:<18}    {1:>18}".format(p.name, self.game.score_display.format_score(p.score)))
-                        lyrTmp.layers += [layer]
+                lyrTmp = dmd.LastScoresLayer(self.game, multiple_screens, fnt, font_style, background, duration)
+                duration = lyrTmp.get_duration()
 
             elif('RandomText' in yamlStruct):
                 v = yamlStruct['RandomText']

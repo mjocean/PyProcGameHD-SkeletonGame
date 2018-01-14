@@ -1,5 +1,5 @@
 # Defines the tilt mode.  Expects asset_list.yaml entries for:
-# sounds: 'tilt warning' and 'tilt' 
+# sounds: 'tilt warning' and 'tilt'
 # fonts: tilt_small and tilt_big
 
 import logging
@@ -20,7 +20,7 @@ class Tilted(AdvancedMode):
             self.add_switch_handler(name=sw.name, event_type='active', delay=None, handler=self.ignore_switch)
 
     def ignore_switch(self, sw):
-        self.game.log("tilted: ignoring switch '%s'" % sw.name)     
+        self.game.log("tilted: ignoring switch '%s'" % sw.name)
         return procgame.game.SwitchStop
 
     def mode_stopped(self):
@@ -53,7 +53,7 @@ class TiltMonitorMode(AdvancedMode):
     def mode_started(self):
         self.tilt_reset()
         if self.game.tilted_mode is None:
-            self.game.tilted_mode = Tilted(game=self.game)  
+            self.game.tilted_mode = Tilted(game=self.game)
 
     def tilt_handler(self, sw):
         now = time.time()
@@ -137,8 +137,11 @@ class TiltMonitorMode(AdvancedMode):
             self.tilted = True
             self.tilt_status = 1
 
-            # self.game.tilted_mode = Tilted(game=self.game)  
+            # self.game.tilted_mode = Tilted(game=self.game)
             self.game.modes.add(self.game.tilted_mode)
             #play sound
             #play video
             self.game.tilted()
+
+    def evt_ball_ending(self, (shoot_again, last_ball)):
+        self.game.modes.remove(self)
