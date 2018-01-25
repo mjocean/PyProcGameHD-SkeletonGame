@@ -37,6 +37,7 @@ class Attract(Mode):
             t = 0
             for l in s:
                 layer_data = self.game.genLayerFromYAML(l)
+
                 if(layer_data is None):
                     continue
 
@@ -120,7 +121,12 @@ class Attract(Mode):
         lampshow_key = self.shows[self.layer.script_index]
 
         self.logger.debug("Attract: Playing next lampshow: %s" % lampshow_key)
-        self.game.lampctrl.play_show(lampshow_key,  repeat=True)
+
+        if(lampshow_key in self.game.rgbshow_player.shows):
+            self.game.rgbshow_player.stop_all()
+            self.game.rgbshow_player.play_show(lampshow_key,  repeat=True)
+        else:
+            self.game.lampctrl.play_show(lampshow_key, repeat=True)
 
     def next_sound(self):
         """ play the sound that corresponds to this specific step in the sequence """

@@ -23,19 +23,19 @@ PRSwitches:
     #                  'NC' (normally closed.  Common for optos)
     flipperLwR:
         number: SF2
-    flipperLwL: 
+    flipperLwL:
         number: SF4
-    flipperUpR: 
+    flipperUpR:
         number: SF6
-    flipperUpL: 
+    flipperUpL:
         number: SF8
-    exit: 
+    exit:
         number: SD5
-    down: 
+    down:
         number: SD6
-    up: 
+    up:
         number: SD7
-    enter: 
+    enter:
         number: SD8
     fireL:
         number: S11
@@ -103,9 +103,9 @@ PRSwitches:
         number: S47
     s48:
         number: S48
-    slingL: 
+    slingL:
         number: S51
-    slingR: 
+    slingR:
         number: S52
     captiveBall2:
         number: S53
@@ -124,10 +124,10 @@ PRSwitches:
     dropTargetE:
         number: S58
         type: 'NC'
-    globePosition1: 
+    globePosition1:
         number: S61
         type: 'NO' # Manual says NC
-    craneRelease: 
+    craneRelease:
         number: S62
         type: 'NC'
     leftRampToLock:
@@ -200,21 +200,21 @@ PRSwitches:
     s88:
         number: S88
 PRCoils:
-    flipperLwRMain: 
+    flipperLwRMain:
         number: FLRM
-    flipperLwRHold: 
+    flipperLwRHold:
         number: FLRH
-    flipperLwLMain: 
+    flipperLwLMain:
         number: FLLM
-    flipperLwLHold: 
+    flipperLwLHold:
         number: FLLH
-    flipperUpRMain: 
+    flipperUpRMain:
         number: FURM
-    flipperUpRHold: 
+    flipperUpRHold:
         number: FURH
-    flipperUpLMain: 
+    flipperUpLMain:
         number: FULM
-    flipperUpLHold: 
+    flipperUpLHold:
         number: FULH
     craneMagnet:
         number: C01
@@ -232,6 +232,9 @@ PRCoils:
         number: C07
     shooterR:
         number: C08
+        # the label here corresponds to putting the entry in the config/game_default_settings.yaml
+        # together, this coil's strength will be able to be set by the user in the Service Mode->Coils Settings screen
+        label: Auto Plunger
     shooterL:
         number: C09
     tripDropTarget:
@@ -240,9 +243,9 @@ PRCoils:
         number: C11
     trough:
         number: C13
-    slingL: 
+    slingL:
         number: C15
-    slingR: 
+    slingR:
         number: C16
     flasherFire:
         number: C17
@@ -410,7 +413,7 @@ PRLamps:
         number: G05
 
 PRBallSave:
-    pulseCoils: [popperL, popperR, resetDropTarget, 
+    pulseCoils: [popperL, popperR, resetDropTarget,
                  shooterR, shooterL, slingL, slingR]
     resetSwitches:
         shooterL: open
@@ -445,7 +448,7 @@ PRBallSave:
         rightRampEnter: closed
         centerRampExit: closed
         captiveBall3: open
-        topRightOpto: closed 
+        topRightOpto: closed
         topRampExit: closed
         rightRampExit: closed
         globePosition2: open

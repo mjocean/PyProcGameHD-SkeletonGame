@@ -848,6 +848,13 @@ class SkeletonGame(BasicGame):
             self.logger.warning('settings changed.  Re-Saving!')
             self.save_settings()
 
+        # for every coil in the list, if there's a setting that matches this label, take the value as the new default
+        for c in self.coils:
+            label = c.label
+            if(label is not None and label in self.user_settings['Machine (Coils)']):
+                c.default_pulse_time = self.user_settings['Machine (Coils)'][label]
+                self.log("Settings loaded: setting coil '%s' to strength: %d" % (label, c.default_pulse_time))
+
         self.balls_per_game = self.user_settings['Machine (Standard)']['Balls Per Game']
         # self.auto_plunge_strength = self.user_settings['Machine (Coils)']['Auto Plunger']
 
