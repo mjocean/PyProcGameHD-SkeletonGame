@@ -11,7 +11,7 @@ import copy
 import ctypes
 from .. import config
 import os
-from time import sleep
+from time import sleep, clock
 try:
     import serial
 except Exception, e:
@@ -147,12 +147,14 @@ class Desktop():
                 elif event.key.keysym.sym in self.key_map:
                     key_event['type'] = pinproc.EventTypeSwitchClosedDebounced
                     key_event['value'] = self.key_map[event.key.keysym.sym]
+                    key_event['time'] = clock() * 1000
             elif event.type == sdl2.SDL_KEYUP:
                 if event.key.keysym.sym == sdl2.SDLK_LCTRL or event.key.keysym.sym == sdl2.SDLK_RCTRL:
                     self.ctrl = 0
                 elif event.key.keysym.sym in self.key_map:
                     key_event['type'] = pinproc.EventTypeSwitchOpenDebounced
                     key_event['value'] = self.key_map[event.key.keysym.sym]
+                    key_event['time'] = clock() * 1000
             if len(key_event):
                 self.key_events.append(key_event)
         e = self.key_events
