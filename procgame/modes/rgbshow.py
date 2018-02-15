@@ -45,7 +45,7 @@ class RgbShowPlayer(AdvancedMode):
 
         self.shows[key].restart()
 
-    def play_show(self, key, repeat=None, save_state=True, time=None):
+    def play_show(self, key, repeat=None, save_state=True, time=None, callback_fn=None, callback_param=None):
         """ plays an RgbShow --
             use repeat to override the behavior described in the show file
             if time is None, the value in the file is used; if none in the file
@@ -65,6 +65,8 @@ class RgbShowPlayer(AdvancedMode):
         if(save_state):
             self.save_state(key)
             self.shows[key].set_callback(self.restore_state, key)
+        elif(callback_fn):
+            self.shows[key].set_callback(callback_fn, callback_param)
         self.active_shows.append(key)
         if(repeat is not None):
             self.shows[key].repeat = repeat
