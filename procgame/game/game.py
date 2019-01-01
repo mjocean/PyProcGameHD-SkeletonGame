@@ -548,6 +548,13 @@ class GameController(object):
             self.coils[79].disable()
 
     def enable_bumpers(self, enable):
+        # Scott Danesi modified to allow pulsed patter for these PRBumpers.
+        # You must include teh tag 'pulsed' in your machine.yaml file for the coil, example below
+        #   slingR:
+        #       number: A6-B1-4
+        #       pulseTime: 5
+        #       label: 'Sling - Right'
+        #       tags: pulsed
 
         for bumper in self.config['PRBumpers']:
             switch_num = self.switches[bumper].number
@@ -555,9 +562,12 @@ class GameController(object):
 
             drivers = []
             if enable:
-                drivers += [pinproc.driver_state_pulse(coil.state(), coil.default_pulse_time)]
+                if "pulsed" in coil.tags:
+                    drivers += [pinproc.driver_state_pulsed_patter(coil.state(), 2, 2, coil.default_pulse_time, True)]
+                else:
+                    drivers += [pinproc.driver_state_pulse(coil.state(), coil.default_pulse_time)]
 
-            self.proc.switch_update_rule(switch_num, 'closed_nondebounced', {'notifyHost':False, 'reloadActive':True}, drivers, False)
+            self.proc.switch_update_rule(switch_num, 'closed_nondebounced', {'notifyHost':True, 'reloadActive':True}, drivers, False)
 
     def install_switch_rule_coil_disable(self, switch_num, switch_state, coil_name, notify_host, enable, reload_active = False, drive_coil_now_if_valid=False):
         coil = self.coils[coil_name];
