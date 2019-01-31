@@ -793,6 +793,16 @@ class ScoresLayer(ScriptlessLayer):
             else:
                 records = [rec['category'], rec['player'], rec['score']]
             self.game.logger.info("re-generating scores: %s " % str(records))
+            # check if custom high scores were loaded
+            if self.game.custom_hs:
+                # check against the categories in the list
+                for category in self.game.custom_hs:
+                    # if we get a match
+                    if rec['category'] == category:
+                        # see if there's a background key
+                        if 'background' in self.game.custom_hs[category]:
+                            # and assign that thing
+                            self.background = self.game.custom_hs[category]['background']
             lT = self.game.dmdHelper.genMsgFrame(records, self.background, font_key=self.fnt, font_style=self.font_style)
 
             self.append(lT, self.duration)

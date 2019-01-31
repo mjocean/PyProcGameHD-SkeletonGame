@@ -1,0 +1,42 @@
+#
+# Custom High Scores for Skeleton Game
+#
+# To use Custom High scores, add "custom_high_scores = True" to the config.yaml
+#
+# Each custom category in the yaml needs:
+# titles
+#
+# Optional data for each category:
+# score_for_player
+# score_suffix_singular
+# score_suffix_plural
+# lowest_score
+# background
+#
+# Example:
+#
+# HurryUpChamp:
+#   titles: "Hurry Up Champ"
+#   score_for_player: total_
+#   score_suffix_singular: ' Hurry Up'
+#   score_suffix_plural: ' Hurry Ups'
+#   lowest_score: False
+#   background: HurryUpChampBackground
+#
+# Note: Need an asset_list.yaml entry matching the 'background', alternately do not include
+#       a 'background' entry to use the default.
+#
+# And in dmd\layers.py
+#
+# if rec['cateogry'] == 'HurryUpChampKey';
+#     self.background = 'HurryUpChampBackground';
+#
+ClassicHighScores:
+  titles: ['Grand Champion', 'High Score 1', 'High Score 2', 'High Score 3', 'High Score 4']
+#HurryUpChamp:
+#  titles: ['Hurry Up Champ']
+#  score_for_player: 'total_hurryups'
+#  score_suffix_singular: ' Hurry Up'
+#  score_suffix_plural: ' Hurry Ups'
+#  lowest_score: False
+#  background: 'HurryUpBackground'

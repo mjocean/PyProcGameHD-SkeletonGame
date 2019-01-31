@@ -845,15 +845,54 @@ class SkeletonGame(BasicGame):
         self.user_settings['Sound']['Initial volume'] = game_volume
 
         ## high score stuff:
+        ## Create the category list
         self.highscore_categories = []
 
-        cat = highscore.HighScoreCategory()
-        cat.game_data_key = 'ClassicHighScores'
-        cat.titles = ['Grand Champion', 'High Score 1', 'High Score 2', 'High Score 3', 'High Score 4']
-        self.highscore_categories.append(cat)
+        ## Check for custom high scores path and load custom yaml if set
+        customScores = config.value_for_key_path('custom_high_scores', False)
+        if customScores:
+            # requires custom_high_scores.yaml and entries in default_settings for the categories
+            self.load_custom_scores()
+        else:
+            cat = highscore.HighScoreCategory()
+            cat.game_data_key = 'ClassicHighScores'
+            cat.titles = ['Grand Champion', 'High Score 1', 'High Score 2', 'High Score 3', 'High Score 4']
+            self.highscore_categories.append(cat)
 
         for category in self.highscore_categories:
             category.load_from_game(self)
+
+    def load_custom_scores(self):
+        ## Load the file
+        scoreConfig = self.curr_file_path + "/config/custom_high_scores.yaml"
+        self.custom_hs = yaml.load(open(scoreConfig, 'r'))
+        file.close(scoreConfig)
+        # if we don't have contents, it's error time
+        if not self.custom_hs:
+            raise ValueError, 'Yaml file custom_high_scores.yaml could not be loaded.'
+        # step through the contents and set up high score categories
+        for category in self.custom_hs:
+            cat = highscore.HighScoreCategory()
+            # set the key using the top list item in the yaml
+            cat.game_data_key = self.custom_hs[category]
+            # set the title(s)
+            cat.titles = self.custom_hs[category]['titles']
+            # set the item used for the score for this category
+            if 'score_for_player' in self.custom_hs[category]:
+                cat.score_for_player = lambda player: player.getState(self.custom_hs[category]['score_for_player'])
+            # if there's a single suffix, set that
+            if 'score_suffix_singular' in self.custom_hs[category]:
+                cat.score_suffix_singular = self.custom_hs[category]['score_suffix_singular']
+            # If there's a plural suffix, set that
+            if 'score_suffix_plural' in self.custom_hs[category]:
+                cat.score_suffix_plural = self.custom_hs[category]['score_suffix_plural']
+            # check for lowest_score true or false
+            if 'lowest_score' in self.custom_hs[category]:
+                cat.lowest_score = True
+            else:
+                cat.lowest_score = False
+            # stuff the results in to the high score category list
+            self.highscore_categories.append(cat)
 
 
     def save_settings(self, filename=None):
