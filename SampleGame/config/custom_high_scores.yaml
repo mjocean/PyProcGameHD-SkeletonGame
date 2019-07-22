@@ -2,6 +2,9 @@
 # Custom High Scores for Skeleton Game
 #
 # To use Custom High scores, add "custom_high_scores = True" to the config.yaml
+# Categories should match up with what's in the game_data for defaults
+# Any category other than classicHighScores should end in "HSD" so it can be identified by other things
+# as being high score data
 #
 # Each custom category in the yaml needs:
 # titles

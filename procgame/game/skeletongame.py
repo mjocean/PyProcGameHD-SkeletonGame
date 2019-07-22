@@ -849,8 +849,8 @@ class SkeletonGame(BasicGame):
         self.highscore_categories = []
 
         ## Check for custom high scores path and load custom yaml if set
-        customScores = config.value_for_key_path('custom_high_scores', False)
-        if customScores:
+        custom_scores = config.value_for_key_path('custom_high_scores', False)
+        if custom_scores:
             # requires custom_high_scores.yaml and entries in default_settings for the categories
             self.load_custom_scores()
         else:
@@ -863,10 +863,11 @@ class SkeletonGame(BasicGame):
             category.load_from_game(self)
 
     def load_custom_scores(self):
-        ## Load the file
-        scoreConfig = self.curr_file_path + "/config/custom_high_scores.yaml"
-        self.custom_hs = yaml.load(open(scoreConfig, 'r'))
-        file.close(scoreConfig)
+        # Load the file
+        score_config_file = self.curr_file_path + "/config/custom_high_scores.yaml"
+        score_config = open(score_config_file, 'r')
+        self.custom_hs = yaml.load(score_config)
+        file.close(score_config)
         # if we don't have contents, it's error time
         if not self.custom_hs:
             raise ValueError, 'Yaml file custom_high_scores.yaml could not be loaded.'
@@ -874,7 +875,7 @@ class SkeletonGame(BasicGame):
         for category in self.custom_hs:
             cat = highscore.HighScoreCategory()
             # set the key using the top list item in the yaml
-            cat.game_data_key = self.custom_hs[category]
+            cat.game_data_key = category
             # set the title(s)
             cat.titles = self.custom_hs[category]['titles']
             # set the item used for the score for this category
