@@ -1,0 +1,52 @@
+# updated to include examples of text_layer, panning_layer, group_layer, and markup_layer
+Sequence:
+    - LastScores:
+        Font: status
+        FontStyle: 
+            interior_color: [130,230,130]
+            line_width: 1
+            line_color: [60,60,60]
+        # Background: dark_chrome
+        # lampshow: attract_show_2
+        # sound: sling
+        duration: 2.0
+        multiple_screens: True
+    - Combo:
+        Text:
+            - "Author"
+            - ""
+            - "Presents"
+        # Font: med  -- these are optional for 
+        # FontStyle: weird  -- Combo layers
+        # Animation: dark_chrome
+        # lampshow: attract_show_2
+        # sound: sling
+        duration: 2.0
+    - text_layer: # a more powerful version of the Combo Layer for text
+        x: .50   # 50% of the display width
+        y: .50    # 50% of the display height
+        h_justify: center
+        v_justify: center
+        Text: "empty game"        
+        Font: status
+        duration: 2.0
+    - text_layer: # a more powerful version of the Combo Layer for text
+        x: .50   # 50% of the display width
+        y: .50    # 50% of the display height
+        h_justify: center
+        v_justify: center
+        Text: "PRESS START"        
+        Font: status
+        duration: 2.0
+    - HighScores:
+        Font: status
+        FontStyle: 
+            interior_color: [130,230,130]
+            line_width: 1
+            line_color: [60,60,60]
+        # Background: dark_chrome
+        Order:
+            - player
+            - category
+            - score
+        duration: 2.0 # increase duration since it is now the length of all high score frames, together!
