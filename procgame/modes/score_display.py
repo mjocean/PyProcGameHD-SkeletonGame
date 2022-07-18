@@ -141,6 +141,8 @@ class ScoreDisplay(Mode):
         self.font_inactive_player_8_digits = self.game.fonts[key_inactive_8_digits]
         self.font_inactive_player_7_digits = self.game.fonts[key_inactive_9plus]
 
+        self.active_player_row2_y = value_for_key(v, 'multiplayer.active.row2_y', '1.0')
+        self.inactive_player_row2_y = value_for_key(v, 'multiplayer.inactive.row2_y', '1.0')
         self.set_left_players_justify(left_players_justify)
 
         # self.bgFire = self.game.animations['flames']
@@ -244,21 +246,17 @@ class ScoreDisplay(Mode):
     def set_left_players_justify(self, left_players_justify):
         """Call to set the justification of the left-hand players' scores in a multiplayer game.
         Valid values for ``left_players_justify`` are ``'left'`` and ``'right'``."""
+        active_row2_y = int(self.active_player_row2_y * self.game.dmd.height) 
+        inactive_row2_y = int(self.inactive_player_row2_y * self.game.dmd.height) 
         if left_players_justify == "left":
             # score positions: True are positions for the respective player number when active
             # score positions: False are positions for the respective player number when INactive
-            self.score_posns = { True: [(0, 0), (self.game.dmd.width, 0), (0, self.game.dmd.height), (self.game.dmd.width, self.game.dmd.height)], False: [(0, 0), (self.game.dmd.width, 0), (0, self.game.dmd.height), (self.game.dmd.width, self.game.dmd.height)] }
+            self.score_posns = { True: [(0, 0), (self.game.dmd.width, 0), (0, active_row2_y), (self.game.dmd.width, active_row2_y)], False: [(0, 0), (self.game.dmd.width, 0), (0, inactive_row2_y), (self.game.dmd.width, inactive_row2_y)] }
         elif left_players_justify == "right":
-            self.score_posns = { True: [(self.game.dmd.width, 0), (self.game.dmd.width, 0), (self.game.dmd.width/2, self.game.dmd.height), (self.game.dmd.width, self.game.dmd.height)], False: [(self.game.dmd.width, 0), (self.game.dmd.width, 0), (self.game.dmd.width, self.game.dmd.height), (self.game.dmd.width,self.game.dmd.height)] }
+            self.score_posns = { True: [(self.game.dmd.width/2, 0), (self.game.dmd.width, 0), (self.game.dmd.width/2, active_row2_y), (self.game.dmd.width, active_row2_y)], False: [(self.game.dmd.width/2, 0), (self.game.dmd.width, 0), (self.game.dmd.width/2, inactive_row2_y), (self.game.dmd.width/2, inactive_row2_y)] }
         else:
             raise ValueError, "Justify must be right or left."
         self.score_justs = [left_players_justify, 'right', left_players_justify, 'right']
-
-        #     self.score_posns = { True: [(0, -1), (450, -1), (0, 85), (450, 85)], False: [(0, -1), (450, -1), (0, 145), (450, 145)] }
-        # elif left_players_justify == "right":
-        #     self.score_posns = { True: [(75, 0), (450, 0), (75, 85), (450, 85)], False: [(52, -1), (450, -1), (52, 145), (450, 145)] }
-
-
 
     def pos_for_player(self, player_index, is_active_player):
         return self.score_posns[is_active_player][player_index]
