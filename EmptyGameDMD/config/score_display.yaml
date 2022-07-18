@@ -20,7 +20,7 @@ ScoreLayout:
                         9plus: 
                               Font: score_active9
                         row2:
-                              y: 0.35
+                              y: 0.79
 
                   inactive:               # style for the inactive player(s)
                         7_digits: 
@@ -30,9 +30,7 @@ ScoreLayout:
                         9plus: 
                               Font: score_inactive9
                         row2:
-                              y: 0.5
-                  row2:
-                        v_justify: top
+                              y: 0.79
 
       # Background: flames
       #ScoreInterior: flames
