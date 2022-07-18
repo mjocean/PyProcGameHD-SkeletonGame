@@ -141,8 +141,9 @@ class ScoreDisplay(Mode):
         self.font_inactive_player_8_digits = self.game.fonts[key_inactive_8_digits]
         self.font_inactive_player_7_digits = self.game.fonts[key_inactive_9plus]
 
-        self.active_player_row2_y = value_for_key(v, 'multiplayer.active.row2_y', '1.0')
-        self.inactive_player_row2_y = value_for_key(v, 'multiplayer.inactive.row2_y', '1.0')
+        self.active_player_row2_y = value_for_key(v, 'multiplayer.active.row2.y', '1.0')
+        self.inactive_player_row2_y = value_for_key(v, 'multiplayer.inactive.row2.y', '1.0')
+        self.multiplayer_row2_v_justify = value_for_key(v, 'multiplayer.row2.v_justify', 'auto')
         self.set_left_players_justify(left_players_justify)
 
         # self.bgFire = self.game.animations['flames']
@@ -314,7 +315,10 @@ class ScoreDisplay(Mode):
             font = self.font_for_score(score=score, is_active_player=is_active_player)
             pos = self.pos_for_player(player_index=i, is_active_player=is_active_player)
             justify = self.justify_for_player(player_index=i)
-            vjustify = "top" if i < 2 else "bottom"
+            if self.multiplayer_row2_v_justify == 'auto':
+                vjustify = "top" if i < 2 else "bottom"
+            else:
+                vjustify = self.multiplayer_row2_v_justify
             
             if(is_active_player):
                 col = (132,132,132)

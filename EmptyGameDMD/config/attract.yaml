@@ -2,7 +2,7 @@
 Sequence:
     - LastScores:
         Font: status
-        FontStyle: 
+        FontStyle:
             interior_color: [130,230,130]
             line_width: 1
             line_color: [60,60,60]
@@ -16,7 +16,7 @@ Sequence:
             - "Author"
             - ""
             - "Presents"
-        # Font: med  -- these are optional for 
+        # Font: med  -- these are optional for
         # FontStyle: weird  -- Combo layers
         # Animation: dark_chrome
         # lampshow: attract_show_2
@@ -27,7 +27,7 @@ Sequence:
         y: .50    # 50% of the display height
         h_justify: center
         v_justify: center
-        Text: "empty game"        
+        Text: "Empty Game DMD"
         Font: status
         duration: 2.0
     - text_layer: # a more powerful version of the Combo Layer for text
@@ -35,18 +35,18 @@ Sequence:
         y: .50    # 50% of the display height
         h_justify: center
         v_justify: center
-        Text: "PRESS START"        
+        Text: "PRESS START"
         Font: status
         duration: 2.0
     - HighScores:
         Font: status
-        FontStyle: 
+        FontStyle:
             interior_color: [130,230,130]
             line_width: 1
             line_color: [60,60,60]
         # Background: dark_chrome
         Order:
-            - player
             - category
+            - player
             - score
-        duration: 2.0 # increase duration since it is now the length of all high score frames, together!
+        duration: 2.0

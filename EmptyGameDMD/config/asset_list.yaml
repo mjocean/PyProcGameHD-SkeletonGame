@@ -26,19 +26,14 @@ Fonts:
     # SG Recommended: default style is the style when no specific style is specified
     # If you don't define this the system default is intentionally noticable
   - key: default
-    interior_color: [200,200,20]
+    interior_color: [255,255,255]
     line_width: 1
-    line_color: [20,20,20]
+    line_color: [255,255,255]
     # SG Recommended:  status font is for status messages
   - key: status_font_style
-    interior_color: [200,200,20]
+    interior_color: [255,255,255]
     line_width: 1
-    line_color: [20,20,20]
-    # anything else defined is for your own personal use
-  - key: blueish
-    interior_color: [0,0,255]
-    line_width: 1
-    line_color: [0,0,128]
+    line_color: [255,255,255]
   HDFonts:
   # Example follows; I don't actually use any, but this is how you would.
   # - key: 'status_font'
@@ -46,7 +41,30 @@ Fonts:
   #   size: 10
   DMDFonts:
   - key: 'default'
-    file: "Font07x5.dmd"
+    file: 'Font07x5.dmd'
+  - key: 'status'
+    file: 'Font07x5.dmd'
+  - key: 'score_sub'
+    file: 'Font07x5.dmd'
+  - key: 'score_single10'
+    file: 'Font18x12.dmd'
+  - key: 'score_single11'
+    file: 'Font18x11.dmd'
+  - key: 'score_single12'
+    file: 'Font18x10.dmd'
+  - key: 'score_active7'
+    file: 'Font14x10.dmd'
+  - key: 'score_active8'
+    file: 'Font14x9.dmd'
+  - key: 'score_active9'
+    file: 'Font14x8.dmd'
+  - key: 'score_inactive7'
+    file: 'Font09x7.dmd'
+  - key: 'score_inactive8'
+    file: 'Font09x6.dmd'
+  - key: 'score_inactive9'
+    file: 'Font09x5.dmd'
+
 Audio:
   Music:
     - key: 'base-music-bgm'
