@@ -632,7 +632,6 @@ class sdl2_DisplayManager(object):
     def make_bits_from_texture(self, texture, width, height, mode="RGBA"):
         bk = sdl2.SDL_GetRenderTarget(self.texture_renderer.renderer)
         sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, texture)
-        sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, bk) # revert back
 
         pixel_format = None
         if mode == "RGB":
