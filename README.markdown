@@ -24,8 +24,8 @@ In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDis
 
 ## License
 
-SkeletonGameDMD is Copyright (c) 2022 Clement Pellerin
-Content unchanged from PyProcGameHD-SkeletonGame remain Copyright (c) 2014-2015 Michael Ocean and Josh Kugler
+SkeletonGameDMD is Copyright (c) 2022 Clement Pellerin  
+Content unchanged from PyProcGameHD-SkeletonGame remain Copyright (c) 2014-2015 Michael Ocean and Josh Kugler  
 Content unchanged from PyProcGame remain Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
