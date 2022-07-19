@@ -171,7 +171,10 @@ class AssetManager(object):
         sdl2_DisplayManager.inst().switch_target(bk)
         if self.game.use_proc_dmd:
             self.game.dmd.proc_dmd_draw(self.frame)
-        self.game.desktop.draw(self.frame)
+        if self.game.desktop:
+            self.game.desktop.draw(self.frame) # desktop handles pixel scaling
+        else:
+            sdl2_DisplayManager.inst().screen_blit(self.frame.texture, expand_to_fill=True)
 
         for event in sdl2.ext.get_events():
             #print("Key: %s" % event.key.keysym.sym)
@@ -179,8 +182,6 @@ class AssetManager(object):
                 if event.key.keysym.sym == sdl2.SDLK_ESCAPE:
                     self.game.end_run_loop()
                     sys.exit()
-            elif event.type == pinproc.EventTypeDMDFrameDisplayed and self.game.use_proc_dmd:
-                self.game.dmd.proc_dmd_draw(self.frame) 
 
     def render_text(self, text, x, y):
         if self.rfont:

@@ -1,16 +1,31 @@
-This codebase exists for folks looking to code their own rules for pinball machines powered by either the P-ROC or P3-ROC, available from [pinballcontrollers.com](http://pinballcontrollers.com).  This framework is a fork of [PyProcGame](http://www.github.com/preble/pyprocgame), a Python based pinball programming framework.  Rather than traditional DMD hardware, it supports traditional PC display hardware (i.e., LCD) for high-resolution, full-color display via SDL2/OpenGL based hardware acceleration (PyProcGameHD) and tries to reduce the amount of code you have to write to create a new game with 'typical components' (via SkeletonGame).
+SkeletonGameDMD is a fork of [PyProcGameHD-SkeletonGame](http://skeletongame.com/) which is itself a fork of [pyprocgame](http://pyprocgame.pindev.org/).
 
-The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or go to the thread on the PinballControllers forum, [here](http://www.pinballcontrollers.com/forum/index.php?topic=1500.0).  
+pyprocgame is a Python-based programming framework that can be used to code custom rules for pinball machines powered by either the P-ROC or P3-ROC, available from [Multimorphic](https://www.multimorphic.com/)
 
-Thank you.  
+PyProcGameHD-SkeletonGame augments pyprocgame with support for traditional PC display hardware (i.e., LCD) for high-resolution, full-color display via SDL2/OpenGL based hardware acceleration (PyProcGameHD) and tries to reduce the amount of code you have to write to create a new game with 'typical components' (via SkeletonGame). Traditional DMD screens are no longer supported.
 
-![screenshot](https://dl.dropboxusercontent.com/u/254844/pyprocgamehd.png)
+SkeletonGameDMD keeps all features of PyProcGameHD-SkeletonGame and adds back support for monochome DMD screens driven by the P-ROC.
 
-Please see the [Official PyProcGameHD/SkeletonGame website](http://www.pinballprogramming.com/) site for the all-in-one installer, programming help, and assorted documentation.
+Please see the [Official PyProcGameHD/SkeletonGame website](http://skeletongame.com/) site for the all-in-one installer, programming help, and assorted documentation.
+
+## DMD Support
+
+To enable the display on the DMD driven by the P-ROC controller, set the following options in config.yaml
+
+    ```
+    proc_dmd: True
+    dmd_dots_w: 128
+    dmd_dots_h: 32
+    ```
+
+See ./EmptyGameDMD for an example of very simple game using a physical monochrome DMD driven by the P-ROC controller, from which to start a new game.
+In particular, EmptyGameDMD shows how to configure the lower resolution ScoreDisplay and a very simple attract mode formatted for the size of the DMD.
+
 
 ## License
 
-New components are Copyright (c) 2014-2015 Michael Ocean and Josh Kugler
+SkeletonGameDMD is Copyright (c) 2022 Clement Pellerin
+Content unchanged from PyProcGameHD-SkeletonGame remain Copyright (c) 2014-2015 Michael Ocean and Josh Kugler
 Content unchanged from PyProcGame remain Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
