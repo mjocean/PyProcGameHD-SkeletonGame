@@ -141,8 +141,8 @@ class ScoreDisplay(Mode):
         self.font_inactive_player_8_digits = self.game.fonts[key_inactive_8_digits]
         self.font_inactive_player_7_digits = self.game.fonts[key_inactive_9plus]
 
-        self.active_player_row2_y = value_for_key(v, 'multiplayer.active.row2.y', '1.0')
-        self.inactive_player_row2_y = value_for_key(v, 'multiplayer.inactive.row2.y', '1.0')
+        self.active_player_row2_y = value_for_key(v, 'multiplayer.active.row2.y', 1.0)
+        self.inactive_player_row2_y = value_for_key(v, 'multiplayer.inactive.row2.y', 1.0)
         self.set_left_players_justify(left_players_justify)
 
         # self.bgFire = self.game.animations['flames']
