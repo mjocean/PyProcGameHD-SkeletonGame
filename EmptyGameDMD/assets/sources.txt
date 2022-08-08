@@ -1,0 +1,14 @@
+explosion is derived from Positech's Explosion Generator:
+http://www.positech.co.uk/content/explosion/explosiongenerator.html
+
+Fireloop1 and explosion1 are from Wrath Games, here:
+http://wrathgames.com/blog/free-development-resources/animations/
+
+Textures are from the Pattern Library:
+http://thepatternlibrary.com/#retro-furnish
+
+If you're looking for TTF (hd) fonts, try Font Squirrel:
+http://www.fontsquirrel.com/fonts/list/find_fonts
+
+Terminator theme from Mitch Murder via Sound Cloud:
+https://soundcloud.com/daataa/mitch-murder-terminator-theme

@@ -1,16 +1,16 @@
-This codebase exists for folks looking to code their own rules for pinball machines powered by either the P-ROC or P3-ROC, available from [pinballcontrollers.com](http://pinballcontrollers.com).  This framework is a fork of [PyProcGame](http://www.github.com/preble/pyprocgame), a Python based pinball programming framework.  Rather than traditional DMD hardware, it supports traditional PC display hardware (i.e., LCD) for high-resolution, full-color display via SDL2/OpenGL based hardware acceleration (PyProcGameHD) and tries to reduce the amount of code you have to write to create a new game with 'typical components' (via SkeletonGame).
+This codebase exists for folks looking to code their own rules for pinball machines powered by either the P-ROC or P3-ROC, available from [Multimorphic Inc](https://multimorphic.com).  This framework is a fork of [PyProcGame](https://github.com/preble/pyprocgame), a Python based pinball programming framework. SkeletonGame supports traditional DMD displays (PyProcGame), plus traditional PC display hardware (i.e., LCD) for high-resolution, full-color display via SDL2/OpenGL based hardware acceleration (PyProcGameHD) and tries to reduce the amount of code you have to write to create a new game with 'typical components' (via SkeletonGame).
 
-The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or go to the thread on the PinballControllers forum, [here](http://www.pinballcontrollers.com/forum/index.php?topic=1500.0).  
+The code, documentation, and this page itself are a work in progress.  Please bear with me.  Please report bugs, issues, problems, etc.  Either use the GitHub issue tracker, or join the [Pindev Slack Channel](https://pindev.slack.com/). For an invitation to the slack channel, please email info@multimorphic.com  
 
 Thank you.  
 
-![screenshot](https://dl.dropboxusercontent.com/u/254844/pyprocgamehd.png)
+<img src="http://skeletongame.com/wp-content/uploads/2017/03/pyprocgamehd.png" width="294" height="147" />
 
 Please see the [Official PyProcGameHD/SkeletonGame website](http://www.pinballprogramming.com/) site for the all-in-one installer, programming help, and assorted documentation.
 
 ## License
 
-New components are Copyright (c) 2014-2015 Michael Ocean and Josh Kugler
+New components are Copyright (c) 2014-2015 Michael Ocean and Josh Kugler  
 Content unchanged from PyProcGame remain Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

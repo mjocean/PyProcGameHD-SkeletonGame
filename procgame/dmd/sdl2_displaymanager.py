@@ -629,148 +629,59 @@ class sdl2_DisplayManager(object):
         del tsurface
         return tx
 
-    def make_bits_from_texture(self, frame, width, height):
-        # 1) backup the renderer's destination 
-        # bk = sdl2.SDL_GetRenderTarget(self.texture_renderer.renderer)
-        
-        # sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, frame.texture)
-        # self.texture_renderer.copy(frame.texture, srcrect=(0,0,width,height), dstrect=None)
-        # sdl2.render.SDL_RenderPresent(self.texture_renderer.renderer)
+    def make_bits_from_texture(self, texture, width, height, mode="RGBA"):
+        bk = sdl2.SDL_GetRenderTarget(self.texture_renderer.renderer)
+        sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, texture)
 
-        rmask = gmask = bmask = amask = 0
-
-        mode = "RGBA"
         pixel_format = None
         if mode == "RGB":
             # 3x8-bit, 24bpp
             if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
-                rmask = 0x0000FF
-                gmask = 0x00FF00
-                bmask = 0xFF0000
+                # rmask = 0x0000FF
+                # gmask = 0x00FF00
+                # bmask = 0xFF0000
                 pixel_format = sdl2.pixels.SDL_PIXELFORMAT_BGR888
             else:
-                rmask = 0xFF0000
-                gmask = 0x00FF00
-                bmask = 0x0000FF
+                # rmask = 0xFF0000
+                # gmask = 0x00FF00
+                # bmask = 0x0000FF
                 pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGB888
-            depth = 24
             pitch = width * 3
         elif mode in ("RGBA", "RGBX"):
             # RGBX: 4x8-bit, no alpha
             # RGBA: 4x8-bit, alpha
             if endian.SDL_BYTEORDER == endian.SDL_LIL_ENDIAN:
-                rmask = 0x000000FF
-                gmask = 0x0000FF00
-                bmask = 0x00FF0000
+                # rmask = 0x000000FF
+                # gmask = 0x0000FF00
+                # bmask = 0x00FF0000
                 if mode == "RGBA":
-                    amask = 0xFF000000
+                    # amask = 0xFF000000
                     pixel_format = sdl2.pixels.SDL_PIXELFORMAT_ABGR8888
                 else:
                     pixel_format = sdl2.pixels.SDL_PIXELFORMAT_BGRX8888                    
             else:
-                rmask = 0xFF000000
-                gmask = 0x00FF0000
-                bmask = 0x0000FF00
+                # rmask = 0xFF000000
+                # gmask = 0x00FF0000
+                # bmask = 0x0000FF00
                 if mode == "RGBA":
-                    amask = 0x000000FF
+                    # amask = 0x000000FF
                     pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGBA8888
                 else:
                     pixel_format = sdl2.pixels.SDL_PIXELFORMAT_RGBX8888                    
-            depth = 32
             pitch = width * 4
         else:
             raise ValueError, "Format not supported"
 
-        # ?!?
-        # tsurf = self.new_texture(128,32,(255,0,255,128))
-        # ssurf = sdl2.ext.SoftwareSprite(tsurf.te, True)
-        # del tsurf
-
-        # imgsurface = sdl2.surface.SDL_CreateRGBSurface(0, width, height,
-        #                                               depth, rmask,
-        #                                               gmask, bmask, amask)
-        # if not imgsurface:
-        #     raise sdl2.ext.SDLError()
-
-        # bits = (ctypes.c_uint8)*128*32*4
-        # for x in range(0, 128*32*4):
-        #     bits[x] = 128
-        # imgsurface = sdl2.surface.SDL_CreateRGBSurfaceFrom(bits, width, height,
-        #                                               depth, pitch, rmask,
-        #                                               gmask, bmask, amask)
-
-
-        #??
-        # bucket = (ctypes.c_uint8*(128*32*4))()
-        # not better
-
-        ## ALLOC MEMBER
+        clip_r = sdl2.rect.SDL_Rect(0,0,width,height)
         bucket = ctypes.create_string_buffer(height*pitch*chr(128))
         pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8))
-
-        # pxbuf = byref(bucket)
-        # pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8*128*32*3))
-
-        # pxbuf = ctypes.cast(bucket,
-        #                 ctypes.POINTER(ctypes.c_ubyte * 128*32*3)) #.contents        
-
-        # swtarget = sdl2.ext.SoftwareSprite(imgsurface.contents, True)
-        # rtarget = swtarget.surface
-
-        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint8))
-
-        # Bucket = ctypes.c_uint8*128*32*3
-        # pxbuf = Bucket()
-
-
-        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint8))
-        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint32))
-
-
-        # pxbuf = ctypes.cast(imgsurface.contents.pixels, ctypes.POINTER(ctypes.c_uint32))
-        # pxbuf = ctypes.cast(rtarget.pixels, ctypes.POINTER(ctypes.c_uint32))
-        # pxbuf = ctypes.cast(bucket, ctypes.POINTER(ctypes.c_uint8))
-
-        clip_r = sdl2.rect.SDL_Rect(0,0,width,height)
-
-        # print("---------------------%d----------------" % pitch)
 
         ret = sdl2.render.SDL_RenderReadPixels(
             self.texture_renderer.renderer, 
             clip_r, pixel_format, 
             pxbuf, ctypes.c_int(pitch))
-            # imgsurface.contents.pixels, ctypes.c_int(pitch))
 
-        # [POINTER(SDL_Renderer), POINTER(SDL_Rect), Uint32, c_void_p, c_int], c_int)
-
-        # ctypes.c_int(pitch)
-
-        # if ret != 0:
-        #    print "ERROR: %s " % ret
-        #    raise sdl2.ext.SDLError()
-
-        # i = 0
-        # while(i < width*height*3):
-        #     print("pixel %i: %s, %s, %s" % (i, bucket[i], bucket[i+1], bucket[i+2]))
-        #     i+=3
-
-        #4) Restore renderer's texture target
-        # sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, bk) # revert back
-
-        # go into a software sprite
-        # swtarget = sdl2.ext.SoftwareSprite(imgsurface.contents, True)
-        # tx = self.texture_from_surface(swtarget)
-
-        # tx = sdl2_DisplayManager.inst().make_texture_from_imagebits(width,height, pxbuf, mode=mode, composite_op=None)
-        # tx = sdl2_DisplayManager.inst().make_texture_from_imagebits(width,height, imgsurface.contents.pixels, mode=mode, composite_op=None)
-
-        # sdl2_DisplayManager.inst().clear((0,0,0,255))
-        # sdl2_DisplayManager.inst().screen_blit(source_tx=tx, expand_to_fill=True)
-        # sdl2_DisplayManager.inst().flip()
-
-        # del tx
-        # del pxbuf
-
+        sdl2.SDL_SetRenderTarget(self.texture_renderer.renderer, bk) # revert back
         return pxbuf
 
 

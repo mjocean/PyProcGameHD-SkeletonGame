@@ -22,11 +22,11 @@ class FakePinPROC(object):
 
     def __init__(self, machine_type):
         # this short circuits the generation of 'extra' DMD events if the virtual/color DMD is used
-        use_virtual_dmd_only = config.value_for_key_path('use_virtual_dmd_only', False)
-        if(use_virtual_dmd_only==True):
-            self.get_events = self.get_events_noDMD
-        else:
+        use_proc_dmd = config.value_for_key_path(keypath='proc_dmd', default=False)
+        if use_proc_dmd:
             self.frames_per_second = config.value_for_key_path('dmd_framerate', 30)
+        else:
+            self.get_events = self.get_events_noDMD
 
         # Instantiate 256 drivers.
         for i in range(0, 256):

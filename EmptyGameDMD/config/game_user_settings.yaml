@@ -1,0 +1,5 @@
+Gameplay (Feature): {Ball Save Timer: 10, Skillshot Autoplunge Timer: 15}
+Machine (Coils): {Auto Plunger: 32}
+Machine (Standard): {Attract Mode Music: 'Off', Attract Mode Sounds: 'Off', Balls Per Game: 3,
+  Quick Bonus Mode: true}
+Sound: {Initial volume: 5, Music volume offset: 0}
