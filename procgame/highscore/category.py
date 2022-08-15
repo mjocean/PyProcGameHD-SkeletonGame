@@ -31,15 +31,14 @@ class HighScoreCategory:
 
 	def load_from_game(self, game):
 		"""Loads :attr:`scores` from *game* using :attr:`game_data_key`."""
+		self.scores = []
 		if self.game_data_key in game.game_data:
-			self.scores = []
 			for d in game.game_data[self.game_data_key]:
 				self.scores.append(HighScore.from_dict(d))
+				for score in self.scores:
+					score.key = None # No key for existing scores.
 		else:
 			game.logger.warning('HighScoreCategory.load_from_game(): game_data_key %s not found in game_data.', self.game_data_key)
-
-		for score in self.scores:
-			score.key = None # No key for existing scores.
 
 	def save_to_game(self, game):
 		"""Saves :attr:`scores` to *game* using :attr:`game_data_key`."""

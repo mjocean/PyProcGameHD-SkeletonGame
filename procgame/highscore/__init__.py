@@ -15,12 +15,12 @@ import locale
 from .. import dmd
 
 
-def generate_highscore_frames(categories, width, height):
+def generate_highscore_frames(categories, game, font_plain, font_bold, width=128, height=32):
     """Utility function that returns a sequence of :class:`~procgame.dmd.Frame` objects
     describing the current high scores in each of the *categories* supplied.
     *categories* should be a list of :class:`HighScoreCategory` objects.
     """
-    markup = dmd.MarkupFrameGenerator(width, height)
+    markup = dmd.MarkupFrameGenerator(game, font_plain, font_bold, width, height)
     frames = list()
     for category in categories:
         for index, score in enumerate(category.scores):

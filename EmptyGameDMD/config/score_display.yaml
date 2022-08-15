@@ -1,0 +1,36 @@
+ScoreLayout:
+      Fonts:
+            bottom_info:                  # the bottom info Credits/Ball Num
+                  Font: score_sub         # value corresponds to a font key in asset_list.yaml
+
+            single_player:                # Fonts/Styles for single player play
+                  10_digits:
+                        Font: score_single10 # corresponds to keys in asset_list.yaml
+                  11_digits:
+                        Font: score_single11
+                  12plus:
+                        Font: score_single12
+
+            multiplayer:                 # Fonts/Styles for multiplayer play
+                  active:                 # style for the active player
+                        7_digits: 
+                              Font: score_active7
+                        8_digits: 
+                              Font: score_active8
+                        9plus: 
+                              Font: score_active9
+                        row2:
+                              y: 0.79
+
+                  inactive:               # style for the inactive player(s)
+                        7_digits: 
+                              Font: score_inactive7
+                        8_digits: 
+                              Font: score_inactive8
+                        9plus: 
+                              Font: score_inactive9
+                        row2:
+                              y: 0.79
+
+      # Background: flames
+      #ScoreInterior: flames

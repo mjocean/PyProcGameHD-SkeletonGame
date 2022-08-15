@@ -104,6 +104,9 @@ class Font(object):
         for i in range(96):
             out.frames[1].set_font_dot(i%self.__anim.width, i/self.__anim.width, self.char_widths[i])
         out.save_old(filename)
+
+    def drawHD(self, frame, text, x, y, line_color, line_width, interior_color, fill_color, font_size=None):
+        self.draw(frame, text, x, y)
         
     def draw(self, frame, text, x, y):
         """Uses this font's characters to draw the given string at the given position."""

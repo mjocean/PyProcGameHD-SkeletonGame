@@ -51,7 +51,8 @@ class BasicGame(GameController):
 		self.dmd = DisplayController(self, width=dots_w, height=dots_h) #, message_font=hdfont_named('Font07x5.dmd'))
 		# self.score_display = ScoreDisplay(self, 0)
 
-		if self.dmd: self.dmd.frame_handlers.append(self.set_last_frame)
+		if self.dmd:
+			self.dmd.frame_handlers.append(self.set_last_frame)
 
 	def load_config(self, path):
 		super(BasicGame,self).load_config(path)
@@ -123,6 +124,8 @@ class BasicGame(GameController):
 	
 	def show_last_frame(self):
 		if self.desktop and self.last_frame:
+			if self.use_proc_dmd:
+				self.dmd.proc_dmd_draw(self.last_frame)
 			self.desktop.draw(self.last_frame)
 			self.last_frame = None
 
