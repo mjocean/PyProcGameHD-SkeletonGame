@@ -62,8 +62,8 @@ keyboard_switch_map:                                # this is the mapping of key
     q: S56 # rollover lane left
     w: S57 # rollover lane middle
     e: S58 # rollover lane right
-    1073742053: S11 # 303 is the pygame keyboard code for left shift, mapped to left flipper
-    1073742049: S12 # 304 is the pygame code for right shift, right flipper
+    1073742053: SF4 # 303 is the pygame keyboard code for left shift, mapped to left flipper
+    1073742049: SF2 # 304 is the pygame code for right shift, right flipper
     47: S34 # 47 is forward slash and is the grip trigger
     f: S14 #tilt
     g: S21 # slam tilt

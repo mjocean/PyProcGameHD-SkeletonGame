@@ -339,11 +339,7 @@ class SkeletonGame(BasicGame):
                     self.use_ballsearch_mode = False
 
             # create it anyway; if the switches are empty it will nerf itself.
-            self.ball_search = BallSearch(self, priority=100, \
-                                 countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
-                                 reset_switches=self.ballsearch_resetSwitches, \
-                                 stop_switches=self.ballsearch_stopSwitches, \
-                                 special_handler_modes=[])
+            self.ball_search = self.create_ball_search()
 
             if(self.use_osc_input):
                 try:
@@ -355,7 +351,7 @@ class SkeletonGame(BasicGame):
                 self.modes.add(self.osc)
 
 
-            self.switchmonitor = SwitchMonitor(game=self)
+            self.switchmonitor = self.create_switch_monitor()
             self.modes.add(self.switchmonitor)
 
             # # call reset (to reset the machine/modes/etc)
@@ -373,6 +369,16 @@ class SkeletonGame(BasicGame):
             if(hasattr(self,'osc') and self.osc is not None):
                 self.osc.OSC_shutdown()
             raise
+
+    def create_switch_monitor(self):
+        return SwitchMonitor(game=self)
+
+    def create_ball_search(self):
+        return BallSearch(self, priority=100, \
+                         countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
+                         reset_switches=self.ballsearch_resetSwitches, \
+                         stop_switches=self.ballsearch_stopSwitches, \
+                         special_handler_modes=[])
 
     def __install_drain_logic(self):
         """ do not install the "ball drained" logic until we know we have
