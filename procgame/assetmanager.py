@@ -268,8 +268,7 @@ class AssetManager(object):
             effects += value_for_key(sounds,'Effects',{}) or list()
             voice += value_for_key(sounds,'Voice',{}) or list()
 
-        # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
-        self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
+        self.total = len(lamps) + len(rgbshows) + len(hfonts) + len(rfonts) + len(anims) + len(music) + len(effects) + len(voice)
 
         try:
             current = ""
@@ -329,10 +328,9 @@ class AssetManager(object):
                 lc = value_for_key(f, 'line_color')
                 lw = value_for_key(f, 'line_width')
                 k = value_for_key(f, 'key')
-                font_style = dmd.HDFontStyle( interior_color=ic,
-                                        line_width=lw,
-                                        line_color=lc )
+                font_style = dmd.HDFontStyle(interior_color=ic, line_width=lw, line_color=lc)
                 self.fontstyles[k] = font_style
+                # fontstyles load instantly, do not count fontstyles in number of loaded assets
 
             for anim in anims:
                 k  = value_for_key(anim,'key')
