@@ -217,7 +217,7 @@ class Desktop():
         sdl2_DisplayManager.inst().screen_blit(source_tx=frame.pySurface, expand_to_fill=True)
         sdl2_DisplayManager.inst().flip()
 
-        bucket = sdl2_DisplayManager.inst().make_bits_from_texture(frame.pySurface, 128, 32)
+        bucket = sdl2_DisplayManager.inst().make_bits_from_texture(frame.pySurface.texture, 128, 32)
 
         self.serialPort.write(self.magic_cookie);
         s = bytearray([])

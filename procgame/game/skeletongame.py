@@ -122,26 +122,26 @@ class SkeletonGame(BasicGame):
             if not machine_type:
                 raise ValueError, 'machine config(filename="%s") did not set machineType, and not set in SkeletonGame() init.' % (machineYamlFile)
 
+            self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
+            self.dmd_height = config.value_for_key_path('dmd_dots_h', 240)
+            self.dmd_fps = config.value_for_key_path('dmd_framerate', 30)
+
             try:
                 super(SkeletonGame, self).__init__(machine_type)
             except IOError, e:
                 self.log("Error connecting to P-ROC -- running virtual mode")
                 sdl2_DisplayManager.inst().clear((0,0,0,0))
-                s = "Hardware connection failed."
-                tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=(255,128,0,0), bg_color=None)
-                sdl2_DisplayManager.inst().screen_blit(tx, x=260, y=150, expand_to_fill=False)
-                s = "Ensure boards have power and USB cable is secure."
-                tx2 = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=(255,128,0,0), bg_color=None)
-                sdl2_DisplayManager.inst().screen_blit(tx2, x=160, y=300, expand_to_fill=False)
-                sdl2_DisplayManager.inst().flip()
-                from time import sleep
-                sleep(15)
+                if self.dmd_width > 128:
+                    s = "Hardware connection failed."
+                    tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=int(0.9*self.dmd_width), color=(255,128,0,0), bg_color=None)
+                    sdl2_DisplayManager.inst().screen_blit(tx, x=int(0.1 * self.dmd_width), y=int(0.33*self.dmd_height), expand_to_fill=False)
+                    s = "Ensure boards have power and USB cable is secure."
+                    tx2 = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=int(0.9*self.dmd_width), color=(255,128,0,0), bg_color=None)
+                    sdl2_DisplayManager.inst().screen_blit(tx2, x=int(0.1 * self.dmd_width), y=int(0.33*self.dmd_height), expand_to_fill=False)
+                    sdl2_DisplayManager.inst().flip()
+                    from time import sleep
+                    sleep(15)
                 exit(-1)
-
-
-            self.dmd_width = config.value_for_key_path('dmd_dots_w', 480)
-            self.dmd_height = config.value_for_key_path('dmd_dots_h', 240)
-            self.dmd_fps = config.value_for_key_path('dmd_framerate', 30)
 
             # load the machine config yaml
             self.load_config(machineYamlFile)
@@ -339,11 +339,7 @@ class SkeletonGame(BasicGame):
                     self.use_ballsearch_mode = False
 
             # create it anyway; if the switches are empty it will nerf itself.
-            self.ball_search = BallSearch(self, priority=100, \
-                                 countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
-                                 reset_switches=self.ballsearch_resetSwitches, \
-                                 stop_switches=self.ballsearch_stopSwitches, \
-                                 special_handler_modes=[])
+            self.ball_search = self.create_ball_search()
 
             if(self.use_osc_input):
                 try:
@@ -355,7 +351,7 @@ class SkeletonGame(BasicGame):
                 self.modes.add(self.osc)
 
 
-            self.switchmonitor = SwitchMonitor(game=self)
+            self.switchmonitor = self.create_switch_monitor()
             self.modes.add(self.switchmonitor)
 
             # # call reset (to reset the machine/modes/etc)
@@ -373,6 +369,16 @@ class SkeletonGame(BasicGame):
             if(hasattr(self,'osc') and self.osc is not None):
                 self.osc.OSC_shutdown()
             raise
+
+    def create_switch_monitor(self):
+        return SwitchMonitor(game=self)
+
+    def create_ball_search(self):
+        return BallSearch(self, priority=100, \
+                         countdown_time=self.ballsearch_time, coils=self.ballsearch_coils, \
+                         reset_switches=self.ballsearch_resetSwitches, \
+                         stop_switches=self.ballsearch_stopSwitches, \
+                         special_handler_modes=[])
 
     def __install_drain_logic(self):
         """ do not install the "ball drained" logic until we know we have

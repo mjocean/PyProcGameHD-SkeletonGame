@@ -437,6 +437,9 @@ class TextLayer(Layer):
             elif self.justify == 'center':
                 (x, y) = (-w/2,0)
 
+            (wOfText, hOfText) = self.font.size(text)
+            self.text_width = wOfText
+            self.text_height = hOfText
 
             if self.fill_color != None and self.width != None and self.height != None:
                 #width and height must not be none

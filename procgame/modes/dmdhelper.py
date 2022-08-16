@@ -231,7 +231,11 @@ class DMDHelper(Mode):
 
             tL.style = font_style
         else:
-            tL = dmd.TextLayer(x=x, y=y, font=f, justify=hj, opaque=opaque, width=None, height=None, fill_color=None)
+            if vj == 'bottom':
+                y = y - f.char_size
+            elif vj == 'center':
+                y = int(y - f.char_size/2)
+            tL = dmd.TextLayer(x=x, y=max(0, int(y - f.char_size/2)), font=f, justify=hj, opaque=opaque, width=None, height=None, fill_color=None)
 
         tL.enabled = value_for_key(yaml_struct,"visible",True)
 

@@ -87,6 +87,7 @@ class GameController(object):
         self.t0 = time.time()
         self.LEDs = LEDs.LEDcontroller(self)
         self.dmd_updates = 0
+        self.use_proc_dmd = config.value_for_key_path(keypath='proc_dmd', default=False)
 
     def create_pinproc(self):
         """Instantiates and returns the class to use as the P-ROC device.
@@ -667,7 +668,8 @@ class GameController(object):
         """
         events = []
         events.extend(self.proc.get_events())
-        events.extend(self.get_virtualDMDevents()) # MJO: changed to support fake DMD w/o h/w DMD
+        if not self.use_proc_dmd:
+            events.extend(self.get_virtualDMDevents()) # MJO: changed to support fake DMD w/o h/w DMD
         return events
 
     def tick_virtual_drivers(self):

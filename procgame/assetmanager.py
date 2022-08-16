@@ -1,6 +1,7 @@
 from procgame import dmd
 from procgame.dmd.sdl2_displaymanager import sdl2_DisplayManager
 import sdl2
+import pinproc
 """
 """
 import os
@@ -78,23 +79,14 @@ class AssetManager(object):
         except Exception, e:
             self.logger.error('Error loading asset config file from %s: %s', path, e)
 
-
     def __init__(self, game, yaml_values=None, yaml_file=None):
         super(AssetManager, self).__init__()
         self.logger = logging.getLogger('game.assets')
         self.game = game
         self.dmd_path = game.dmd_path
 
-
-        # self.screen=game.desktop.screen
-        # pygame.font.init()
-        # p = pygame.font.match_font('Arial')
-        # if(p==None):
-        #   raise ValueError, "Specific font could not be found on your system.  Please install '" + fontname + "'."
-        ### josh prog par
-        # self.pygF = pygame.font.Font(p,32)
-        self.screen_height = sdl2_DisplayManager.inst().window_h
-        self.screen_width = sdl2_DisplayManager.inst().window_w
+        self.dots_w = sdl2_DisplayManager.inst().dots_w
+        self.dots_h = sdl2_DisplayManager.inst().dots_h
 
         if(yaml_values is not None):
             self.values = yaml_values
@@ -103,8 +95,12 @@ class AssetManager(object):
 
         splash_file = self.value_for_key_path('UserInterface.splash_screen', None)
         self.single_line = self.value_for_key_path('UserInterface.single_line', False)
-        self.rect_color = self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255))
-        self.inner_rect_color = self.value_for_key_path('UserInterface.progress_bar.fill',(255,84,84,255))
+        default_line_format = "Loading %s: [%06d] of [%06d]: %s" if self.single_line else "Loading %s: [%06d] of [%06d]"
+        self.line_format = self.value_for_key_path('UserInterface.line_format', default_line_format)
+        self.border_width = self.value_for_key_path('UserInterface.progress_bar.border_width', 1)
+        self.border_color = self.verify_alpha(self.value_for_key_path('UserInterface.progress_bar.border', (120,120,120,255)))
+        self.background_color = self.verify_alpha(self.value_for_key_path('UserInterface.progress_bar.background', None))
+        self.fill_color = self.verify_alpha(self.value_for_key_path('UserInterface.progress_bar.fill',(255,84,84,255)))
         self.bar_x = self.value_for_key_path('UserInterface.progress_bar.x_center', 0.5)
         self.bar_y = self.value_for_key_path('UserInterface.progress_bar.y_center', 0.25)
 
@@ -114,15 +110,18 @@ class AssetManager(object):
         text_y = self.value_for_key_path('UserInterface.text.y_center', 0.15)
         # self.text_font = self.value_for_key_path('UserInterface.text.font', 0.15)
         # self.text_size = self.value_for_key_path('UserInterface.text.size', 0.15)
-        self.text_color = self.value_for_key_path('UserInterface.text.color', (255,255,0,255))
+        self.text_color = self.verify_alpha(self.value_for_key_path('UserInterface.text.color', (255,255,0,255)))
 
-        self.prog_bar_width = int(bar_w * self.screen_width)
-        self.prog_bar_height = int(bar_h * self.screen_height)
+        self.prog_bar_width = int(bar_w * self.dots_w)
+        self.prog_bar_height = int(bar_h * self.dots_h)
 
-        self.prog_bar_x = int((self.screen_width * self.bar_x) - (self.prog_bar_width/2))
-        self.prog_bar_y = int((self.screen_height * self.bar_y) - (self.prog_bar_height/2))
+        self.prog_bar_x = int((self.dots_w * self.bar_x) - (self.prog_bar_width/2))
+        self.prog_bar_y = int((self.dots_h * self.bar_y) - (self.prog_bar_height/2))
 
-        self.text_y = int(text_y * self.screen_height)
+        self.text_x = self.prog_bar_x
+        self.text_y = int(text_y * self.dots_h)
+
+        self.frame = dmd.Frame(self.dots_w, self.dots_h)
 
         if(splash_file is not None):
             s = sdl2_DisplayManager.inst().load_surface(game.dmd_path + splash_file)
@@ -131,36 +130,51 @@ class AssetManager(object):
         else:
             self.splash_image = None
 
+        if self.game.use_proc_dmd:
+            self.rfont = dmd.font_named('Font07x5.dmd')
+
         self.load()
 
-
-    def updateProgressBar(self, displayType,fname):
-        if(self.splash_image is not None):
-            sdl2_DisplayManager.inst().screen_blit(self.splash_image, expand_to_fill=True)
+    def verify_alpha(self, color):
+        if type(color) == list and len(color) == 3:
+            return color + [255]
         else:
-            sdl2_DisplayManager.inst().clear((0,0,0,0))
+            return color
 
+    def updateProgressBar(self, displayType, fname):
+        if(self.splash_image is not None):
+            sdl2_DisplayManager.inst().roto_blit(self.splash_image, self.frame.pySurface, dest=None, area=None, angle=0, origin=None, flip=0)
+        else:
+            self.frame.clear()
 
-        sdl2_DisplayManager.inst().draw_rect(self.rect_color, (self.prog_bar_x,self.prog_bar_y,self.prog_bar_width,self.prog_bar_height), False)
-        percent = int (float(self.numLoaded + 1)/float(self.total) * self.prog_bar_width)
+        bk = sdl2_DisplayManager.inst().switch_target(self.frame.pySurface)
 
-        sdl2_DisplayManager.inst().draw_rect(self.inner_rect_color, (self.prog_bar_x + 2,self.prog_bar_y + 2,percent,self.prog_bar_height-4), True)
+        for r in range(self.border_width):
+            sdl2_DisplayManager.inst().draw_rect(self.border_color, (self.prog_bar_x + r, self.prog_bar_y + r, self.prog_bar_width - 2 * r, self.prog_bar_height - 2 * r), False)
+
+        bar_width = int(float(self.numLoaded + 1)/float(self.total) * self.prog_bar_width)
+
+        if self.background_color:
+            sdl2_DisplayManager.inst().draw_rect(self.background_color, (self.prog_bar_x + self.border_width + bar_width, self.prog_bar_y + self.border_width, self.prog_bar_width - bar_width - 2 * self.border_width, self.prog_bar_height - 2 * self.border_width), True)
+
+        sdl2_DisplayManager.inst().draw_rect(self.fill_color, (self.prog_bar_x + self.border_width, self.prog_bar_y + self.border_width, bar_width, self.prog_bar_height - 2 * self.border_width), True)
 
         if (self.single_line):
-            s = "Loading %s: [%06d] of [%06d]: %s" % (displayType, self.numLoaded+1,self.total, fname)
-            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+            s = self.line_format % (displayType, self.numLoaded+1,self.total, fname)
+            self.render_text(s, x=self.text_x, y=self.text_y)
         else:
-            s = "Loading %s: [%06d] of [%06d]:" % (displayType, self.numLoaded+1,self.total)
-            tx = sdl2_DisplayManager.inst().font_render_text(s, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-            sdl2_DisplayManager.inst().screen_blit(tx, x=60, y=self.text_y, expand_to_fill=False)
+            s = self.line_format % (displayType, self.numLoaded+1,self.total)
+            tx_size = self.render_text(s, x=self.text_x, y=self.text_y)
+            (unused_tx_w, tx_h) = tx_size
+            self.render_text(fname, x=self.text_x, y=int(self.text_y+1.2*tx_h))
 
-            tx = sdl2_DisplayManager.inst().font_render_text(fname, font_alias=None, size=None, width=300, color=self.text_color, bg_color=None)
-            sdl2_DisplayManager.inst().screen_blit(tx, x=80, y=self.text_y+35, expand_to_fill=False)
-
-
-    #   self.screen.blit(surf,(self.prog_bar_x,self.prog_bar_y + (1.1 * self.prog_bar_height)) )
-        sdl2_DisplayManager.inst().flip()
+        sdl2_DisplayManager.inst().switch_target(bk)
+        if self.game.use_proc_dmd:
+            self.game.dmd.proc_dmd_draw(self.frame)
+        if self.game.desktop:
+            self.game.desktop.draw(self.frame) # desktop handles pixel scaling
+        else:
+            sdl2_DisplayManager.inst().screen_blit(self.frame.texture, expand_to_fill=True)
 
         for event in sdl2.ext.get_events():
             #print("Key: %s" % event.key.keysym.sym)
@@ -169,12 +183,15 @@ class AssetManager(object):
                     self.game.end_run_loop()
                     sys.exit()
 
-        # pygame.display.flip()
-
-    def clearScreen(self):
-        self.screen.fill((255,0,0))
-        pygame.display.flip()
-
+    def render_text(self, text, x, y):
+        if self.rfont:
+            w = self.rfont.draw(self.frame, text, x, y)
+            return (w, self.rfont.char_size)
+        else:
+            tx = sdl2_DisplayManager.inst().font_render_text(text, font_alias=None, size=None, width=self.dots_w, color=self.text_color, bg_color=None)
+            sdl2_DisplayManager.inst().screen_blit(tx, x, y, expand_to_fill=False)
+            size = tx.size
+        return size
 
     def loadIntoCache(self,key,frametime=1,file=None,repeatAnim=False,holdLastFrame=False,  opaque = False, composite_op = None, x_loc =0, y_loc=0, streaming_load=False, streaming_png=False, png_stream_cache=False, custom_sequence=None, scale=None):
         if(file==None):
@@ -251,8 +268,7 @@ class AssetManager(object):
             effects += value_for_key(sounds,'Effects',{}) or list()
             voice += value_for_key(sounds,'Voice',{}) or list()
 
-        # self.total = str(len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
-        self.total = (len(lamps) + len(fontstyles) + len(anims)+len(hfonts)+len(rfonts)+len(music)+len(effects)+len(voice))
+        self.total = len(lamps) + len(rgbshows) + len(hfonts) + len(rfonts) + len(anims) + len(music) + len(effects) + len(voice)
 
         try:
             current = ""
@@ -296,7 +312,6 @@ class AssetManager(object):
                     if(not os.path.isfile(file_path)):
                         raise ValueError, "Could not load font as specified in yaml\n %s\n File [%s] does not exist." % (current, file_path)
 
-
                 self.fonts[k] = dmd.hdfont_named(sname,size, font_file_path=file_path)
                 self.numLoaded += 1
 
@@ -313,10 +328,9 @@ class AssetManager(object):
                 lc = value_for_key(f, 'line_color')
                 lw = value_for_key(f, 'line_width')
                 k = value_for_key(f, 'key')
-                font_style = dmd.HDFontStyle( interior_color=ic,
-                                        line_width=lw,
-                                        line_color=lc )
+                font_style = dmd.HDFontStyle(interior_color=ic, line_width=lw, line_color=lc)
                 self.fontstyles[k] = font_style
+                # fontstyles load instantly, do not count fontstyles in number of loaded assets
 
             for anim in anims:
                 k  = value_for_key(anim,'key')
@@ -370,9 +384,3 @@ class AssetManager(object):
             self.updateProgressBar("Audio Voices", fname)
             self.game.sound.register_sound(k,self.game.voice_path+fname, volume=volume, is_voice=True)
             self.numLoaded += 1
-
-
-
-        # self.clearScreen()
-
-
